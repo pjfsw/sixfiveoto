@@ -6,6 +6,7 @@ import java.util.List;
 
 import com.pjfsw.sixfiveoto.addressables.Peeker;
 import com.pjfsw.sixfiveoto.addressables.Poker;
+import com.pjfsw.sixfiveoto.addressables.RomVectors;
 import com.pjfsw.sixfiveoto.registers.Registers;
 
 /**
@@ -27,9 +28,7 @@ public class Workbench implements Peeker, Poker {
         this.registers = new Registers();
         addressDecoder = new AddressDecoder();
         addressDecoder.mapPeeker(new Memory1K(byteCode), CODEPAGE, CODEPAGE+3);
-
-        addressDecoder.mapPeeker(new RomPage(CODEBASE), 0xFF, 0xFF);
-
+        addressDecoder.mapPeeker(new RomVectors(CODEBASE), 0xFF, 0xFF);
         Memory1K ram = new Memory1K(emptyList());
         addressDecoder.mapPeeker(ram, 0,3);
         addressDecoder.mapPoker(ram, 0,3);
@@ -67,26 +66,7 @@ public class Workbench implements Peeker, Poker {
         return registers;
     }
 
-    private static class RomPage implements Peeker {
-        private final int bootVector;
-
-        public RomPage(int bootVector) {
-            this.bootVector = bootVector;
-        }
-
-        @Override
-        public int peek(final int address) {
-            if (Word.lo(address) == 0xFC) {
-                return Word.lo(bootVector);
-            } else if (Word.lo(address) == 0xFD) {
-                return Word.hi(bootVector);
-            } else {
-                return 0;
-            }
-        }
-    }
-
-    private static class Memory1K implements Peeker, Poker {
+    public static class Memory1K implements Peeker, Poker {
         private final int[] byteCode;
 
         public Memory1K(List<Integer> byteCode) {

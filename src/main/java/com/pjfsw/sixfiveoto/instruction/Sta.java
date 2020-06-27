@@ -37,6 +37,7 @@ public class Sta {
         @Override
         public int execute(final Registers registers, final Peeker peek, final Poker poke) {
             poke.poke(Memory.add(Memory.readWord(peek, registers.pc), registers.x()), registers.a());
+            registers.incrementPc(2);
             return 5;
         }
 

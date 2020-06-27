@@ -1,6 +1,8 @@
 package com.pjfsw.sixfiveoto.addressables;
 
 import com.pjfsw.sixfiveoto.Word;
+import com.pjfsw.sixfiveoto.instruction.Lda;
+import com.pjfsw.sixfiveoto.instruction.Nop;
 
 public class TestRom implements Peeker {
     private final int startAddress;
@@ -11,8 +13,8 @@ public class TestRom implements Peeker {
     public TestRom(int startAddress) {
         this.startAddress = startAddress;
         this.bytes = new int[] {
-            0xea,
-            0xa9, 0x11,
+            Nop.OPCODE,
+            Lda.Immediate.OPCODE, 0x11,
             0xae, Word.lo(startAddress), Word.hi(startAddress),
             0xbd, Word.lo(startAddress), Word.hi(startAddress),
             0xe8,

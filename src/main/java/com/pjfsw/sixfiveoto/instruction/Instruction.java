@@ -1,6 +1,6 @@
 package com.pjfsw.sixfiveoto.instruction;
 
-import java.util.Collection;
+import java.util.List;
 
 import com.pjfsw.sixfiveoto.addressables.Peeker;
 import com.pjfsw.sixfiveoto.addressables.Poker;
@@ -16,5 +16,5 @@ public interface Instruction {
 
     String getMnemonic(Integer word);
 
-    Collection<Integer> assemble(Integer word);
+    List<Integer> assemble(Integer word);
 }

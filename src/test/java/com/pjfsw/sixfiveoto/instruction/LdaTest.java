@@ -1,0 +1,57 @@
+package com.pjfsw.sixfiveoto.instruction;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import org.junit.jupiter.api.Test;
+
+import com.google.common.collect.ImmutableList;
+import com.pjfsw.sixfiveoto.Workbench;
+
+public class LdaTest {
+    private static final int POSITIVE = 17;
+    private static final int ZERO = 0;
+    private static final int NEGATIVE = 0xF0;
+
+    @Test
+    public void testImmediate() {
+        Workbench wb = new Workbench(ImmutableList.<Integer>builder()
+            .addAll(new Lda.Immediate().assemble(POSITIVE))
+            .addAll(new Lda.Immediate().assemble(NEGATIVE))
+            .addAll(new Lda.Immediate().assemble(ZERO))
+            .build());
+        assertEquals(2, wb.run(1));
+        assertEquals(POSITIVE, wb.registers().a());
+        assertFalse(wb.registers().z);
+        assertFalse(wb.registers().n);
+        assertEquals(2, wb.run(1));
+        assertEquals(NEGATIVE, wb.registers().a());
+        assertFalse(wb.registers().z);
+        assertTrue(wb.registers().n);
+        assertEquals(2, wb.run(1));
+        assertEquals(ZERO, wb.registers().a());
+        assertTrue(wb.registers().z);
+        assertFalse(wb.registers().n);
+    }
+
+    @Test
+    public void testAbsolute() {
+        Workbench wb = new Workbench(new Lda.Absolute().assemble(0x0200));
+        wb.poke(0x0200, POSITIVE);
+        wb.run(1);
+        assertEquals(POSITIVE, wb.registers().a());
+        assertEquals(4, wb.cycles());
+    }
+
+    @Test
+    public void testAbsoluteX() {
+        int offset = 2;
+        Workbench wb = new Workbench(new Lda.AbsoluteX().assemble(0x0200));
+        wb.poke(0x0202, POSITIVE);
+        wb.registers().x(2);
+        wb.run(1);
+        assertEquals(POSITIVE, wb.registers().a());
+        assertEquals(4, wb.cycles());
+    }
+}

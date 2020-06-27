@@ -1,6 +1,6 @@
 package com.pjfsw.sixfiveoto.instruction;
 
-import java.util.Collection;
+import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 import com.pjfsw.sixfiveoto.Memory;
@@ -15,7 +15,7 @@ public class Lda  {
 
         @Override
         public int execute(final Registers registers, Peeker peek, Poker poke) {
-            registers.a = peek.peek(Memory.read16Bit(peek, registers.pc));
+            registers.a((peek.peek(Memory.readWord(peek, registers.pc))));
             registers.incrementPc(2);
             return 4;
         }
@@ -26,7 +26,7 @@ public class Lda  {
         }
 
         @Override
-        public Collection<Integer> assemble(final Integer word) {
+        public List<Integer> assemble(final Integer word) {
             return ImmutableList.of(OPCODE, Word.lo(word), Word.hi(word));
         }
     }
@@ -36,8 +36,8 @@ public class Lda  {
 
         @Override
         public int execute(final Registers registers, Peeker peek, Poker poke) {
-            registers.a = peek.peek(Memory.add(Memory.read16Bit(peek, registers.pc), registers.x));
-            int cycles = 4 + Memory.penalty(registers.pc, registers.x);
+            registers.a(peek.peek(Memory.add(Memory.readWord(peek, registers.pc), registers.x())));
+            int cycles = 4 + Memory.penalty(registers.pc, Memory.add(registers.pc, registers.x()));
             registers.incrementPc(2);
             return cycles;
         }
@@ -48,7 +48,7 @@ public class Lda  {
         }
 
         @Override
-        public Collection<Integer> assemble(final Integer word) {
+        public List<Integer> assemble(final Integer word) {
             return ImmutableList.of(OPCODE, Word.lo(word), Word.hi(word));
         }
     }
@@ -58,7 +58,7 @@ public class Lda  {
 
         @Override
         public int execute(final Registers registers, Peeker peek, Poker poke) {
-            registers.a = peek.peek(registers.pc);
+            registers.a(peek.peek(registers.pc));
             registers.incrementPc(1);
             return 2;
         }
@@ -69,7 +69,7 @@ public class Lda  {
         }
 
         @Override
-        public Collection<Integer> assemble(final Integer word) {
+        public List<Integer> assemble(final Integer word) {
             return ImmutableList.of(OPCODE, Word.lo(word));
         }
     }

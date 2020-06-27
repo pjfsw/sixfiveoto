@@ -13,9 +13,9 @@ public class CpuTest {
         ImmutableList<Integer> byteCode = ImmutableList.<Integer>builder()
             .addAll(new Lda.Immediate().assemble(37))
             .build();
-        TestBench tb = new TestBench(byteCode);
-        tb.run(1);
-        assertEquals(37, tb.registers().a);
-        assertEquals(2, tb.cpu().getCycles());
+        Workbench wb = new Workbench(byteCode);
+        wb.run(1);
+        assertEquals(37, wb.registers().a());
+        assertEquals(2, wb.cpu().getCycles());
     }
 }

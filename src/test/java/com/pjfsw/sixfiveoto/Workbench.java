@@ -1,22 +1,39 @@
 package com.pjfsw.sixfiveoto;
 
-import java.util.Collection;
+import static java.util.Collections.emptyList;
+
+import java.util.List;
 
 import com.pjfsw.sixfiveoto.addressables.Peeker;
 import com.pjfsw.sixfiveoto.addressables.Poker;
 import com.pjfsw.sixfiveoto.registers.Registers;
 
-public class TestBench implements Peeker, Poker {
+/**
+ * A simple workbench computer with the following memory layout:
+ *
+ * 0x0000-0x03FF 1KB RAM
+ * 0xF000-0xF3FF 1KB ROM code
+ *
+ */
+public class Workbench implements Peeker, Poker {
     private static final int CODEPAGE = 0xF0;
+    public static final int CODEBASE = CODEPAGE << 8;
     private final Cpu cpu;
     private final Registers registers;
     private final AddressDecoder addressDecoder;
 
-    public TestBench(Collection<Integer> byteCode) {
+
+    public Workbench(List<Integer> byteCode) {
         this.registers = new Registers();
         addressDecoder = new AddressDecoder();
-        addressDecoder.mapPeeker(new RamPage(byteCode), CODEPAGE, CODEPAGE);
-        addressDecoder.mapPeeker(new RomPage(CODEPAGE << 8), 0xFF, 0xFF);
+        addressDecoder.mapPeeker(new Memory1K(byteCode), CODEPAGE, CODEPAGE+3);
+
+        addressDecoder.mapPeeker(new RomPage(CODEBASE), 0xFF, 0xFF);
+
+        Memory1K ram = new Memory1K(emptyList());
+        addressDecoder.mapPeeker(ram, 0,3);
+        addressDecoder.mapPoker(ram, 0,3);
+
         cpu = new Cpu(addressDecoder, registers);
     }
 
@@ -28,10 +45,12 @@ public class TestBench implements Peeker, Poker {
         return cpu.getCycles();
     }
 
-    public void run(int instructions) {
+    public int run(int instructions) {
+        int cycles = 0;
         for (int i = 0; i < instructions; i++) {
-            cpu.next();
+            cycles += cpu.next();
         }
+        return cycles;
     }
 
     @Override
@@ -67,28 +86,25 @@ public class TestBench implements Peeker, Poker {
         }
     }
 
-    private static class RamPage implements Peeker, Poker {
-        private final Integer[] byteCode;
+    private static class Memory1K implements Peeker, Poker {
+        private final int[] byteCode;
 
-        public RamPage(Collection<Integer> byteCode) {
-            this.byteCode = byteCode.toArray(new Integer[0]);
+        public Memory1K(List<Integer> byteCode) {
+            this.byteCode = new int[1024];
+            for (int i = 0; i < byteCode.size(); i++) {
+                this.byteCode[i] = byteCode.get(i);
+            }
         }
 
 
         @Override
         public int peek(int address) {
-            if (Word.lo(address) < byteCode.length) {
-                return byteCode[Word.lo(address)];
-            } else {
-                return 0;
-            }
+            return byteCode[address & 0x03FF];
         }
 
         @Override
         public void poke(final int address, final int data) {
-            if (Word.lo(address) < byteCode.length) {
-                byteCode[Word.lo(address)] = Word.lo(data);
-            }
+            byteCode[address & 0x03FF] = Word.lo(data);
         }
     }
 

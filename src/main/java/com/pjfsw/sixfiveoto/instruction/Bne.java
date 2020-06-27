@@ -1,27 +1,27 @@
 package com.pjfsw.sixfiveoto.instruction;
 
-import java.util.Collections;
 import java.util.List;
 
+import com.google.common.collect.ImmutableList;
 import com.pjfsw.sixfiveoto.addressables.Peeker;
 import com.pjfsw.sixfiveoto.addressables.Poker;
 import com.pjfsw.sixfiveoto.registers.Registers;
 
-public class Inx implements Instruction {
-    public static final int OPCODE = 0xE8;
+public class Bne implements Instruction {
+    public static final int OPCODE = 0xD0;
+
     @Override
-    public int execute(final Registers registers, Peeker peek, Poker poke) {
-        registers.x(registers.add(registers.x(), 1));
-        return 2;
+    public int execute(final Registers registers, final Peeker peek, final Poker poke) {
+        return BranchHelper.branch(!registers.z, registers, peek);
     }
 
     @Override
     public String getMnemonic(final Integer word) {
-        return "INX";
+        return String.format("BNE %02X", word);
     }
 
     @Override
     public List<Integer> assemble(final Integer word) {
-        return Collections.singletonList(OPCODE);
+        return ImmutableList.of(OPCODE, word);
     }
 }

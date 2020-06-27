@@ -1,6 +1,6 @@
 package com.pjfsw.sixfiveoto.instruction;
 
-import java.util.Collection;
+import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 import com.pjfsw.sixfiveoto.Memory;
@@ -15,7 +15,7 @@ public class Jmp {
 
         @Override
         public int execute(final Registers registers, Peeker peek, Poker poke) {
-            registers.pc = Memory.read16Bit(peek, registers.pc);
+            registers.pc = Memory.readWord(peek, registers.pc);
             return 3;
         }
 
@@ -25,7 +25,7 @@ public class Jmp {
         }
 
         @Override
-        public Collection<Integer> assemble(final Integer word) {
+        public List<Integer> assemble(final Integer word) {
             return ImmutableList.of(OPCODE, Word.lo(word), Word.hi(word));
         }
     }

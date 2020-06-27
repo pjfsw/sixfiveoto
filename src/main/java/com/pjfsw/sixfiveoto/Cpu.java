@@ -3,12 +3,15 @@ package com.pjfsw.sixfiveoto;
 import java.util.Map;
 
 import com.google.common.collect.ImmutableMap;
+import com.pjfsw.sixfiveoto.instruction.Beq;
+import com.pjfsw.sixfiveoto.instruction.Bne;
 import com.pjfsw.sixfiveoto.instruction.Instruction;
 import com.pjfsw.sixfiveoto.instruction.Inx;
-import com.pjfsw.sixfiveoto.instruction.Jmp.Absolute;
+import com.pjfsw.sixfiveoto.instruction.Jmp;
 import com.pjfsw.sixfiveoto.instruction.Lda;
 import com.pjfsw.sixfiveoto.instruction.Ldx;
 import com.pjfsw.sixfiveoto.instruction.Nop;
+import com.pjfsw.sixfiveoto.instruction.Sta;
 import com.pjfsw.sixfiveoto.registers.Registers;
 
 public class Cpu {
@@ -25,19 +28,23 @@ public class Cpu {
         this.addressDecoder = addressDecoder;
         this.registers = registers;
         instructions = ImmutableMap.<Integer, Instruction>builder()
-            .put(Absolute.OPCODE, new Absolute())
+            .put(Beq.OPCODE, new Beq())
+            .put(Bne.OPCODE, new Bne())
+            .put(Jmp.Absolute.OPCODE, new Jmp.Absolute())
             .put(Ldx.Immediate.OPCODE, new Ldx.Immediate())
             .put(Lda.Immediate.OPCODE, new Lda.Immediate())
             .put(Lda.Absolute.OPCODE, new Lda.Absolute())
             .put(Lda.AbsoluteX.OPCODE, new Lda.AbsoluteX())
             .put(Inx.OPCODE, new Inx())
             .put(Nop.OPCODE, new Nop())
+            .put(Sta.Absolute.OPCODE, new Sta.Absolute())
+            .put(Sta.AbsoluteX.OPCODE, new Sta.AbsoluteX())
             .build();
         reset();
     }
 
     public void reset() {
-        registers.pc = Memory.read16Bit(addressDecoder, RESET_VECTOR);
+        registers.pc = Memory.readWord(addressDecoder, RESET_VECTOR);
         totalCycles = 0;
     }
 
@@ -50,7 +57,7 @@ public class Cpu {
         Instruction instruction = instructions.get(addressDecoder.peek(registers.pc));
         String mnemonic;
         if (instruction != null) {
-            mnemonic = instruction.getMnemonic(Memory.read16Bit(addressDecoder, registers.pc+1));
+            mnemonic = instruction.getMnemonic(Memory.readWord(addressDecoder, registers.pc+1));
         } else {
             mnemonic = "???";
         }

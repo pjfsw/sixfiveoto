@@ -7,8 +7,8 @@ import com.pjfsw.sixfiveoto.addressables.Peeker;
 import com.pjfsw.sixfiveoto.addressables.Poker;
 
 public class AddressDecoder implements Peeker, Poker {
-    private final Map<Integer, Poker> consumers = new HashMap<>();
-    private final Map<Integer, Peeker> functions = new HashMap<>();
+    private final Map<Integer, Poker> pokers = new HashMap<>();
+    private final Map<Integer, Peeker> peekers = new HashMap<>();
 
     /**
      * Map a poker to the specified high byte in memory
@@ -19,7 +19,7 @@ public class AddressDecoder implements Peeker, Poker {
      */
     public void mapPoker(Poker poker, Integer firstHighByte, Integer lastHighByte) {
         for (int i = firstHighByte; i <= lastHighByte; i++) {
-            consumers.put(i, poker);
+            pokers.put(i, poker);
         }
     }
 
@@ -32,18 +32,18 @@ public class AddressDecoder implements Peeker, Poker {
      */
     public void mapPeeker(Peeker peeker, Integer firstHighByte, Integer lastHighByte) {
         for (int i = firstHighByte; i <= lastHighByte; i++) {
-            functions.put(i, peeker);
+            peekers.put(i, peeker);
         }
     }
 
     @Override
     public void poke(int address, int data) {
-        consumers.getOrDefault(address, (a,d) -> {}).poke(address, data);
+        pokers.getOrDefault(address >> 8, (a,d) -> {}).poke(address, data);
 
     }
 
     @Override
     public int peek(int address) {
-        return functions.getOrDefault(address >> 8, (a) -> 0x00).peek(address);
+        return peekers.getOrDefault(address >> 8, (a) -> 0x00).peek(address);
     }
 }

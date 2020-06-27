@@ -1,7 +1,7 @@
 package com.pjfsw.sixfiveoto.instruction;
 
-import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 import com.pjfsw.sixfiveoto.addressables.Peeker;
 import com.pjfsw.sixfiveoto.addressables.Poker;
@@ -21,7 +21,7 @@ public class Nop implements Instruction {
     }
 
     @Override
-    public Collection<Integer> assemble(final Integer word) {
+    public List<Integer> assemble(final Integer word) {
         return Collections.singletonList(OPCODE);
     }
 }

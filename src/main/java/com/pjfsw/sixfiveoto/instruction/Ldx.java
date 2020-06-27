@@ -1,6 +1,6 @@
 package com.pjfsw.sixfiveoto.instruction;
 
-import java.util.Collection;
+import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 import com.pjfsw.sixfiveoto.Word;
@@ -14,7 +14,7 @@ public class Ldx {
 
         @Override
         public int execute(final Registers registers, Peeker peek, Poker poke) {
-            registers.x = peek.peek(registers.pc);
+            registers.x(peek.peek(registers.pc));
             registers.incrementPc(1);
             return 2;
         }
@@ -25,7 +25,7 @@ public class Ldx {
         }
 
         @Override
-        public Collection<Integer> assemble(final Integer word) {
+        public List<Integer> assemble(final Integer word) {
             return ImmutableList.of(OPCODE, Word.lo(word));
         }
     }

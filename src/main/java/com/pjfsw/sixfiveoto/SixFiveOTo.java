@@ -9,7 +9,7 @@ public class SixFiveOTo {
 
     private SixFiveOTo() {
         AddressDecoder addressDecoder = new AddressDecoder();
-        addressDecoder.mapFunction(new TestRom(0xF000), 0xF0, 0xFF);
+        addressDecoder.mapPeeker(new TestRom(0xF000), 0xF0, 0xFF);
 
         registers = new Registers();
         cpu = new Cpu(addressDecoder, registers);

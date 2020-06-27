@@ -1,8 +1,9 @@
 package com.pjfsw.sixfiveoto.instruction;
 
-import java.util.function.Consumer;
-import java.util.function.Function;
+import java.util.Collection;
 
+import com.pjfsw.sixfiveoto.addressables.Peeker;
+import com.pjfsw.sixfiveoto.addressables.Poker;
 import com.pjfsw.sixfiveoto.registers.Registers;
 
 public interface Instruction {
@@ -11,7 +12,9 @@ public interface Instruction {
      *
      * @return
      */
-    int execute(final Registers registers, Function<Integer, Integer> peek, Consumer<Integer> poke);
+    int execute(final Registers registers, Peeker peek, Poker poke);
 
-    String getMnemonic(Integer sixteenBitValue);
+    String getMnemonic(Integer word);
+
+    Collection<Integer> assemble(Integer word);
 }

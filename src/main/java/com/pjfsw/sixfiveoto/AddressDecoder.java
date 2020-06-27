@@ -2,47 +2,48 @@ package com.pjfsw.sixfiveoto;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
-public class AddressDecoder implements Consumer<Integer>, Function<Integer, Integer> {
-    private final Map<Integer, Consumer<Integer>> consumers = new HashMap<>();
-    private final Map<Integer, Function<Integer, Integer>> functions = new HashMap<>();
+import com.pjfsw.sixfiveoto.addressables.Peeker;
+import com.pjfsw.sixfiveoto.addressables.Poker;
+
+public class AddressDecoder implements Peeker, Poker {
+    private final Map<Integer, Poker> consumers = new HashMap<>();
+    private final Map<Integer, Peeker> functions = new HashMap<>();
 
     /**
-     * Map a consumer to the specified high byte in memory
+     * Map a poker to the specified high byte in memory
      *
-     * @param consumer The consumer to map
-     * @param firstHighByte The first high byte value which selects the consumer
-     * @param lastHighByte The last high byte value which selects the consumer
+     * @param poker The poker to map
+     * @param firstHighByte The first high byte value which selects the poker
+     * @param lastHighByte The last high byte value which selects the poker
      */
-    public void mapConsumer(Consumer<Integer> consumer, Integer firstHighByte, Integer lastHighByte) {
+    public void mapPoker(Poker poker, Integer firstHighByte, Integer lastHighByte) {
         for (int i = firstHighByte; i <= lastHighByte; i++) {
-            consumers.put(i, consumer);
+            consumers.put(i, poker);
         }
     }
 
     /**
-     * Map a function to the specified high byte in memory
+     * Map a peeker to the specified high byte in memory
      *
-     * @param function The function to map
-     * @param firstHighByte The first high byte value which selects the function
-     * @param lastHighByte The last high byte value which selects the function
+     * @param peeker The function to map
+     * @param firstHighByte The first high byte value which selects the peeker
+     * @param lastHighByte The last high byte value which selects the peeker
      */
-    public void mapFunction(Function<Integer, Integer> function, Integer firstHighByte, Integer lastHighByte) {
+    public void mapPeeker(Peeker peeker, Integer firstHighByte, Integer lastHighByte) {
         for (int i = firstHighByte; i <= lastHighByte; i++) {
-            functions.put(i, function);
+            functions.put(i, peeker);
         }
     }
 
     @Override
-    public void accept(final Integer address) {
-        consumers.getOrDefault(address, (x) -> {}).accept(address);
+    public void poke(int address, int data) {
+        consumers.getOrDefault(address, (a,d) -> {}).poke(address, data);
 
     }
 
     @Override
-    public Integer apply(final Integer address) {
-        return functions.getOrDefault(address >> 8, (x) -> 0x00).apply(address);
+    public int peek(int address) {
+        return functions.getOrDefault(address >> 8, (a) -> 0x00).peek(address);
     }
 }

@@ -1,22 +1,27 @@
 package com.pjfsw.sixfiveoto.addressables;
 
-import java.util.function.Function;
+import com.pjfsw.sixfiveoto.Word;
 
-public class TestRom implements Function<Integer, Integer> {
+public class TestRom implements Peeker {
     private final int startAddress;
 
     private final int[] bytes;
+
 
     public TestRom(int startAddress) {
         this.startAddress = startAddress;
         this.bytes = new int[] {
             0xea,
-            0x4c, startAddress & 0xFF, startAddress >> 8
+            0xa9, 0x11,
+            0xae, Word.lo(startAddress), Word.hi(startAddress),
+            0xbd, Word.lo(startAddress), Word.hi(startAddress),
+            0xe8,
+            0x4c, Word.lo(startAddress), Word.hi(startAddress)
         };
     }
 
     @Override
-    public Integer apply(final Integer address) {
+    public int peek(int address) {
         if (address == 0xfffc) {
             return startAddress & 0xFF;
         } else if (address == 0xfffd) {

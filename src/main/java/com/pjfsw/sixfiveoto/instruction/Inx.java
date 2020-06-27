@@ -7,17 +7,17 @@ import com.pjfsw.sixfiveoto.addressables.Peeker;
 import com.pjfsw.sixfiveoto.addressables.Poker;
 import com.pjfsw.sixfiveoto.registers.Registers;
 
-public class Nop implements Instruction {
-    public static final int OPCODE = 0xEA;
-
+public class Inx implements Instruction {
+    public static final int OPCODE = 0xE8;
     @Override
     public int execute(final Registers registers, Peeker peek, Poker poke) {
+        registers.x = registers.add(registers.x, 1);
         return 2;
     }
 
     @Override
-    public String getMnemonic(Integer word) {
-        return "NOP";
+    public String getMnemonic(final Integer word) {
+        return "INX";
     }
 
     @Override

@@ -1,9 +1,13 @@
 package com.pjfsw.sixfiveoto.registers;
 
+import com.pjfsw.sixfiveoto.addressables.Peeker;
+import com.pjfsw.sixfiveoto.addressables.Poker;
+
 public class Registers {
     public int pc;
     private int a;
     private int x;
+    public int sp;
     public boolean z;
     public boolean n;
 
@@ -43,5 +47,15 @@ public class Registers {
 
     public int x() {
         return this.x;
+    }
+
+    public int sp(Peeker peeker) {
+        sp = (sp + 1) & 0xFF;
+        return peeker.peek(0x100 + sp);
+    }
+
+    public void sp(Poker poker, int value) {
+        poker.poke(0x100 + sp, value);
+        sp = (sp - 1) & 0xFF;
     }
 }

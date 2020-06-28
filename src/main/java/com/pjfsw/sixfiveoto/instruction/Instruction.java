@@ -12,9 +12,9 @@ public interface Instruction {
      *
      * @return
      */
-    int execute(final Registers registers, Peeker peek, Poker poke);
+    int execute(final Registers registers, Peeker peeker, Poker poker);
 
-    String getMnemonic(Integer word);
+    String getMnemonic(Integer parameter);
 
-    List<Integer> assemble(Integer word);
+    List<Integer> assemble(Integer parameter);
 }

@@ -3,14 +3,16 @@ package com.pjfsw.sixfiveoto;
 import java.util.Map;
 
 import com.google.common.collect.ImmutableMap;
-import com.pjfsw.sixfiveoto.instruction.Beq;
-import com.pjfsw.sixfiveoto.instruction.Bne;
+import com.pjfsw.sixfiveoto.instruction.Branch;
+import com.pjfsw.sixfiveoto.instruction.Dex;
 import com.pjfsw.sixfiveoto.instruction.Instruction;
 import com.pjfsw.sixfiveoto.instruction.Inx;
 import com.pjfsw.sixfiveoto.instruction.Jmp;
+import com.pjfsw.sixfiveoto.instruction.Jsr;
 import com.pjfsw.sixfiveoto.instruction.Lda;
 import com.pjfsw.sixfiveoto.instruction.Ldx;
 import com.pjfsw.sixfiveoto.instruction.Nop;
+import com.pjfsw.sixfiveoto.instruction.Rts;
 import com.pjfsw.sixfiveoto.instruction.Sta;
 import com.pjfsw.sixfiveoto.registers.Registers;
 
@@ -28,15 +30,20 @@ public class Cpu {
         this.addressDecoder = addressDecoder;
         this.registers = registers;
         instructions = ImmutableMap.<Integer, Instruction>builder()
-            .put(Beq.OPCODE, new Beq())
-            .put(Bne.OPCODE, new Bne())
+            .put(Branch.BEQ.opcode(), Branch.BEQ)
+            .put(Branch.BMI.opcode(), Branch.BMI)
+            .put(Branch.BNE.opcode(), Branch.BNE)
+            .put(Branch.BPL.opcode(), Branch.BPL)
+            .put(Dex.OPCODE, new Dex())
             .put(Jmp.Absolute.OPCODE, new Jmp.Absolute())
-            .put(Ldx.Immediate.OPCODE, new Ldx.Immediate())
+            .put(Jsr.OPCODE, new Jsr())
             .put(Lda.Immediate.OPCODE, new Lda.Immediate())
             .put(Lda.Absolute.OPCODE, new Lda.Absolute())
             .put(Lda.AbsoluteX.OPCODE, new Lda.AbsoluteX())
+            .put(Ldx.Immediate.OPCODE, new Ldx.Immediate())
             .put(Inx.OPCODE, new Inx())
             .put(Nop.OPCODE, new Nop())
+            .put(Rts.OPCODE, new Rts())
             .put(Sta.Absolute.OPCODE, new Sta.Absolute())
             .put(Sta.AbsoluteX.OPCODE, new Sta.AbsoluteX())
             .build();

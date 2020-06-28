@@ -36,6 +36,30 @@ public class LdaTest {
     }
 
     @Test
+    public void testAnd() {
+        Workbench wb = new Workbench(LdImmediate.AND.assemble(0x0f));
+        wb.registers().a(0xf8);
+        wb.run(1);
+        assertEquals(0x08, wb.registers().a());
+    }
+
+    @Test
+    public void testOr() {
+        Workbench wb = new Workbench(LdImmediate.ORA.assemble(0x0f));
+        wb.registers().a(0xf8);
+        wb.run(1);
+        assertEquals(0xff, wb.registers().a());
+    }
+
+    @Test
+    public void testEor() {
+        Workbench wb = new Workbench(LdImmediate.EOR.assemble(0x0f));
+        wb.registers().a(0x55);
+        wb.run(1);
+        assertEquals(0x5a, wb.registers().a());
+    }
+
+    @Test
     public void testAbsolute() {
         Workbench wb = new Workbench(LdAbsolute.LDA.assemble(0x0200));
         wb.poke(0x0200, POSITIVE);

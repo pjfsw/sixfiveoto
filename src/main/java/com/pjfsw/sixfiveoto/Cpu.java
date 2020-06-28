@@ -81,6 +81,7 @@ public class Cpu {
                     Transfer::opcode,
                     Function.identity())))
             .build();
+        System.out.println(String.format("%d opcodes supported", instructions.size()));
         reset();
     }
 

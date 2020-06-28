@@ -12,19 +12,28 @@ import com.pjfsw.sixfiveoto.addressables.Poker;
 import com.pjfsw.sixfiveoto.registers.Registers;
 
 public enum LdIndexed implements Instruction {
-    LDAX(Registers::a, Registers::x, 0xBD, "LDA $%04X,X"),
-    LDAY(Registers::a, Registers::y, 0xB9, "LDA $%04X,Y"),
-    LDXY(Registers::x, Registers::y, 0xBE, "LDX $%04X,Y"),
-    LDYX(Registers::y, Registers::x, 0xBC, "LDY $%04X,X");
+    ANDX(Registers::a, Registers::x, Operation.AND, 0x3D, "AND $%04X,X"),
+    ANDY(Registers::a, Registers::y, Operation.AND, 0x39, "AND $%04X,X"),
+    LDAX(Registers::a, Registers::x, Operation.EQU, 0xBD, "LDA $%04X,X"),
+    LDAY(Registers::a, Registers::y, Operation.EQU, 0xB9, "LDA $%04X,Y"),
+    LDXY(Registers::x, Registers::y, Operation.EQU, 0xBE, "LDX $%04X,Y"),
+    LDYX(Registers::y, Registers::x, Operation.EQU, 0xBC, "LDY $%04X,X"),
+    EORX(Registers::a, Registers::x, Operation.EOR, 0x5D, "EOR $%04X,X"),
+    EORY(Registers::a, Registers::y, Operation.EOR, 0x59, "EOR $%04X,X"),
+    ORAX(Registers::a, Registers::x, Operation.ORA, 0x1D, "ORA $%04X,X"),
+    ORAY(Registers::a, Registers::y, Operation.ORA, 0x19, "ORA $%04X,X");
+
 
     private final int opcode;
     private final String mnemonic;
     private final BiConsumer<Registers, Integer> to;
     private final Function<Registers, Integer> index;
+    private final Operation operation;
 
-    LdIndexed(BiConsumer<Registers,Integer> to, Function<Registers,Integer> index, int opcode, String mnemonic) {
+    LdIndexed(BiConsumer<Registers,Integer> to, Function<Registers,Integer> index, Operation operation, int opcode, String mnemonic) {
         this.to = to;
         this.index = index;
+        this.operation = operation;
         this.opcode = opcode;
         this.mnemonic = mnemonic;
     }
@@ -35,7 +44,7 @@ public enum LdIndexed implements Instruction {
 
     @Override
     public int execute(final Registers registers, final Peeker peeker, final Poker poker) {
-        to.accept(registers, peeker.peek(Memory.add(Memory.readWord(peeker, registers.pc), index.apply(registers))));
+        to.accept(registers, operation.apply(registers,peeker.peek(Memory.add(Memory.readWord(peeker, registers.pc), index.apply(registers)))));
         int cycles = 4 + Memory.penalty(registers.pc, Memory.add(registers.pc, registers.x()));
         registers.incrementPc(2);
         return cycles;

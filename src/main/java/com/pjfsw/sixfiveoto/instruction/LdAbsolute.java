@@ -11,16 +11,21 @@ import com.pjfsw.sixfiveoto.addressables.Poker;
 import com.pjfsw.sixfiveoto.registers.Registers;
 
 public enum LdAbsolute implements Instruction {
-    LDA(Registers::a, 0xAD, "LDA"),
-    LDX(Registers::x, 0xAE, "LDX"),
-    LDY(Registers::y, 0xAC, "LDY");
+    AND(Registers::a, Operation.AND, 0x2D, "AND"),
+    EOR(Registers::a, Operation.EOR, 0x4D, "EOR"),
+    LDA(Registers::a, Operation.EQU, 0xAD, "LDA"),
+    LDX(Registers::x, Operation.EQU, 0xAE, "LDX"),
+    LDY(Registers::y, Operation.EQU, 0xAC, "LDY"),
+    ORA(Registers::a, Operation.ORA, 0x0D, "ORA");
 
     private final BiConsumer<Registers, Integer> to;
     private final int opcode;
     private final String mnemonic;
+    private final Operation operation;
 
-    LdAbsolute(BiConsumer<Registers,Integer> to, int opcode, String mnemonic) {
+    LdAbsolute(BiConsumer<Registers,Integer> to, Operation operation, int opcode, String mnemonic) {
         this.to = to;
+        this.operation = operation;
         this.opcode = opcode;
         this.mnemonic = mnemonic;
     }
@@ -31,7 +36,7 @@ public enum LdAbsolute implements Instruction {
 
     @Override
     public int execute(final Registers registers, final Peeker peeker, final Poker poker) {
-        to.accept(registers, peeker.peek(Memory.readWord(peeker, registers.pc)));
+        to.accept(registers, operation.apply(registers, peeker.peek(Memory.readWord(peeker, registers.pc))));
         registers.incrementPc(2);
         return 4;
     }

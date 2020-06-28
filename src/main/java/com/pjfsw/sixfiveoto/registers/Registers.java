@@ -27,6 +27,24 @@ public class Registers {
         return result;
     }
 
+    public int and(int a, int b) {
+        int result = a & b;
+        setFlags(result);
+        return result;
+    }
+
+    public int or(int a, int b) {
+        int result = a | b;
+        setFlags(result);
+        return result;
+    }
+
+    public int eor(int a, int b) {
+        int result = a ^ b;
+        setFlags(result);
+        return result;
+    }
+
     @Override
     public String toString() {
         return String.format("A: $%02X X: $%02X Y: $%02X %s%s", a, x, y, n ? "N" : ".", z ? "Z" : ".");

@@ -10,16 +10,21 @@ import com.pjfsw.sixfiveoto.addressables.Poker;
 import com.pjfsw.sixfiveoto.registers.Registers;
 
 public enum LdImmediate implements Instruction {
-    LDA(Registers::a, 0xA9, "LDA"),
-    LDX(Registers::x, 0xA2, "LDX"),
-    LDY(Registers::y, 0xA0, "LDY");
+    AND(Registers::a, Operation.AND, 0x29, "AND"),
+    EOR(Registers::a, Operation.EOR, 0x49, "EOR"),
+    LDA(Registers::a, Operation.EQU, 0xA9, "LDA"),
+    LDX(Registers::x, Operation.EQU, 0xA2, "LDX"),
+    LDY(Registers::y, Operation.EQU, 0xA0, "LDY"),
+    ORA(Registers::a, Operation.ORA, 0x09, "ORA");
 
     private final BiConsumer<Registers, Integer> to;
     private final int opcode;
     private final String mnemonic;
+    private final Operation operation;
 
-    LdImmediate(BiConsumer<Registers,Integer> to, int opcode, String mnemonic) {
+    LdImmediate(BiConsumer<Registers,Integer> to, Operation operation, int opcode, String mnemonic) {
         this.to = to;
+        this.operation = operation;
         this.opcode = opcode;
         this.mnemonic = mnemonic;
     }
@@ -30,7 +35,7 @@ public enum LdImmediate implements Instruction {
 
     @Override
     public int execute(final Registers registers, final Peeker peeker, final Poker poker) {
-        to.accept(registers, peeker.peek(registers.pc));
+        to.accept(registers, operation.apply(registers, peeker.peek(registers.pc)));
         registers.incrementPc(1);
         return 2;
     }

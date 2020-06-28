@@ -11,7 +11,7 @@ import com.pjfsw.sixfiveoto.Workbench;
 public class DexTest {
     @Test
     public void testNormal() {
-        Workbench wb = new Workbench(new Dex().assemble(0));
+        Workbench wb = new Workbench(IncDecXY.DEX.assemble(0));
         wb.registers().x(0x1);
         assertEquals(2,wb.run(1));
         assertEquals(0,wb.registers().x());
@@ -21,7 +21,7 @@ public class DexTest {
 
     @Test
     public void testNegative() {
-        Workbench wb = new Workbench(new Dex().assemble(0));
+        Workbench wb = new Workbench(IncDecXY.DEX.assemble(0));
         wb.registers().x(0x00);
         assertEquals(2,wb.run(1));
         assertEquals(0xFF,wb.registers().x());

@@ -17,9 +17,9 @@ public class LdxTest {
     @Test
     public void testImmediate() {
         Workbench wb = new Workbench(ImmutableList.<Integer>builder()
-            .addAll(new Ldx.Immediate().assemble(POSITIVE))
-            .addAll(new Ldx.Immediate().assemble(NEGATIVE))
-            .addAll(new Ldx.Immediate().assemble(ZERO))
+            .addAll(LdImmediate.LDX.assemble(POSITIVE))
+            .addAll(LdImmediate.LDX.assemble(NEGATIVE))
+            .addAll(LdImmediate.LDX.assemble(ZERO))
             .build());
         assertEquals(2, wb.run(1));
         assertEquals(POSITIVE, wb.registers().x());

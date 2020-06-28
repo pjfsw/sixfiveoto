@@ -11,18 +11,18 @@ public class StaTest {
 
     @Test
     public void testAbsolute() {
-        Workbench wb = new Workbench(new Sta.Absolute().assemble(0x0200));
+        Workbench wb = new Workbench(StAbsolute.STA.assemble(0x0200));
         wb.registers().a(VALUE);
         assertEquals(4,wb.run(1));
         assertEquals(VALUE, wb.peek(0x0200));
     }
 
     @Test
-    public void testAbsoluteX() {
+    public void testAbsoluteY() {
         int offset = 2;
-        Workbench wb = new Workbench(new Sta.AbsoluteX().assemble(0x0200));
+        Workbench wb = new Workbench(StIndexed.STAY.assemble(0x0200));
         wb.registers().a(VALUE);
-        wb.registers().x(offset);
+        wb.registers().y(offset);
         assertEquals(5,wb.run(1));
         assertEquals(VALUE, wb.peek(0x0200 + offset));
     }

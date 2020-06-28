@@ -17,9 +17,9 @@ public class LdaTest {
     @Test
     public void testImmediate() {
         Workbench wb = new Workbench(ImmutableList.<Integer>builder()
-            .addAll(new Lda.Immediate().assemble(POSITIVE))
-            .addAll(new Lda.Immediate().assemble(NEGATIVE))
-            .addAll(new Lda.Immediate().assemble(ZERO))
+            .addAll(LdImmediate.LDA.assemble(POSITIVE))
+            .addAll(LdImmediate.LDA.assemble(NEGATIVE))
+            .addAll(LdImmediate.LDA.assemble(ZERO))
             .build());
         assertEquals(2, wb.run(1));
         assertEquals(POSITIVE, wb.registers().a());
@@ -37,7 +37,7 @@ public class LdaTest {
 
     @Test
     public void testAbsolute() {
-        Workbench wb = new Workbench(new Lda.Absolute().assemble(0x0200));
+        Workbench wb = new Workbench(LdAbsolute.LDA.assemble(0x0200));
         wb.poke(0x0200, POSITIVE);
         wb.run(1);
         assertEquals(POSITIVE, wb.registers().a());
@@ -47,9 +47,20 @@ public class LdaTest {
     @Test
     public void testAbsoluteX() {
         int offset = 2;
-        Workbench wb = new Workbench(new Lda.AbsoluteX().assemble(0x0200));
+        Workbench wb = new Workbench(LdIndexed.LDAX.assemble(0x0200));
         wb.poke(0x0202, POSITIVE);
         wb.registers().x(2);
+        wb.run(1);
+        assertEquals(POSITIVE, wb.registers().a());
+        assertEquals(4, wb.cycles());
+    }
+
+    @Test
+    public void testAbsoluteY() {
+        int offset = 2;
+        Workbench wb = new Workbench(LdIndexed.LDAY.assemble(0x0200));
+        wb.poke(0x0202, POSITIVE);
+        wb.registers().y(2);
         wb.run(1);
         assertEquals(POSITIVE, wb.registers().a());
         assertEquals(4, wb.cycles());

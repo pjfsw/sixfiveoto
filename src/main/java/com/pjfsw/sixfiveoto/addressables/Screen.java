@@ -18,8 +18,9 @@ public class Screen implements Poker, Peeker {
 
     public Screen() {
         frame = new JFrame();
-        frame.setPreferredSize(new Dimension(256,256));
+        //frame.setPreferredSize(new Dimension(256,256));
         pixelComponent = new PixelFrame(16);
+        pixelComponent.setPreferredSize(new Dimension(256,256));
         frame.add(pixelComponent);
         frame.pack();
         frame.setVisible(true);

@@ -12,8 +12,8 @@ public class JsrRtsTest {
     public void test() {
         Workbench wb = new Workbench(ImmutableList.<Integer>builder()
             .addAll(new Jsr().assemble(Workbench.CODEBASE+4))
-            .addAll(new Inx().assemble(0))
-            .addAll(new Ldx.Immediate().assemble(16))
+            .addAll(IncDecXY.INX.assemble(0))
+            .addAll(LdImmediate.LDX.assemble(16))
             .addAll(new Rts().assemble(0))
             .build());
         assertEquals(6, wb.run(1)); // JSR

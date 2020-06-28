@@ -12,9 +12,11 @@ import com.pjfsw.sixfiveoto.registers.Registers;
 
 public enum Transfer implements Instruction {
     TAX(Registers::a, Registers::x, 0xaa, "TAX"),
+    TAY(Registers::a, Registers::y, 0xa8, "TAY"),
     TSX(Registers::sp, Registers::x, 0xba, "TSX"),
     TXA(Registers::x, Registers::a, 0x8a, "TXA"),
-    TXS(Registers::x, Registers::sp, 0x9a, "TXS")
+    TXS(Registers::x, Registers::sp, 0x9a, "TXS"),
+    TYA(Registers::y, Registers::a, 0x98, "TYA");
     ;
 
     private final Function<Registers,Integer> from;

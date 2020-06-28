@@ -1,6 +1,7 @@
 * = $F000
 
 !:
+    iny
     jsr vbl
     jsr paint
     jmp !-
@@ -14,7 +15,7 @@ vbl:
 paint:
     ldx #0
 !:
-    txa
+    tya
     sta $8000,x
     inx
     bne !-

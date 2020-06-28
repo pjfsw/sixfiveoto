@@ -7,6 +7,7 @@ public class Registers {
     public int pc;
     private int a;
     private int x;
+    private int y;
     public int sp;
     public boolean z;
     public boolean n;
@@ -28,7 +29,7 @@ public class Registers {
 
     @Override
     public String toString() {
-        return String.format("A: $%02X X: $%02X %s%s", a, x, n ? "N" : ".", z ? "Z" : ".");
+        return String.format("A: $%02X X: $%02X Y: $%02X %s%s", a, x, y, n ? "N" : ".", z ? "Z" : ".");
     }
 
     public void a(final int a) {
@@ -48,6 +49,16 @@ public class Registers {
     public int x() {
         return this.x;
     }
+
+    public void y(final int y) {
+        setFlags(y);
+        this.y = y;
+    }
+
+    public int y() {
+        return this.y;
+    }
+
 
     public int sp() {
         return this.sp;

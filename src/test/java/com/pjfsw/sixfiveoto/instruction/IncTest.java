@@ -20,6 +20,17 @@ public class IncTest {
     }
 
     @Test
+    public void testNormalIndexed() {
+        Workbench wb = new Workbench(new Inc.IncIndexed().assemble(0x0200));
+        wb.registers().x(2);
+        wb.poke(0x202, 0);
+        assertEquals(7, wb.run(1));
+        assertEquals(1, wb.peek(0x202));
+        assertFalse(wb.registers().z);
+        assertFalse(wb.registers().n);
+    }
+
+    @Test
     public void testNegative() {
         Workbench wb = new Workbench(new Inc.IncAbsolute().assemble(0x0200));
         wb.poke(0x200, 0x7F);

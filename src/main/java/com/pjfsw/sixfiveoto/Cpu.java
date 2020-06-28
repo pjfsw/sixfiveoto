@@ -45,6 +45,7 @@ public class Cpu {
                     Branch::opcode,
                     Function.identity())))
             .put(Dec.DecAbsolute.OPCODE, new Dec.DecAbsolute())
+            .put(Dec.DecIndexed.OPCODE, new Dec.DecIndexed())
             .put(Jmp.Absolute.OPCODE, new Jmp.Absolute())
             .put(Jsr.OPCODE, new Jsr())
             .putAll(Arrays.stream(LdImmediate.values())
@@ -60,6 +61,7 @@ public class Cpu {
                     LdIndexed::opcode,
                     Function.identity())))
             .put(Inc.IncAbsolute.OPCODE, new Inc.IncAbsolute())
+            .put(Inc.IncIndexed.OPCODE, new Inc.IncIndexed())
             .putAll(Arrays.stream(IncDecXY.values())
                 .collect(toMap(
                     IncDecXY::opcode,

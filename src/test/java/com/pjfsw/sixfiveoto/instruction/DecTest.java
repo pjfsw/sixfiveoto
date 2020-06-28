@@ -20,6 +20,18 @@ public class DecTest {
     }
 
     @Test
+    public void testNormalIndexed() {
+        Workbench wb = new Workbench(new Dec.DecIndexed().assemble(0x0200));
+        wb.poke(0x202, 1);
+        wb.registers().x(2);
+        assertEquals(7, wb.run(1));
+        assertEquals(0, wb.peek(0x202));
+        assertTrue(wb.registers().z);
+        assertFalse(wb.registers().n);
+    }
+
+
+    @Test
     public void testNegative() {
         Workbench wb = new Workbench(new Dec.DecAbsolute().assemble(0x0200));
         wb.poke(0x200, 0);

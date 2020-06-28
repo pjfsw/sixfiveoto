@@ -31,4 +31,25 @@ public class Inc {
             return ImmutableList.of(OPCODE, Word.lo(parameter), Word.hi(parameter));
         }
     }
+
+    public static class IncIndexed implements Instruction {
+        public static final int OPCODE = 0xFE;
+
+        @Override
+        public int execute(final Registers registers, final Peeker peeker, final Poker poker) {
+            int address = Memory.add(Memory.readWord(peeker, registers.pc), registers.x());
+            poker.poke(address, registers.add(peeker.peek(address), 1));
+            return 7;
+        }
+
+        @Override
+        public String getMnemonic(final Integer parameter) {
+            return String.format("INC $%04X,X", parameter);
+        }
+
+        @Override
+        public List<Integer> assemble(final Integer parameter) {
+            return ImmutableList.of(OPCODE, Word.lo(parameter), Word.hi(parameter));
+        }
+    }
 }

@@ -73,7 +73,7 @@ public class SixFiveOTo {
         nanos = System.nanoTime();
         runner = executorService.scheduleAtFixedRate(() -> {
             runCount++;
-            if (runCount % 500 == 0) {
+            if (runCount % refreshRate == 0) {
                 double micros = (System.nanoTime() - nanos)/1000.0;
                 System.out.println(String.format("Measured speed: %.3f MHz",
                     (double)totalCycles/(double)micros));

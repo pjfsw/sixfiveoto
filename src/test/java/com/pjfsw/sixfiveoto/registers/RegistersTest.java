@@ -14,7 +14,7 @@ public class RegistersTest {
         Registers registers = new Registers();
         Stack stack = new Stack();
         registers.sp = 0x00;
-        registers.sp(stack, 17);
+        registers.push(stack, 17);
         assertEquals(17, stack.peek(0x100));
         assertEquals(0xFF, registers.sp);
     }
@@ -25,7 +25,7 @@ public class RegistersTest {
         Stack stack = new Stack();
         registers.sp = 0xFF;
         stack.poke(0x100, 17);
-        assertEquals(17,registers.sp(stack));
+        assertEquals(17,registers.pull(stack));
         assertEquals(0, registers.sp);
     }
 

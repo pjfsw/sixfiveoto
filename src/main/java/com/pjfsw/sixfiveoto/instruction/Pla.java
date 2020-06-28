@@ -8,20 +8,18 @@ import com.pjfsw.sixfiveoto.addressables.Peeker;
 import com.pjfsw.sixfiveoto.addressables.Poker;
 import com.pjfsw.sixfiveoto.registers.Registers;
 
-public class Rts implements Instruction {
-    public static final int OPCODE = 0x60;
+public class Pla implements Instruction {
+    public static final int OPCODE = 0x68;
 
     @Override
     public int execute(final Registers registers, final Peeker peeker, final Poker poker) {
-        registers.pc = registers.pull(peeker);
-        registers.pc |= registers.pull(peeker) << 8;
-        registers.pc++;
-        return 6;
+        registers.a(registers.pull(peeker));
+        return 4;
     }
 
     @Override
     public String getMnemonic(final Integer parameter) {
-        return "RTS";
+        return "PLA";
     }
 
     @Override

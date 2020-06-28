@@ -49,12 +49,20 @@ public class Registers {
         return this.x;
     }
 
-    public int sp(Peeker peeker) {
+    public int sp() {
+        return this.sp;
+    }
+
+    public void sp(int x) {
+        this.sp = x;
+    }
+
+    public int pull(Peeker peeker) {
         sp = (sp + 1) & 0xFF;
         return peeker.peek(0x100 + sp);
     }
 
-    public void sp(Poker poker, int value) {
+    public void push(Poker poker, int value) {
         poker.poke(0x100 + sp, value);
         sp = (sp - 1) & 0xFF;
     }

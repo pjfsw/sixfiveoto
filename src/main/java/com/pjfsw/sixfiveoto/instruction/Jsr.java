@@ -14,8 +14,8 @@ public class Jsr implements Instruction {
 
     @Override
     public int execute(final Registers registers, final Peeker peeker, final Poker poker) {
-        registers.sp(poker, Word.hi(registers.pc+1));
-        registers.sp(poker, Word.lo(registers.pc+1));
+        registers.push(poker, Word.hi(registers.pc+1));
+        registers.push(poker, Word.lo(registers.pc+1));
         registers.pc = Memory.readWord(peeker, registers.pc);
         return 6;
     }

@@ -2,27 +2,6 @@
 
 !:
     jsr vbl
-    lda #0
-    jsr paint
-
-    jsr vbl
-    lda #1
-    jsr paint
-
-    jsr vbl
-    lda #2
-    jsr paint
-
-    jsr vbl
-    lda #3
-    jsr paint
-
-    jsr vbl
-    lda #2
-    jsr paint
-
-    jsr vbl
-    lda #1
     jsr paint
     jmp !-
 
@@ -35,6 +14,7 @@ vbl:
 paint:
     ldx #0
 !:
+    txa
     sta $8000,x
     inx
     bne !-

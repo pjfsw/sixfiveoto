@@ -69,10 +69,31 @@ public class LdaTest {
     }
 
     @Test
+    public void testZeroPage() {
+        Workbench wb = new Workbench(LdZeroPage.LDA.assemble(0x20));
+        wb.poke(0x20, POSITIVE);
+        wb.run(1);
+        assertEquals(POSITIVE, wb.registers().a());
+        assertEquals(3, wb.cycles());
+    }
+
+
+    @Test
     public void testAbsoluteX() {
         int offset = 2;
         Workbench wb = new Workbench(LdIndexed.LDAX.assemble(0x0200));
         wb.poke(0x0202, POSITIVE);
+        wb.registers().x(2);
+        wb.run(1);
+        assertEquals(POSITIVE, wb.registers().a());
+        assertEquals(4, wb.cycles());
+    }
+
+    @Test
+    public void testZeroPageX() {
+        int offset = 2;
+        Workbench wb = new Workbench(LdZeroPageIndexed.LDAX.assemble(0x20));
+        wb.poke(0x22, POSITIVE);
         wb.registers().x(2);
         wb.run(1);
         assertEquals(POSITIVE, wb.registers().a());

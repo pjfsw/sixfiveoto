@@ -11,7 +11,7 @@ import com.pjfsw.sixfiveoto.registers.Registers;
 
 public class Lda  {
     public static class Absolute implements Instruction {
-        public static final int OPCODE = 0xAE;
+        public static final int OPCODE = 0xAD;
 
         @Override
         public int execute(final Registers registers, Peeker peek, Poker poke) {

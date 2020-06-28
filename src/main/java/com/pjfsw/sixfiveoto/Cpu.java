@@ -61,12 +61,13 @@ public class Cpu {
 
     public String toString()
     {
-        Instruction instruction = instructions.get(addressDecoder.peek(registers.pc));
+        int opcode = addressDecoder.peek(registers.pc);
+        Instruction instruction = instructions.get(opcode);
         String mnemonic;
         if (instruction != null) {
             mnemonic = instruction.getMnemonic(Memory.readWord(addressDecoder, registers.pc+1));
         } else {
-            mnemonic = "???";
+            mnemonic = String.format("???(%02X)", opcode);
         }
         return String.format("%-12s %s", mnemonic, registers.toString());
 

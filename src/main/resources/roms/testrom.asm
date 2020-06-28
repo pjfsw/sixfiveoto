@@ -1,21 +1,41 @@
 * = $F000
 
 !:
+    jsr vbl
     lda #0
-{
-    ldx #$FA
-!:
-    sta $0200,x
-    inx
-    bne !-
-}
+    jsr paint
 
+    jsr vbl
     lda #1
-{
-    ldx #$FA
+    jsr paint
+
+    jsr vbl
+    lda #2
+    jsr paint
+
+    jsr vbl
+    lda #3
+    jsr paint
+
+    jsr vbl
+    lda #2
+    jsr paint
+
+    jsr vbl
+    lda #1
+    jsr paint
+    jmp !-
+
+vbl:
+    // Vertical blank
+    lda $8000
+    beq vbl
+    rts
+
+paint:
+    ldx #0
 !:
-    sta $0200,x
+    sta $8000,x
     inx
     bne !-
-}
-    jmp !-
+    rts

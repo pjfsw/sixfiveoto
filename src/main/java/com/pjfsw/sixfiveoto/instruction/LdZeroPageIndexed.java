@@ -2,33 +2,33 @@ package com.pjfsw.sixfiveoto.instruction;
 
 import java.util.List;
 import java.util.function.BiConsumer;
-import java.util.function.Function;
 
 import com.google.common.collect.ImmutableList;
-import com.pjfsw.sixfiveoto.Memory;
 import com.pjfsw.sixfiveoto.Word;
 import com.pjfsw.sixfiveoto.addressables.Peeker;
 import com.pjfsw.sixfiveoto.addressables.Poker;
 import com.pjfsw.sixfiveoto.registers.Registers;
 
 public enum LdZeroPageIndexed implements Instruction {
-    ANDX(Registers::a, Registers::x, Operation.AND, 0x35, "AND $%02X,X"),
-    EORX(Registers::a, Registers::x, Operation.EOR, 0x55, "EOR $%02X,X"),
-    LDAX(Registers::a, Registers::x, Operation.EQU, 0xB5, "LDA $%02X,X"),
-    LDXY(Registers::x, Registers::y, Operation.EQU, 0xB6, "LDX $%02X,Y"),
-    LDYX(Registers::y, Registers::x, Operation.EQU, 0xB4, "LDY $%02X,X"),
-    ORAX(Registers::a, Registers::x, Operation.ORA, 0x15, "ORA $%02X,X");
-
+    ANDX(Registers::a, AddressingMode.ZEROPAGE_INDEXED_X, Operation.AND, 0x35, "AND $%02X,X"),
+    EORX(Registers::a, AddressingMode.ZEROPAGE_INDEXED_X, Operation.EOR, 0x55, "EOR $%02X,X"),
+    LDAX(Registers::a, AddressingMode.ZEROPAGE_INDEXED_X, Operation.EQU, 0xB5, "LDA $%02X,X"),
+    LDXY(Registers::x, AddressingMode.ZEROPAGE_INDEXED_Y, Operation.EQU, 0xB6, "LDX $%02X,Y"),
+    LDYX(Registers::y, AddressingMode.ZEROPAGE_INDEXED_X, Operation.EQU, 0xB4, "LDY $%02X,X"),
+    ORAX(Registers::a, AddressingMode.ZEROPAGE_INDEXED_X, Operation.ORA, 0x15, "ORA $%02X,X");
 
     private final int opcode;
     private final String mnemonic;
     private final BiConsumer<Registers, Integer> to;
-    private final Function<Registers, Integer> index;
     private final Operation operation;
+    private final AddressingMode addressingMode;
 
-    LdZeroPageIndexed(BiConsumer<Registers,Integer> to, Function<Registers,Integer> index, Operation operation, int opcode, String mnemonic) {
+    LdZeroPageIndexed(
+        BiConsumer<Registers,Integer> to,
+        AddressingMode addressingMode,
+        Operation operation, int opcode, String mnemonic) {
         this.to = to;
-        this.index = index;
+        this.addressingMode = addressingMode;
         this.operation = operation;
         this.opcode = opcode;
         this.mnemonic = mnemonic;
@@ -40,8 +40,8 @@ public enum LdZeroPageIndexed implements Instruction {
 
     @Override
     public int execute(final Registers registers, final Peeker peeker, final Poker poker) {
-        to.accept(registers, operation.apply(registers,peeker.peek(
-            Memory.add(peeker.peek(registers.pc), index.apply(registers)))));
+        int address = addressingMode.getEffectiveAddress(registers, peeker);
+        to.accept(registers, operation.apply(registers,peeker.peek(address)));
         registers.incrementPc(1);
         return 4;
     }
@@ -53,6 +53,6 @@ public enum LdZeroPageIndexed implements Instruction {
 
     @Override
     public List<Integer> assemble(final Integer parameter) {
-        return ImmutableList.of(opcode(), Word.lo(parameter), Word.hi(parameter));
+        return ImmutableList.of(opcode(), Word.lo(parameter));
     }
 }

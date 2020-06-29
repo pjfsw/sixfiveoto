@@ -15,7 +15,7 @@ public enum AddressingMode {
     }),
     INDEXED_INDIRECT((peeker, registers) -> {
         int pointerAddress = Memory.add(peeker.peek(registers.pc), registers.x()) & 0xFF;
-        return Memory.readWord(peeker, pointerAddress);
+        return readZpWord(peeker, pointerAddress);
     });
 
     private final BiFunction<Peeker, Registers, Integer> addressingMode;
@@ -27,4 +27,9 @@ public enum AddressingMode {
     int getEffectiveAddress(final Registers registers, final Peeker peeker) {
         return addressingMode.apply(peeker, registers);
     }
+
+    private static Integer readZpWord(Peeker peek, Integer address) {
+        return peek.peek(address & 0xFF) | (peek.peek((address+1)&0xFF) << 8);
+    }
+
 }

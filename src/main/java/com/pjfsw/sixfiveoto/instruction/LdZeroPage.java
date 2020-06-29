@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.function.BiConsumer;
 
 import com.google.common.collect.ImmutableList;
-import com.pjfsw.sixfiveoto.Memory;
 import com.pjfsw.sixfiveoto.Word;
 import com.pjfsw.sixfiveoto.addressables.Peeker;
 import com.pjfsw.sixfiveoto.addressables.Poker;

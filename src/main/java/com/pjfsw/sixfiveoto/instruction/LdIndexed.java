@@ -44,8 +44,11 @@ public enum LdIndexed implements Instruction {
 
     @Override
     public int execute(final Registers registers, final Peeker peeker, final Poker poker) {
-        to.accept(registers, operation.apply(registers,peeker.peek(Memory.add(Memory.readWord(peeker, registers.pc), index.apply(registers)))));
-        int cycles = 4 + Memory.penalty(registers.pc, Memory.add(registers.pc, registers.x()));
+        int baseAddress = Memory.readWord(peeker, registers.pc);
+        int offsetAddress = Memory.add(baseAddress, index.apply(registers));
+
+        to.accept(registers, operation.apply(registers,peeker.peek(offsetAddress)));
+        int cycles = 4 + Memory.penalty(baseAddress, offsetAddress);
         registers.incrementPc(2);
         return cycles;
     }

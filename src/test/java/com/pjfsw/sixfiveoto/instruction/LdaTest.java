@@ -80,7 +80,6 @@ public class LdaTest {
 
     @Test
     public void testAbsoluteX() {
-        int offset = 2;
         Workbench wb = new Workbench(LdIndexed.LDAX.assemble(0x0200));
         wb.poke(0x0202, POSITIVE);
         wb.registers().x(2);
@@ -89,9 +88,19 @@ public class LdaTest {
         assertEquals(4, wb.cycles());
     }
 
+
+    @Test
+    public void testAbsoluteYWithPenalty() {
+        Workbench wb = new Workbench(LdIndexed.LDAY.assemble(0x02FF));
+        wb.poke(0x0301, POSITIVE);
+        wb.registers().y(2);
+        wb.run(1);
+        assertEquals(POSITIVE, wb.registers().a());
+        assertEquals(5, wb.cycles());
+    }
+
     @Test
     public void testZeroPageX() {
-        int offset = 2;
         Workbench wb = new Workbench(LdZeroPageIndexed.LDAX.assemble(0x20));
         wb.poke(0x22, POSITIVE);
         wb.registers().x(2);
@@ -101,13 +110,27 @@ public class LdaTest {
     }
 
     @Test
-    public void testAbsoluteY() {
-        int offset = 2;
-        Workbench wb = new Workbench(LdIndexed.LDAY.assemble(0x0200));
-        wb.poke(0x0202, POSITIVE);
+    public void testZeroPageY() {
+        Workbench wb = new Workbench(LdZeroPageIndexed.LDXY.assemble(0x20));
+        wb.poke(0x22, POSITIVE);
         wb.registers().y(2);
         wb.run(1);
-        assertEquals(POSITIVE, wb.registers().a());
+        assertEquals(POSITIVE, wb.registers().x());
         assertEquals(4, wb.cycles());
+    }
+
+
+    @Test
+    public void testIndexedIndirect() {
+        Workbench wb = new Workbench(LdIndexedIndirect.LDAX.assemble(0xfe));
+        // value
+        wb.poke(0x0123, POSITIVE);
+        // pointer to 0x0123
+        wb.poke(0xff, 0x23);
+        wb.poke(0x00, 0x01);
+        // offset
+        wb.registers().x(1);
+        assertEquals(6,wb.run(1));
+        assertEquals(POSITIVE, wb.registers().a());
     }
 }

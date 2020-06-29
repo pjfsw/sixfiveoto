@@ -18,6 +18,7 @@ import com.pjfsw.sixfiveoto.instruction.LdAbsolute;
 import com.pjfsw.sixfiveoto.instruction.LdImmediate;
 import com.pjfsw.sixfiveoto.instruction.LdIndexed;
 import com.pjfsw.sixfiveoto.instruction.LdIndexedIndirect;
+import com.pjfsw.sixfiveoto.instruction.LdIndirectIndexed;
 import com.pjfsw.sixfiveoto.instruction.LdZeroPage;
 import com.pjfsw.sixfiveoto.instruction.LdZeroPageIndexed;
 import com.pjfsw.sixfiveoto.instruction.Nop;
@@ -66,6 +67,10 @@ public class Cpu {
             .putAll(Arrays.stream(LdIndexedIndirect.values())
                 .collect(toMap(
                     LdIndexedIndirect::opcode,
+                    Function.identity())))
+            .putAll(Arrays.stream(LdIndirectIndexed.values())
+                .collect(toMap(
+                    LdIndirectIndexed::opcode,
                     Function.identity())))
             .putAll(Arrays.stream(LdZeroPage.values())
                 .collect(toMap(

@@ -133,4 +133,33 @@ public class LdaTest {
         assertEquals(6,wb.run(1));
         assertEquals(POSITIVE, wb.registers().a());
     }
+
+    @Test
+    public void testIndirectIndexed() {
+        Workbench wb = new Workbench(LdIndirectIndexed.LDAY.assemble(0xfe));
+        // value
+        wb.poke(0x0124, POSITIVE);
+        // pointer to 0x0123
+        wb.poke(0xfe, 0x23);
+        wb.poke(0xff, 0x01);
+        // offset
+        wb.registers().y(1);
+        assertEquals(5,wb.run(1));
+        assertEquals(POSITIVE, wb.registers().a());
+    }
+
+    @Test
+    public void testIndirectIndexedPenalty() {
+        Workbench wb = new Workbench(LdIndirectIndexed.LDAY.assemble(0xff));
+        // value
+        wb.poke(0x0124, POSITIVE);
+        // pointer to 0x0123
+        wb.poke(0xff, 0x23);
+        wb.poke(0x100, 0x01);
+        // offset
+        wb.registers().y(1);
+        assertEquals(6,wb.run(1));
+        assertEquals(POSITIVE, wb.registers().a());
+    }
+
 }

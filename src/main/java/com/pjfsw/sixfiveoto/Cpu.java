@@ -19,8 +19,7 @@ import com.pjfsw.sixfiveoto.instruction.Nop;
 import com.pjfsw.sixfiveoto.instruction.Pha;
 import com.pjfsw.sixfiveoto.instruction.Pla;
 import com.pjfsw.sixfiveoto.instruction.Rts;
-import com.pjfsw.sixfiveoto.instruction.StAbsolute;
-import com.pjfsw.sixfiveoto.instruction.StIndexed;
+import com.pjfsw.sixfiveoto.instruction.StMemory;
 import com.pjfsw.sixfiveoto.instruction.Transfer;
 import com.pjfsw.sixfiveoto.registers.Registers;
 
@@ -64,13 +63,9 @@ public class Cpu {
             .put(Pha.OPCODE, new Pha())
             .put(Pla.OPCODE, new Pla())
             .put(Rts.OPCODE, new Rts())
-            .putAll(Arrays.stream(StAbsolute.values())
+            .putAll(Arrays.stream(StMemory.values())
                 .collect(toMap(
-                    StAbsolute::opcode,
-                    Function.identity())))
-            .putAll(Arrays.stream(StIndexed.values())
-                .collect(toMap(
-                    StIndexed::opcode,
+                    StMemory::opcode,
                     Function.identity())))
             .putAll(Arrays.stream(Transfer.values())
                 .collect(toMap(

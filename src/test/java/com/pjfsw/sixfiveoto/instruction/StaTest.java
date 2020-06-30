@@ -13,7 +13,7 @@ public class StaTest {
     @Test
     public void testAbsolute() {
         int addr = 0x200;
-        Workbench wb = new Workbench(StAbsolute.STA.opcode(), Word.lo(addr), Word.hi(addr));
+        Workbench wb = new Workbench(StMemory.STA.opcode(), Word.lo(addr), Word.hi(addr));
         wb.registers().a(VALUE);
         assertEquals(4,wb.run(1));
         assertEquals(VALUE, wb.peek(addr));
@@ -23,7 +23,7 @@ public class StaTest {
     public void testAbsoluteX() {
         int offset = 2;
         int addr = 0x200;
-        Workbench wb = new Workbench(StIndexed.STAX.opcode(), Word.lo(addr), Word.hi(addr));
+        Workbench wb = new Workbench(StMemory.STAX.opcode(), Word.lo(addr), Word.hi(addr));
         wb.registers().a(VALUE);
         wb.registers().x(offset);
         assertEquals(5,wb.run(1));
@@ -35,7 +35,7 @@ public class StaTest {
     public void testAbsoluteY() {
         int offset = 2;
         int addr = 0x200;
-        Workbench wb = new Workbench(StIndexed.STAY.opcode(), Word.lo(addr), Word.hi(addr));
+        Workbench wb = new Workbench(StMemory.STAY.opcode(), Word.lo(addr), Word.hi(addr));
         wb.registers().a(VALUE);
         wb.registers().y(offset);
         assertEquals(5,wb.run(1));

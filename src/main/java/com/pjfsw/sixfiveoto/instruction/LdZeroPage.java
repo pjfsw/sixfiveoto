@@ -45,9 +45,4 @@ public enum LdZeroPage implements Instruction {
     public String getMnemonic(final Integer parameter) {
         return String.format("%s $%02X", mnemonic, parameter);
     }
-
-    @Override
-    public List<Integer> assemble(final Integer parameter) {
-        return ImmutableList.of(opcode, Word.lo(parameter));
-    }
 }

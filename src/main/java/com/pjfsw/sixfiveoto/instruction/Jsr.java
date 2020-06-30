@@ -24,9 +24,4 @@ public class Jsr implements Instruction {
     public String getMnemonic(final Integer parameter) {
         return String.format("JSR $%04X", parameter);
     }
-
-    @Override
-    public List<Integer> assemble(final Integer parameter) {
-        return ImmutableList.of(OPCODE, Word.lo(parameter), Word.hi(parameter));
-    }
 }

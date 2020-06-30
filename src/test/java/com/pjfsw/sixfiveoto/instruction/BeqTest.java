@@ -6,12 +6,13 @@ import java.util.Collections;
 
 import org.junit.jupiter.api.Test;
 
+import com.google.common.collect.ImmutableList;
 import com.pjfsw.sixfiveoto.Workbench;
 
 public class BeqTest {
     @Test
     public void testNonZero() {
-        Workbench wb = new Workbench(Branch.BEQ.assemble(127));
+        Workbench wb = new Workbench(ImmutableList.of(Branch.BEQ.opcode(), 127));
         wb.registers().a(1);
         assertEquals(2, wb.run(1));
         assertEquals(Workbench.CODEBASE + 2, wb.registers().pc);
@@ -19,7 +20,7 @@ public class BeqTest {
 
     @Test
     public void testZero() {
-        Workbench wb = new Workbench(Branch.BEQ.assemble(127));
+        Workbench wb = new Workbench(ImmutableList.of(Branch.BEQ.opcode(), 127));
         wb.registers().a(0);
         assertEquals(3, wb.run(1));
         assertEquals(Workbench.CODEBASE + 129, wb.registers().pc);

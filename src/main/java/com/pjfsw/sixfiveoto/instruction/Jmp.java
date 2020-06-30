@@ -23,10 +23,5 @@ public class Jmp {
         public String getMnemonic(Integer word) {
             return "JMP " + Memory.format(word);
         }
-
-        @Override
-        public List<Integer> assemble(final Integer word) {
-            return ImmutableList.of(OPCODE, Word.lo(word), Word.hi(word));
-        }
     }
 }

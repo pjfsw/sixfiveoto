@@ -10,10 +10,7 @@ import com.pjfsw.sixfiveoto.Workbench;
 public class PhaPlaTest {
     @Test
     public void test() {
-        Workbench wb = new Workbench(ImmutableList.<Integer>builder()
-            .addAll(new Pha().assemble(0))
-            .addAll(new Pla().assemble(0))
-            .build());
+        Workbench wb = new Workbench(ImmutableList.of(Pha.OPCODE, Pla.OPCODE));
         wb.registers().a(17);
         assertEquals(3, wb.run(1)); // PHA
         wb.registers().a(99);

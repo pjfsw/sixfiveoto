@@ -7,23 +7,55 @@ import com.pjfsw.sixfiveoto.addressables.Peeker;
 import com.pjfsw.sixfiveoto.registers.Registers;
 
 public enum AddressingMode {
-    ZEROPAGE_INDEXED_X((peeker, registers) -> {
-        return Memory.add(peeker.peek(registers.pc), registers.x()) & 0xFF;
-    }, (peeker, registers) -> (0)),
-    ZEROPAGE_INDEXED_Y((peeker, registers) -> {
-        return Memory.add(peeker.peek(registers.pc), registers.y()) & 0xFF;
-    }, (peeker, registers) -> (0)),
+    // $aaaa
+    ABSOLUTE((peeker, registers) -> Memory.readWord(peeker, registers.pc),(peeker, registers) -> (0)),
+
+    // $aaaa,X
+    INDEXED_X((peeker, registers) -> {
+        int baseAddress = Memory.readWord(peeker, registers.pc);
+        return Memory.add(baseAddress, registers.x());
+
+    }, (peeker, registers) -> {
+        int baseAddress = Memory.readWord(peeker, registers.pc);
+        return Memory.penalty(baseAddress, Memory.add(baseAddress, registers.x()));
+    }),
+
+    // $aaaa,Y
+    INDEXED_Y((peeker, registers) -> {
+        int baseAddress = Memory.readWord(peeker, registers.pc);
+        return Memory.add(baseAddress, registers.y());
+
+    }, (peeker, registers) -> {
+        int baseAddress = Memory.readWord(peeker, registers.pc);
+        return Memory.penalty(baseAddress, Memory.add(baseAddress, registers.y()));
+    }),
+
+    // $aa
+    ZEROPAGE((peeker, registers) -> peeker.peek(registers.pc), (peeker, registers) -> (0)),
+
+    // $aa,x
+    ZEROPAGE_INDEXED_X((peeker, registers) ->
+        Memory.add(peeker.peek(registers.pc), registers.x()) & 0xFF, (peeker, registers) -> (0)),
+
+    // $aa,y
+    ZEROPAGE_INDEXED_Y((peeker, registers) ->
+        Memory.add(peeker.peek(registers.pc), registers.y()) & 0xFF, (peeker, registers) -> (0)),
+
+    // ($aa,x)
     INDEXED_INDIRECT((peeker, registers) -> {
         int pointerAddress = Memory.add(peeker.peek(registers.pc), registers.x()) & 0xFF;
         return readZpWord(peeker, pointerAddress);
     }, (peeker, registers) -> (0)),
+
+    // ($aa),y
     INDIRECT_INDEXED((peeker, registers) -> {
-        int targetAddress = Memory.readWord(peeker, peeker.peek(registers.pc));
+        int targetAddress = readZpWord(peeker, peeker.peek(registers.pc));
         return Memory.add(targetAddress, registers.y());
     }, (peeker, registers) -> {
-        int pointerAddress = peeker.peek(registers.pc);
-        return  Memory.penalty(pointerAddress, pointerAddress+1);
-        // TODO: What is the penalty? Crossing from ZP to normal??
+        int baseAddress = readZpWord(peeker, peeker.peek(registers.pc));
+        int offsetAddress = Memory.add(baseAddress, registers.y());
+
+        return  Memory.penalty(baseAddress, offsetAddress);
     });
 
     private final BiFunction<Peeker, Registers, Integer> addressingMode;

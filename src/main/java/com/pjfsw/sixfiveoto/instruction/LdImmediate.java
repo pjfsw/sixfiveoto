@@ -44,9 +44,4 @@ public enum LdImmediate implements Instruction {
     public String getMnemonic(final Integer parameter) {
         return String.format("%s #$%02X", mnemonic, parameter & 0xFF );
     }
-
-    @Override
-    public List<Integer> assemble(final Integer parameter) {
-        return ImmutableList.of(opcode, Word.lo(parameter));
-    }
 }

@@ -1,7 +1,5 @@
 package com.pjfsw.sixfiveoto.instruction;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -42,10 +40,5 @@ public enum IncDecXY implements Instruction {
     @Override
     public String getMnemonic(final Integer word) {
         return mnemonic;
-    }
-
-    @Override
-    public List<Integer> assemble(final Integer word) {
-        return Collections.singletonList(opcode);
     }
 }

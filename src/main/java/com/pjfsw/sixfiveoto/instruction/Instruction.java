@@ -15,6 +15,4 @@ public interface Instruction {
     int execute(final Registers registers, Peeker peeker, Poker poker);
 
     String getMnemonic(Integer parameter);
-
-    List<Integer> assemble(Integer parameter);
 }

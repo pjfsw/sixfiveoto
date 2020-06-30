@@ -45,9 +45,4 @@ public enum Transfer implements Instruction {
     public String getMnemonic(final Integer parameter) {
         return mnemonic;
     }
-
-    @Override
-    public List<Integer> assemble(final Integer parameter) {
-        return singletonList(opcode);
-    }
 }

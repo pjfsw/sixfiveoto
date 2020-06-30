@@ -8,19 +8,17 @@ import java.util.function.Function;
 
 import com.google.common.collect.ImmutableMap;
 import com.pjfsw.sixfiveoto.instruction.Branch;
-import com.pjfsw.sixfiveoto.instruction.Dec;
-import com.pjfsw.sixfiveoto.instruction.Inc;
+import com.pjfsw.sixfiveoto.instruction.IncDec;
 import com.pjfsw.sixfiveoto.instruction.Instruction;
 import com.pjfsw.sixfiveoto.instruction.IncDecXY;
 import com.pjfsw.sixfiveoto.instruction.Jmp;
 import com.pjfsw.sixfiveoto.instruction.Jsr;
-import com.pjfsw.sixfiveoto.instruction.LdAbsolute;
 import com.pjfsw.sixfiveoto.instruction.LdImmediate;
-import com.pjfsw.sixfiveoto.instruction.LdIndexed;
 import com.pjfsw.sixfiveoto.instruction.LdIndexedIndirect;
 import com.pjfsw.sixfiveoto.instruction.LdIndirectIndexed;
 import com.pjfsw.sixfiveoto.instruction.LdZeroPage;
 import com.pjfsw.sixfiveoto.instruction.LdZeroPageIndexed;
+import com.pjfsw.sixfiveoto.instruction.Lda;
 import com.pjfsw.sixfiveoto.instruction.Nop;
 import com.pjfsw.sixfiveoto.instruction.Pha;
 import com.pjfsw.sixfiveoto.instruction.Pla;
@@ -48,21 +46,15 @@ public class Cpu {
                 .collect(toMap(
                     Branch::opcode,
                     Function.identity())))
-            .put(Dec.DecAbsolute.OPCODE, new Dec.DecAbsolute())
-            .put(Dec.DecIndexed.OPCODE, new Dec.DecIndexed())
             .put(Jmp.Absolute.OPCODE, new Jmp.Absolute())
             .put(Jsr.OPCODE, new Jsr())
             .putAll(Arrays.stream(LdImmediate.values())
                 .collect(toMap(
                     LdImmediate::opcode,
                     Function.identity())))
-            .putAll(Arrays.stream(LdAbsolute.values())
+            .putAll(Arrays.stream(Lda.values())
                 .collect(toMap(
-                    LdAbsolute::opcode,
-                    Function.identity())))
-            .putAll(Arrays.stream(LdIndexed.values())
-                .collect(toMap(
-                    LdIndexed::opcode,
+                    Lda::opcode,
                     Function.identity())))
             .putAll(Arrays.stream(LdIndexedIndirect.values())
                 .collect(toMap(
@@ -80,8 +72,10 @@ public class Cpu {
                 .collect(toMap(
                     LdZeroPageIndexed::opcode,
                     Function.identity())))
-            .put(Inc.IncAbsolute.OPCODE, new Inc.IncAbsolute())
-            .put(Inc.IncIndexed.OPCODE, new Inc.IncIndexed())
+            .putAll(Arrays.stream(IncDec.values())
+                .collect(toMap(
+                    IncDec::opcode,
+                    Function.identity())))
             .putAll(Arrays.stream(IncDecXY.values())
                 .collect(toMap(
                     IncDecXY::opcode,

@@ -19,9 +19,4 @@ public class Nop implements Instruction {
     public String getMnemonic(Integer word) {
         return "NOP";
     }
-
-    @Override
-    public List<Integer> assemble(final Integer word) {
-        return Collections.singletonList(OPCODE);
-    }
 }

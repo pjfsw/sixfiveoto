@@ -41,9 +41,4 @@ public enum LdIndexedIndirect implements Instruction {
     public String getMnemonic(final Integer parameter) {
         return String.format(mnemonic, parameter);
     }
-
-    @Override
-    public List<Integer> assemble(final Integer parameter) {
-        return ImmutableList.of(opcode(), Word.lo(parameter));
-    }
 }

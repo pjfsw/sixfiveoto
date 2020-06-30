@@ -1,9 +1,11 @@
 package com.pjfsw.sixfiveoto;
 
 import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 
 import java.util.List;
 
+import com.google.common.collect.ImmutableList;
 import com.pjfsw.sixfiveoto.addressables.Peeker;
 import com.pjfsw.sixfiveoto.addressables.Poker;
 import com.pjfsw.sixfiveoto.addressables.RomVectors;
@@ -34,6 +36,10 @@ public class Workbench implements Peeker, Poker {
         addressDecoder.mapPoker(ram, 0,3);
 
         cpu = new Cpu(addressDecoder, registers);
+    }
+
+    public Workbench(Integer... bytes) {
+        this(ImmutableList.copyOf(bytes));
     }
 
     public Cpu cpu() {

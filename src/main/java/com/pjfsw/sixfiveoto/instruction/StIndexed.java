@@ -11,16 +11,16 @@ import com.pjfsw.sixfiveoto.addressables.Poker;
 import com.pjfsw.sixfiveoto.registers.Registers;
 
 public enum StIndexed implements Instruction {
-    STAX(Registers::x, 0x9D, "X"),
-    STAY(Registers::y, 0x99, "Y")
+    STAX(AddressingMode.INDEXED_X, 0x9D, "X"),
+    STAY(AddressingMode.INDEXED_Y, 0x99, "Y")
     ;
 
-    private final Function<Registers, Integer> index;
     private final int opcode;
     private final String mnemonic;
+    private final AddressingMode addressingMode;
 
-    StIndexed(Function<Registers,Integer> index, int opcode, String mnemonic) {
-        this.index = index;
+    StIndexed(AddressingMode addressingMode, int opcode, String mnemonic) {
+        this.addressingMode = addressingMode;
         this.opcode = opcode;
         this.mnemonic = mnemonic;
     }
@@ -31,7 +31,7 @@ public enum StIndexed implements Instruction {
 
     @Override
     public int execute(final Registers registers, final Peeker peeker, final Poker poker) {
-        poker.poke(Memory.add(Memory.readWord(peeker, registers.pc), index.apply(registers)), registers.a());
+        poker.poke(addressingMode.getEffectiveAddress(registers, peeker), registers.a());
         registers.incrementPc(2);
         return 5;
     }
@@ -41,8 +41,4 @@ public enum StIndexed implements Instruction {
         return String.format("STA $%04X,%s", parameter, mnemonic);
     }
 
-    @Override
-    public List<Integer> assemble(final Integer parameter) {
-        return ImmutableList.of(opcode(), Word.lo(parameter), Word.hi(parameter));
-    }
 }

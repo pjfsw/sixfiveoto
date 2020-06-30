@@ -21,9 +21,4 @@ public class Pla implements Instruction {
     public String getMnemonic(final Integer parameter) {
         return "PLA";
     }
-
-    @Override
-    public List<Integer> assemble(final Integer parameter) {
-        return singletonList(OPCODE);
-    }
 }

@@ -23,9 +23,4 @@ public class Rts implements Instruction {
     public String getMnemonic(final Integer parameter) {
         return "RTS";
     }
-
-    @Override
-    public List<Integer> assemble(final Integer parameter) {
-        return singletonList(OPCODE);
-    }
 }

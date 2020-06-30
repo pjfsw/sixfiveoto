@@ -4,17 +4,28 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 
-import com.google.common.collect.ImmutableList;
 import com.pjfsw.sixfiveoto.Word;
 import com.pjfsw.sixfiveoto.Workbench;
-import com.pjfsw.sixfiveoto.instruction.Jmp.Absolute;
 
 public class JmpTest {
     @Test
     public void testAbsolute() {
-        Workbench wb = new Workbench(ImmutableList.of(Absolute.OPCODE, Word.lo(1234), Word.hi(1234)));
+        Workbench wb = new Workbench(Jmp.OPCODE, Word.lo(1234), Word.hi(1234));
         wb.run(1);
         assertEquals(1234, wb.registers().pc);
         assertEquals(3, wb.cycles());
     }
+
+    @Test
+    public void testIndirect() {
+        int pointer = 0x200;
+        int address = 0x300;
+        Workbench wb = new Workbench(JmpIndirect.OPCODE, Word.lo(pointer), Word.hi(pointer));
+        wb.poke(pointer, Word.lo(address));
+        wb.poke(pointer+1, Word.hi(address));
+        wb.run(1);
+        assertEquals(address, wb.registers().pc);
+        assertEquals(5, wb.cycles());
+    }
+
 }

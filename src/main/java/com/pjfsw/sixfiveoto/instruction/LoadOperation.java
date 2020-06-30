@@ -4,8 +4,8 @@ import java.util.function.BiFunction;
 
 import com.pjfsw.sixfiveoto.registers.Registers;
 
-public enum Operation implements BiFunction<Registers, Integer, Integer> {
-    EQU((reg,nw)->(nw)),
+public enum LoadOperation implements BiFunction<Registers, Integer, Integer> {
+    LD((reg,nw)->(nw)),
     AND((reg,nw)->(reg.a() & nw)),
     ORA((reg,nw)->(reg.a() | nw)),
     EOR((reg,nw)->(reg.a() ^ nw))
@@ -13,7 +13,7 @@ public enum Operation implements BiFunction<Registers, Integer, Integer> {
 
     private final BiFunction<Registers, Integer, Integer> function;
 
-    Operation(BiFunction<Registers, Integer, Integer> function) {
+    LoadOperation(BiFunction<Registers, Integer, Integer> function) {
         this.function = function;
     }
 

@@ -12,6 +12,7 @@ import com.pjfsw.sixfiveoto.instruction.IncDec;
 import com.pjfsw.sixfiveoto.instruction.Instruction;
 import com.pjfsw.sixfiveoto.instruction.IncDecXY;
 import com.pjfsw.sixfiveoto.instruction.Jmp;
+import com.pjfsw.sixfiveoto.instruction.JmpIndirect;
 import com.pjfsw.sixfiveoto.instruction.Jsr;
 import com.pjfsw.sixfiveoto.instruction.LdImmediate;
 import com.pjfsw.sixfiveoto.instruction.LdMemory;
@@ -41,7 +42,8 @@ public class Cpu {
                 .collect(toMap(
                     Branch::opcode,
                     Function.identity())))
-            .put(Jmp.Absolute.OPCODE, new Jmp.Absolute())
+            .put(Jmp.OPCODE, new Jmp())
+            .put(JmpIndirect.OPCODE, new JmpIndirect())
             .put(Jsr.OPCODE, new Jsr())
             .putAll(Arrays.stream(LdImmediate.values())
                 .collect(toMap(

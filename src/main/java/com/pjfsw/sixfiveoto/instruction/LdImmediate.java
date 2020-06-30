@@ -1,30 +1,27 @@
 package com.pjfsw.sixfiveoto.instruction;
 
-import java.util.List;
 import java.util.function.BiConsumer;
 
-import com.google.common.collect.ImmutableList;
-import com.pjfsw.sixfiveoto.Word;
 import com.pjfsw.sixfiveoto.addressables.Peeker;
 import com.pjfsw.sixfiveoto.addressables.Poker;
 import com.pjfsw.sixfiveoto.registers.Registers;
 
 public enum LdImmediate implements Instruction {
-    AND(Registers::a, Operation.AND, 0x29, "AND"),
-    EOR(Registers::a, Operation.EOR, 0x49, "EOR"),
-    LDA(Registers::a, Operation.EQU, 0xA9, "LDA"),
-    LDX(Registers::x, Operation.EQU, 0xA2, "LDX"),
-    LDY(Registers::y, Operation.EQU, 0xA0, "LDY"),
-    ORA(Registers::a, Operation.ORA, 0x09, "ORA");
+    AND(Registers::a, LoadOperation.AND, 0x29, "AND"),
+    EOR(Registers::a, LoadOperation.EOR, 0x49, "EOR"),
+    LDA(Registers::a, LoadOperation.LD, 0xA9, "LDA"),
+    LDX(Registers::x, LoadOperation.LD, 0xA2, "LDX"),
+    LDY(Registers::y, LoadOperation.LD, 0xA0, "LDY"),
+    ORA(Registers::a, LoadOperation.ORA, 0x09, "ORA");
 
     private final BiConsumer<Registers, Integer> to;
     private final int opcode;
     private final String mnemonic;
-    private final Operation operation;
+    private final LoadOperation loadOperation;
 
-    LdImmediate(BiConsumer<Registers,Integer> to, Operation operation, int opcode, String mnemonic) {
+    LdImmediate(BiConsumer<Registers,Integer> to, LoadOperation loadOperation, int opcode, String mnemonic) {
         this.to = to;
-        this.operation = operation;
+        this.loadOperation = loadOperation;
         this.opcode = opcode;
         this.mnemonic = mnemonic;
     }
@@ -35,7 +32,7 @@ public enum LdImmediate implements Instruction {
 
     @Override
     public int execute(final Registers registers, final Peeker peeker, final Poker poker) {
-        to.accept(registers, operation.apply(registers, peeker.peek(registers.pc)));
+        to.accept(registers, loadOperation.apply(registers, peeker.peek(registers.pc)));
         registers.incrementPc(1);
         return 2;
     }

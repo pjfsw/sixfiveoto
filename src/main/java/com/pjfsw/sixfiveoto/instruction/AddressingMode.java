@@ -7,8 +7,11 @@ import com.pjfsw.sixfiveoto.addressables.Peeker;
 import com.pjfsw.sixfiveoto.registers.Registers;
 
 public enum AddressingMode {
+    // #$aa
+    IMMEDIATE((peeker, registers) -> peeker.peek(registers.pc), (peeker, registers) -> (0)),
+
     // $aaaa
-    ABSOLUTE((peeker, registers) -> Memory.readWord(peeker, registers.pc),(peeker, registers) -> (0)),
+    ABSOLUTE((peeker, registers) -> Memory.readWord(peeker, registers.pc), (peeker, registers) -> (0)),
 
     // $aaaa,X
     INDEXED_X((peeker, registers) -> {

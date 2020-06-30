@@ -18,10 +18,11 @@ public class LdaTest {
 
     @Test
     public void testImmediate() {
+        int lda = 0xa9;
         Workbench wb = new Workbench(
-            LdImmediate.LDA.opcode(), POSITIVE,
-            LdImmediate.LDA.opcode(), NEGATIVE,
-            LdImmediate.LDA.opcode(), ZERO);
+            lda, POSITIVE,
+            lda, NEGATIVE,
+            lda, ZERO);
 
         assertEquals(2, wb.run(1));
         assertEquals(POSITIVE, wb.registers().a());
@@ -47,7 +48,7 @@ public class LdaTest {
 
     @Test
     public void testOr() {
-        Workbench wb = new Workbench(LdImmediate.ORA.opcode(), 0x0f);
+        Workbench wb = new Workbench(0x09, 0x0f);
         wb.registers().a(0xf8);
         wb.run(1);
         assertEquals(0xff, wb.registers().a());
@@ -55,7 +56,7 @@ public class LdaTest {
 
     @Test
     public void testEor() {
-        Workbench wb = new Workbench(LdImmediate.EOR.opcode(), 0x0f);
+        Workbench wb = new Workbench(0x49, 0x0f);
         wb.registers().a(0x55);
         wb.run(1);
         assertEquals(0x5a, wb.registers().a());
@@ -73,7 +74,7 @@ public class LdaTest {
 
     @Test
     public void testZeroPage() {
-        Workbench wb = new Workbench(LdZeroPage.LDA.opcode(), 0x20);
+        Workbench wb = new Workbench(LdMemory.LDAZ.opcode(), 0x20);
         wb.poke(0x20, POSITIVE);
         wb.run(1);
         assertEquals(POSITIVE, wb.registers().a());
@@ -104,8 +105,8 @@ public class LdaTest {
     }
 
     @Test
-    public void testZeroPageX() {
-        Workbench wb = new Workbench(LdZeroPageIndexed.LDAX.opcode(), 0x20);
+    public void testZeroPageAX() {
+        Workbench wb = new Workbench(LdMemory.LDAZX.opcode(), 0x20);
         wb.poke(0x22, POSITIVE);
         wb.registers().x(2);
         wb.run(1);
@@ -114,8 +115,8 @@ public class LdaTest {
     }
 
     @Test
-    public void testZeroPageY() {
-        Workbench wb = new Workbench(LdZeroPageIndexed.LDXY.opcode(), 0x20);
+    public void testZeroPageXY() {
+        Workbench wb = new Workbench(LdMemory.LDXZY.opcode(), 0x20);
         wb.poke(0x22, POSITIVE);
         wb.registers().y(2);
         wb.run(1);
@@ -123,10 +124,20 @@ public class LdaTest {
         assertEquals(4, wb.cycles());
     }
 
+    @Test
+    public void testZeroPageYX() {
+        Workbench wb = new Workbench(LdMemory.LDYZX.opcode(), 0x20);
+        wb.poke(0x22, POSITIVE);
+        wb.registers().x(2);
+        wb.run(1);
+        assertEquals(POSITIVE, wb.registers().y());
+        assertEquals(4, wb.cycles());
+    }
+
 
     @Test
     public void testIndexedIndirect() {
-        Workbench wb = new Workbench(LdIndexedIndirect.LDAX.opcode(), 0xfe);
+        Workbench wb = new Workbench(LdMemory.LDAIX.opcode(), 0xfe);
         // value
         wb.poke(0x0123, POSITIVE);
         // pointer to 0x0123
@@ -140,7 +151,7 @@ public class LdaTest {
 
     @Test
     public void testIndirectIndexed() {
-        Workbench wb = new Workbench(LdIndirectIndexed.LDAY.opcode(), 0xff);
+        Workbench wb = new Workbench(LdMemory.LDAIY.opcode(), 0xff);
         // value
         wb.poke(0x0124, POSITIVE);
         // pointer to 0x0123
@@ -154,7 +165,7 @@ public class LdaTest {
 
     @Test
     public void testIndirectIndexedPenalty() {
-        Workbench wb = new Workbench(LdIndirectIndexed.LDAY.opcode(), 0xff);
+        Workbench wb = new Workbench(LdMemory.LDAIY.opcode(), 0xff);
         // value
         wb.poke(0x0200, POSITIVE);
         // pointer to 0x0123

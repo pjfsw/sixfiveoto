@@ -14,11 +14,7 @@ import com.pjfsw.sixfiveoto.instruction.IncDecXY;
 import com.pjfsw.sixfiveoto.instruction.Jmp;
 import com.pjfsw.sixfiveoto.instruction.Jsr;
 import com.pjfsw.sixfiveoto.instruction.LdImmediate;
-import com.pjfsw.sixfiveoto.instruction.LdIndexedIndirect;
-import com.pjfsw.sixfiveoto.instruction.LdIndirectIndexed;
-import com.pjfsw.sixfiveoto.instruction.LdZeroPage;
-import com.pjfsw.sixfiveoto.instruction.LdZeroPageIndexed;
-import com.pjfsw.sixfiveoto.instruction.Lda;
+import com.pjfsw.sixfiveoto.instruction.LdMemory;
 import com.pjfsw.sixfiveoto.instruction.Nop;
 import com.pjfsw.sixfiveoto.instruction.Pha;
 import com.pjfsw.sixfiveoto.instruction.Pla;
@@ -52,25 +48,9 @@ public class Cpu {
                 .collect(toMap(
                     LdImmediate::opcode,
                     Function.identity())))
-            .putAll(Arrays.stream(Lda.values())
+            .putAll(Arrays.stream(LdMemory.values())
                 .collect(toMap(
-                    Lda::opcode,
-                    Function.identity())))
-            .putAll(Arrays.stream(LdIndexedIndirect.values())
-                .collect(toMap(
-                    LdIndexedIndirect::opcode,
-                    Function.identity())))
-            .putAll(Arrays.stream(LdIndirectIndexed.values())
-                .collect(toMap(
-                    LdIndirectIndexed::opcode,
-                    Function.identity())))
-            .putAll(Arrays.stream(LdZeroPage.values())
-                .collect(toMap(
-                    LdZeroPage::opcode,
-                    Function.identity())))
-            .putAll(Arrays.stream(LdZeroPageIndexed.values())
-                .collect(toMap(
-                    LdZeroPageIndexed::opcode,
+                    LdMemory::opcode,
                     Function.identity())))
             .putAll(Arrays.stream(IncDec.values())
                 .collect(toMap(

@@ -16,10 +16,11 @@ public class LdxTest {
 
     @Test
     public void testImmediate() {
+        int ldx = 0xa2;
         Workbench wb = new Workbench(ImmutableList.of(
-            LdImmediate.LDX.opcode(), POSITIVE,
-            LdImmediate.LDX.opcode(), NEGATIVE,
-            LdImmediate.LDX.opcode(), ZERO));
+            ldx, POSITIVE,
+            ldx, NEGATIVE,
+            ldx, ZERO));
         assertEquals(2, wb.run(1));
         assertEquals(POSITIVE, wb.registers().x());
         assertFalse(wb.registers().z);

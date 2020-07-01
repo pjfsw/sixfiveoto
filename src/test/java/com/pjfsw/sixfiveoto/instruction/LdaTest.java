@@ -1,13 +1,11 @@
 package com.pjfsw.sixfiveoto.instruction;
 
-import static java.util.Collections.emptyList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
-import com.google.common.collect.ImmutableList;
 import com.pjfsw.sixfiveoto.Word;
 import com.pjfsw.sixfiveoto.Workbench;
 

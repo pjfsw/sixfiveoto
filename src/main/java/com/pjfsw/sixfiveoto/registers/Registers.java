@@ -8,6 +8,7 @@ public class Registers {
     private int a;
     private int x;
     private int y;
+    public boolean c;
     public int sp;
     public boolean z;
     public boolean n;
@@ -21,10 +22,32 @@ public class Registers {
         n = (a & 0x80) != 0;
     }
 
+    private void setCarry(int a) {
+        c = (a & 0x100) == 0x100;
+    }
+
     public int add(int a, int b) {
         int result = (a + b) & 0xFF;
         setFlags(result);
         return result;
+    }
+
+    public int adc(int a, int b) {
+        int e = a + b + (c ? 1 : 0);
+        setCarry(e);
+        e = e & 0xFF;
+        setFlags(e);
+        return e;
+    }
+
+    public int sbc(int a, int b) {
+        int binv = b ^ 0xFF;
+        int cadd = c ? 1 : 0;
+        int e = a + binv + cadd;
+        setCarry(e);
+        e = e & 0xFF;
+        setFlags(e);
+        return e;
     }
 
     public int and(int a, int b) {

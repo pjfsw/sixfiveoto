@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 import com.google.common.collect.ImmutableMap;
+import com.pjfsw.sixfiveoto.instruction.Adc;
 import com.pjfsw.sixfiveoto.instruction.Branch;
 import com.pjfsw.sixfiveoto.instruction.IncDec;
 import com.pjfsw.sixfiveoto.instruction.Instruction;
@@ -16,6 +17,7 @@ import com.pjfsw.sixfiveoto.instruction.JmpIndirect;
 import com.pjfsw.sixfiveoto.instruction.Jsr;
 import com.pjfsw.sixfiveoto.instruction.LdImmediate;
 import com.pjfsw.sixfiveoto.instruction.LdMemory;
+import com.pjfsw.sixfiveoto.instruction.ModifyFlags;
 import com.pjfsw.sixfiveoto.instruction.Nop;
 import com.pjfsw.sixfiveoto.instruction.Pha;
 import com.pjfsw.sixfiveoto.instruction.Pla;
@@ -38,6 +40,10 @@ public class Cpu {
         this.addressDecoder = addressDecoder;
         this.registers = registers;
         instructions = ImmutableMap.<Integer, Instruction>builder()
+            .putAll(Arrays.stream(Adc.values())
+                .collect(toMap(
+                    Adc::opcode,
+                    Function.identity())))
             .putAll(Arrays.stream(Branch.values())
                 .collect(toMap(
                     Branch::opcode,
@@ -60,6 +66,10 @@ public class Cpu {
             .putAll(Arrays.stream(IncDecXY.values())
                 .collect(toMap(
                     IncDecXY::opcode,
+                    Function.identity())))
+            .putAll(Arrays.stream(ModifyFlags.values())
+                .collect(toMap(
+                    ModifyFlags::opcode,
                     Function.identity())))
             .put(Nop.OPCODE, new Nop())
             .put(Pha.OPCODE, new Pha())

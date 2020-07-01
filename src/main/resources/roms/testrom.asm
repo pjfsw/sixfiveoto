@@ -1,22 +1,39 @@
 * = $F000
 
-!:
-    iny
-    jsr vbl
-    jsr paint
-    jmp !-
+.label offset = $200
 
+
+loop:
+    inc offset
+    ldx #15
+!:
+    clc
+    txa
+    adc offset
+    tay
+    txa
+    adc sintable,y
+    tay
+    lda offset
+    sta $8000,y
+    dex
+    bpl !-
+
+    inc offset
 vbl:
     // Vertical blank
     lda $8000
     beq vbl
-    rts
 
-paint:
+    lda #0
     ldx #0
 !:
-    tya
     sta $8000,x
     inx
     bne !-
-    rts
+
+    jmp loop
+
+.align $100
+sintable:
+    .fill 256, 16*round(7.5+7.5*sin(toRadians(i*360/64)))

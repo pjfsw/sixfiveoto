@@ -5,6 +5,7 @@ import com.pjfsw.sixfiveoto.addressables.Poker;
 import com.pjfsw.sixfiveoto.registers.Registers;
 
 public enum Adc implements Instruction {
+    ADCI (AluOperation.ADC, AddressingMode.IMMEDIATE, 0x69, "ADC #$%02X", 2, 1),
     ADC  (AluOperation.ADC, AddressingMode.ABSOLUTE, 0x6D, "ADC $%04X", 4, 2),
     ADCX (AluOperation.ADC, AddressingMode.INDEXED_X, 0x7D, "ADC $%04X,X", 4, 2),
     ADCY (AluOperation.ADC, AddressingMode.INDEXED_Y, 0x79, "ADC $%04X,Y", 4, 2),
@@ -13,6 +14,7 @@ public enum Adc implements Instruction {
     ADCIX(AluOperation.ADC, AddressingMode.INDEXED_INDIRECT, 0x61, "ADC ($%02X,X)", 6,1),
     ADCIY(AluOperation.ADC, AddressingMode.INDIRECT_INDEXED, 0x71, "ADC ($%02X),Y", 5,1),
 
+    SBCI (AluOperation.SBC, AddressingMode.IMMEDIATE, 0xE9, "SBC #$%02X", 2, 1),
     SBC  (AluOperation.SBC, AddressingMode.ABSOLUTE, 0xED, "SBC $%04X", 4, 2),
     SBCX (AluOperation.SBC, AddressingMode.INDEXED_X, 0xFD, "SBC $%04X,X", 4, 2),
     SBCY (AluOperation.SBC, AddressingMode.INDEXED_Y, 0xF9, "SBC $%04X,Y", 4, 2),

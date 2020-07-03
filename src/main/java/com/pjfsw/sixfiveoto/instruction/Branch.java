@@ -1,6 +1,5 @@
 package com.pjfsw.sixfiveoto.instruction;
 
-import java.util.List;
 import java.util.function.Function;
 
 import com.pjfsw.sixfiveoto.Memory;
@@ -14,7 +13,9 @@ public enum Branch implements Instruction {
     BNE((registers)-> !registers.z, 0xD0, "BNE"),
     BPL((registers)-> !registers.n, 0x10, "BPL"),
     BCS((registers)-> registers.c, 0xB0, "BCS"),
-    BCC((registers)-> !registers.c, 0x90, "BCC")
+    BCC((registers)-> !registers.c, 0x90, "BCC"),
+    BVS((registers)-> registers.v, 0x70, "BVS"),
+    BVC((registers)-> !registers.v, 0x50, "BVC"),
     ;
 
     private final Function<Registers, Boolean> branchEvaluator;

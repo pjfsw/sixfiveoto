@@ -8,7 +8,8 @@ import com.pjfsw.sixfiveoto.registers.Registers;
 
 public enum ModifyFlags implements Instruction {
     CLC((registers)->registers.c = false, 0x18, "CLC"),
-    SEC((registers)->registers.c = true, 0x38, "SEC");
+    SEC((registers)->registers.c = true, 0x38, "SEC"),
+    CLV((registers)->registers.v = false, 0xB8, "CLV");
 
     private final Consumer<Registers> modifier;
     private final int opcode;

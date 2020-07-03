@@ -19,6 +19,7 @@ public class AdcTest {
         assertEquals(2, wb.run(1));
         assertEquals(0x60, wb.registers().a());
         assertFalse(wb.registers().c);
+        assertFalse(wb.registers().v);
     }
 
     @Test
@@ -31,6 +32,7 @@ public class AdcTest {
         wb.run(1);
         assertEquals(0x30, wb.registers().a());
         assertTrue(wb.registers().c);
+        assertFalse(wb.registers().v);
         assertEquals(4, wb.cycles());
     }
 
@@ -43,6 +45,7 @@ public class AdcTest {
         assertEquals(2, wb.run(1));
         assertEquals(0x20, wb.registers().a());
         assertTrue(wb.registers().c);
+        assertFalse(wb.registers().v);
     }
 
     @Test
@@ -55,10 +58,10 @@ public class AdcTest {
         assertEquals(3, wb.run(1));
         assertEquals(0x10, wb.registers().a());
         assertTrue(wb.registers().c);
+        assertFalse(wb.registers().v);
         assertEquals(3, wb.run(1));
         assertEquals(0xE0, wb.registers().a());
+        assertFalse(wb.registers().v);
         assertFalse(wb.registers().c);
     }
-
-
 }

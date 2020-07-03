@@ -59,6 +59,45 @@ public class RegistersTest {
         assertFalse(registers.c);
     }
 
+    private static boolean overflowAdc(Registers registers, int a, int b) {
+        registers.c = false;
+        registers.adc(a, b);
+        return registers.v;
+    }
+
+    private static boolean overflowSbc(Registers registers, int a, int b) {
+        registers.c = true;
+        registers.sbc(a,b);
+        return registers.v;
+    }
+
+
+    @Test
+    public void testOverflowAdc() {
+        Registers registers = new Registers();
+        assertFalse(overflowAdc(registers, 0x50, 0x10)); // 0x60
+        assertTrue( overflowAdc(registers, 0x50, 0x50)); // 0xa0
+        assertFalse(overflowAdc(registers, 0x50, 0x90)); // 0xe0
+        assertFalse(overflowAdc(registers, 0x50, 0xD0)); // 0x120
+        assertFalse(overflowAdc(registers, 0xD0, 0x10)); // 0xe0
+        assertFalse(overflowAdc(registers, 0xD0, 0x50)); // 0x120
+        assertTrue( overflowAdc(registers, 0xD0, 0x90)); // 0x160
+        assertFalse(overflowAdc(registers, 0xD0, 0xD0)); // 0x1A0
+    }
+
+    @Test
+    public void testOverflowSbc() {
+        Registers registers = new Registers();
+        assertFalse(overflowSbc(registers, 0x50, 0xf0)); // 0x60
+        assertTrue( overflowSbc(registers, 0x50, 0xb0)); // 0xa0
+        assertFalse(overflowSbc(registers, 0x50, 0x70)); // 0xe0
+        assertFalse(overflowSbc(registers, 0x50, 0x30)); // 0x120
+        assertFalse(overflowSbc(registers, 0xD0, 0xf0)); // 0xe0
+        assertFalse(overflowSbc(registers, 0xD0, 0xB0)); // 0x120
+        assertTrue( overflowSbc(registers, 0xD0, 0x70)); // 0x160
+        assertFalse(overflowSbc(registers, 0xD0, 0x30)); // 0x1A0
+    }
+
     @Test
     public void testPush() {
         Registers registers = new Registers();

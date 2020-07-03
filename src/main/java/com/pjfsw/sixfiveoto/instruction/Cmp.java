@@ -54,6 +54,6 @@ public enum Cmp implements Instruction {
 
     @Override
     public String getMnemonic(final Integer parameter) {
-        return mnemonic;
+        return String.format(mnemonic, parameter);
     }
 }

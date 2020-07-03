@@ -8,6 +8,7 @@ import java.util.function.Function;
 
 import com.google.common.collect.ImmutableMap;
 import com.pjfsw.sixfiveoto.instruction.Adc;
+import com.pjfsw.sixfiveoto.instruction.Bit;
 import com.pjfsw.sixfiveoto.instruction.Branch;
 import com.pjfsw.sixfiveoto.instruction.Cmp;
 import com.pjfsw.sixfiveoto.instruction.IncDec;
@@ -44,6 +45,10 @@ public class Cpu {
             .putAll(Arrays.stream(Adc.values())
                 .collect(toMap(
                     Adc::opcode,
+                    Function.identity())))
+            .putAll(Arrays.stream(Bit.values())
+                .collect(toMap(
+                    Bit::opcode,
                     Function.identity())))
             .putAll(Arrays.stream(Branch.values())
                 .collect(toMap(

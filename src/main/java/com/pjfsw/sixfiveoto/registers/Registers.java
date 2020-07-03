@@ -10,6 +10,7 @@ public class Registers {
     private int y;
     public boolean c;
     public int sp;
+    public boolean v;
     public boolean z;
     public boolean n;
 
@@ -36,6 +37,7 @@ public class Registers {
         int e = a + b + (c ? 1 : 0);
         setCarry(e);
         e = e & 0xFF;
+        v = ((a^e)  & (b^e) & 0x80) != 0;
         setFlags(e);
         return e;
     }
@@ -45,6 +47,7 @@ public class Registers {
         int cadd = c ? 1 : 0;
         int e = a + binv + cadd;
         setCarry(e);
+        v = ((a^e)  & ((255-b)^e) & 0x80) != 0;
         e = e & 0xFF;
         setFlags(e);
         return e;

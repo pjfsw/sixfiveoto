@@ -24,4 +24,13 @@ public class ModifyFlagsTest {
         assertEquals(2,wb.run(1));
         assertTrue(wb.registers().c);
     }
+
+    @Test
+    public void testClv() {
+        Workbench wb = new Workbench(ModifyFlags.CLV.opcode());
+        wb.registers().v = true;
+        assertEquals(2,wb.run(1));
+        assertFalse(wb.registers().v);
+    }
+
 }

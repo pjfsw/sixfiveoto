@@ -1,10 +1,10 @@
 package com.pjfsw.sixfiveoto;
 
+import java.awt.KeyboardFocusManager;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.TimerTask;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -24,6 +24,7 @@ public class SixFiveOTo {
     private long runCount;
     private long nanos;
     private long totalCycles;
+    private ScheduledExecutorService executorService;
 
     private SixFiveOTo(byte[] prg) {
 
@@ -42,7 +43,7 @@ public class SixFiveOTo {
         }
         addressDecoder.mapPeeker(rom, 0xF0, 0xFE);
 
-        screen = new Screen();
+        screen = new Screen(512,512);
         addressDecoder.mapPoker(screen, 0x80, 0x80);
         addressDecoder.mapPeeker(screen, 0x80, 0x80);
 
@@ -58,10 +59,7 @@ public class SixFiveOTo {
         cpu.reset();
         System.out.println("RESET " + Memory.format(registers.pc));
     }
-    private void start() {
-        reset();
-        ScheduledExecutorService executorService =
-            Executors.newSingleThreadScheduledExecutor();
+    private void runFullSpeed() {
         int clockSpeedHz = 2500000;
 
         int screenRefreshRate = 60;
@@ -69,7 +67,7 @@ public class SixFiveOTo {
         int refreshRate = refreshMultiplier * screenRefreshRate;
         int refreshPeriod = 1000000/refreshRate;
         int cyclesPerPeriod = clockSpeedHz/refreshRate;
-
+        runCount = 0;
         nanos = System.nanoTime();
         runner = executorService.scheduleAtFixedRate(() -> {
             runCount++;
@@ -94,36 +92,61 @@ public class SixFiveOTo {
                 cycleCount += cycles;
             } while (cycleCount < cyclesPerPeriod);
             totalCycles += cycleCount;
-            if (runCount % refreshMultiplier == 0) {
+            /*if (runCount % refreshMultiplier == 0) {
                 screen.draw();
-            }
+            }*/
 
         }, 0, refreshPeriod, TimeUnit.MICROSECONDS);
+    }
 
-/*        while (true) {
-            StringBuilder sb = new StringBuilder();
 
-            //sb.append(String.format("%08X", cycleCount));
-            //sb.append("  ");
-            sb.append(Memory.format(registers.pc));
-            sb.append("  ");
-            sb.append(cpu.toString());
-            System.out.println(sb.toString());
-            int cycles = cpu.next();
-            cycleCount += cycles;
-            if (cycles == 0) {
-                System.out.println("CPU Crash");
-                reset();
-                cycleCount = 0;
+    private void stepOne() {
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(Memory.format(registers.pc));
+        sb.append("  ");
+        sb.append(cpu.toString());
+        System.out.println(sb.toString());
+        int cycles = cpu.next();
+        if (cycles == 0) {
+            System.out.println("CPU Crash");
+            reset();
+        }
+    }
+
+    private void start() {
+        reset();
+        executorService =
+            Executors.newSingleThreadScheduledExecutor();
+
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher((event) -> {
+            if (event.getID() != KeyEvent.KEY_PRESSED) {
+                return false;
             }
-            try {
-                Thread.sleep(200);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+            switch (event.getKeyCode()) {
+                case KeyEvent.VK_F8:
+                    if (runner.isCancelled() || runner.isDone()) {
+                        runFullSpeed();
+                    } else {
+                        runner.cancel(false);
+                    }
+                    break;
+                case KeyEvent.VK_F6:
+                    if (runner.isDone()) {
+                        stepOne();
+                    }
+                    break;
+                case KeyEvent.VK_ESCAPE:
+                    runner.cancel(true);
+                    screen.interrupt();
+                    break;
+                default:
             }
-        }*/
+            return true;
+        });
 
-
+        runFullSpeed();
+        screen.loop();
     }
 
     public static void main(String[] args) {

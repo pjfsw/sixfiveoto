@@ -14,7 +14,7 @@ loop:
     txa
     adc sintable,y
     tay
-    lda offset
+    lda #255
     sta $8000,y
     inx
     cpx #16
@@ -37,4 +37,4 @@ vbl:
 
 .align $100
 sintable:
-    .fill 256, 16*round(7.5+7.5*sin(toRadians(i*360/64)))
+    .fill 256, 16*round(7.5+7.5*sin(toRadians(i*360/128)))

@@ -4,6 +4,7 @@ import com.pjfsw.sixfiveoto.addressables.Peeker;
 import com.pjfsw.sixfiveoto.addressables.Poker;
 
 public class Registers {
+    // STATUS REGISTER: nv-bdizc
     public int pc;
     private int a;
     private int x;
@@ -73,7 +74,11 @@ public class Registers {
 
     @Override
     public String toString() {
-        return String.format("A: $%02X X: $%02X Y: $%02X %s%s", a, x, y, n ? "N" : ".", z ? "Z" : ".");
+        return String.format("A: $%02X X: $%02X Y: $%02X %c%c....%c%c", a, x, y,
+            n ? 'N' : '.',
+            v ? 'V' : '.',
+            z ? 'Z' : '.',
+            c ? 'C' : '.');
     }
 
     public void a(final int a) {

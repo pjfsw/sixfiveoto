@@ -8,10 +8,10 @@ import com.pjfsw.sixfiveoto.registers.Registers;
 
 public enum AddressingMode {
     // #$aa
-    IMMEDIATE((peeker, registers) -> registers.pc, (peeker, registers) -> (0)),
+    IMMEDIATE((peeker, registers) -> registers.pc, (peeker, registers) -> (0), 1),
 
     // $aaaa
-    ABSOLUTE((peeker, registers) -> Memory.readWord(peeker, registers.pc), (peeker, registers) -> (0)),
+    ABSOLUTE((peeker, registers) -> Memory.readWord(peeker, registers.pc), (peeker, registers) -> (0), 2),
 
     // $aaaa,X
     INDEXED_X((peeker, registers) -> {
@@ -21,7 +21,7 @@ public enum AddressingMode {
     }, (peeker, registers) -> {
         int baseAddress = Memory.readWord(peeker, registers.pc);
         return Memory.penalty(baseAddress, Memory.add(baseAddress, registers.x()));
-    }),
+    }, 2),
 
     // $aaaa,Y
     INDEXED_Y((peeker, registers) -> {
@@ -31,24 +31,24 @@ public enum AddressingMode {
     }, (peeker, registers) -> {
         int baseAddress = Memory.readWord(peeker, registers.pc);
         return Memory.penalty(baseAddress, Memory.add(baseAddress, registers.y()));
-    }),
+    }, 2),
 
     // $aa
-    ZEROPAGE((peeker, registers) -> peeker.peek(registers.pc), (peeker, registers) -> (0)),
+    ZEROPAGE((peeker, registers) -> peeker.peek(registers.pc), (peeker, registers) -> (0), 1),
 
     // $aa,x
     ZEROPAGE_INDEXED_X((peeker, registers) ->
-        Memory.add(peeker.peek(registers.pc), registers.x()) & 0xFF, (peeker, registers) -> (0)),
+        Memory.add(peeker.peek(registers.pc), registers.x()) & 0xFF, (peeker, registers) -> (0), 1),
 
     // $aa,y
     ZEROPAGE_INDEXED_Y((peeker, registers) ->
-        Memory.add(peeker.peek(registers.pc), registers.y()) & 0xFF, (peeker, registers) -> (0)),
+        Memory.add(peeker.peek(registers.pc), registers.y()) & 0xFF, (peeker, registers) -> (0), 1),
 
     // ($aa,x)
     INDEXED_INDIRECT((peeker, registers) -> {
         int pointerAddress = Memory.add(peeker.peek(registers.pc), registers.x()) & 0xFF;
         return readZpWord(peeker, pointerAddress);
-    }, (peeker, registers) -> (0)),
+    }, (peeker, registers) -> (0), 1),
 
     // ($aa),y
     INDIRECT_INDEXED((peeker, registers) -> {
@@ -59,15 +59,21 @@ public enum AddressingMode {
         int offsetAddress = Memory.add(baseAddress, registers.y());
 
         return  Memory.penalty(baseAddress, offsetAddress);
-    });
+    }, 1);
 
     private final BiFunction<Peeker, Registers, Integer> addressingMode;
     private final BiFunction<Peeker, Registers, Integer> penalty;
+    private final int parameterSize;
 
     AddressingMode(BiFunction<Peeker, Registers, Integer> addressingMode,
-        BiFunction<Peeker, Registers, Integer> penalty) {
+        BiFunction<Peeker, Registers, Integer> penalty, int parameterSize) {
         this.addressingMode = addressingMode;
         this.penalty = penalty;
+        this.parameterSize = parameterSize;
+    }
+
+    int getParameterSize() {
+        return parameterSize;
     }
 
     int getEffectiveAddress(final Registers registers, final Peeker peeker) {

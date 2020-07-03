@@ -5,7 +5,7 @@
 
 loop:
     inc offset
-    ldx #15
+    ldx #0
 !:
     clc
     txa
@@ -16,8 +16,9 @@ loop:
     tay
     lda offset
     sta $8000,y
-    dex
-    bpl !-
+    inx
+    cpx #16
+    bcc !-
 
     inc offset
 vbl:

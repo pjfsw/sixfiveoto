@@ -3,9 +3,7 @@ package com.pjfsw.sixfiveoto.instruction;
 import java.util.List;
 import java.util.function.Function;
 
-import com.google.common.collect.ImmutableList;
 import com.pjfsw.sixfiveoto.Memory;
-import com.pjfsw.sixfiveoto.Word;
 import com.pjfsw.sixfiveoto.addressables.Peeker;
 import com.pjfsw.sixfiveoto.addressables.Poker;
 import com.pjfsw.sixfiveoto.registers.Registers;
@@ -14,7 +12,9 @@ public enum Branch implements Instruction {
     BEQ((registers)-> registers.z , 0xF0, "BEQ"),
     BMI((registers)-> registers.n, 0x30, "BMI"),
     BNE((registers)-> !registers.z, 0xD0, "BNE"),
-    BPL((registers)-> !registers.n, 0x10, "BPL")
+    BPL((registers)-> !registers.n, 0x10, "BPL"),
+    BCS((registers)-> registers.c, 0xB0, "BCS"),
+    BCC((registers)-> !registers.c, 0x90, "BCC")
     ;
 
     private final Function<Registers, Boolean> branchEvaluator;

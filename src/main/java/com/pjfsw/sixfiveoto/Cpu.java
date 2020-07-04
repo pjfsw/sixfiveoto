@@ -13,7 +13,7 @@ import com.pjfsw.sixfiveoto.instruction.Branch;
 import com.pjfsw.sixfiveoto.instruction.Cmp;
 import com.pjfsw.sixfiveoto.instruction.IncDec;
 import com.pjfsw.sixfiveoto.instruction.Instruction;
-import com.pjfsw.sixfiveoto.instruction.IncDecXY;
+import com.pjfsw.sixfiveoto.instruction.IncDecRegister;
 import com.pjfsw.sixfiveoto.instruction.Jmp;
 import com.pjfsw.sixfiveoto.instruction.JmpIndirect;
 import com.pjfsw.sixfiveoto.instruction.Jsr;
@@ -74,9 +74,9 @@ public class Cpu {
                 .collect(toMap(
                     IncDec::opcode,
                     Function.identity())))
-            .putAll(Arrays.stream(IncDecXY.values())
+            .putAll(Arrays.stream(IncDecRegister.values())
                 .collect(toMap(
-                    IncDecXY::opcode,
+                    IncDecRegister::opcode,
                     Function.identity())))
             .putAll(Arrays.stream(ModifyFlags.values())
                 .collect(toMap(

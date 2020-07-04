@@ -16,7 +16,8 @@ loop:
     txa
     adc sintable,y
     tay
-    lda #255
+    lda #0
+    dec // 65C02 test
     sta $8000,y
     inx
     cpx #16
@@ -30,7 +31,7 @@ vbl:
 
     ldx #0
 !:
-    stz $8000,x
+    stz $8000,x // 65C02 test
     inx
     bne !-
 

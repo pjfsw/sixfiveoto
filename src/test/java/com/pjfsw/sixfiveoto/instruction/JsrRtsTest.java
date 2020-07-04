@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 
-import com.google.common.collect.ImmutableList;
 import com.pjfsw.sixfiveoto.Word;
 import com.pjfsw.sixfiveoto.Workbench;
 
@@ -13,7 +12,7 @@ public class JsrRtsTest {
     public void test() {
         Workbench wb = new Workbench(
             Jsr.OPCODE, Word.lo(Workbench.CODEBASE+4), Word.hi(Workbench.CODEBASE+4),
-            IncDecXY.INX.opcode(),
+            IncDecRegister.INX.opcode(),
             LdImmediate.LDX.opcode(), 16,
             Rts.OPCODE
         );

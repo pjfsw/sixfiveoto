@@ -11,7 +11,7 @@ import com.pjfsw.sixfiveoto.Workbench;
 public class InxTest {
     @Test
     public void testNormal() {
-        Workbench wb = new Workbench(IncDecXY.INX.opcode());
+        Workbench wb = new Workbench(IncDecRegister.INX.opcode());
         wb.run(1);
         assertEquals(1,wb.registers().x());
         assertEquals(2, wb.cycles());
@@ -21,7 +21,7 @@ public class InxTest {
 
     @Test
     public void testNegative() {
-        Workbench wb = new Workbench(IncDecXY.INX.opcode());
+        Workbench wb = new Workbench(IncDecRegister.INX.opcode());
         wb.registers().x(0x7F);
         wb.run(1);
         assertEquals(0x80,wb.registers().x());
@@ -32,7 +32,7 @@ public class InxTest {
 
     @Test
     public void testWrap() {
-        Workbench wb = new Workbench(IncDecXY.INX.opcode());
+        Workbench wb = new Workbench(IncDecRegister.INX.opcode());
         wb.registers().x(255);
         wb.run(1);
         assertEquals(0, wb.registers().x());

@@ -16,6 +16,6 @@ public class Jmp implements Instruction {
 
     @Override
     public String getMnemonic(Integer word) {
-        return "JMP " + Memory.format(word);
+        return String.format("JMP ",Memory.format(word));
     }
 }

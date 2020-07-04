@@ -28,4 +28,18 @@ public class JmpTest {
         assertEquals(5, wb.cycles());
     }
 
+    @Test
+    public void testIndexedIndirect() {
+        int pointer = 0x200;
+        int offset = 0x03;
+        int address = 0x300;
+        Workbench wb = new Workbench(JmpIndexedIndirect.OPCODE, Word.lo(pointer), Word.hi(pointer));
+        wb.poke(pointer+offset, Word.lo(address));
+        wb.poke(pointer+offset+1, Word.hi(address));
+        wb.registers().x(offset);
+        wb.run(1);
+        assertEquals(address, wb.registers().pc);
+        assertEquals(6, wb.cycles());
+    }
+
 }

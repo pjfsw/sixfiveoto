@@ -15,6 +15,7 @@ import com.pjfsw.sixfiveoto.instruction.IncDec;
 import com.pjfsw.sixfiveoto.instruction.Instruction;
 import com.pjfsw.sixfiveoto.instruction.IncDecRegister;
 import com.pjfsw.sixfiveoto.instruction.Jmp;
+import com.pjfsw.sixfiveoto.instruction.JmpIndexedIndirect;
 import com.pjfsw.sixfiveoto.instruction.JmpIndirect;
 import com.pjfsw.sixfiveoto.instruction.Jsr;
 import com.pjfsw.sixfiveoto.instruction.LdImmediate;
@@ -61,6 +62,7 @@ public class Cpu {
                     Function.identity())))
             .put(Jmp.OPCODE, new Jmp())
             .put(JmpIndirect.OPCODE, new JmpIndirect())
+            .put(JmpIndexedIndirect.OPCODE, new JmpIndexedIndirect())
             .put(Jsr.OPCODE, new Jsr())
             .putAll(Arrays.stream(LdImmediate.values())
                 .collect(toMap(

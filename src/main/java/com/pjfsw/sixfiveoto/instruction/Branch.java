@@ -16,6 +16,8 @@ public enum Branch implements Instruction {
     BCC((registers)-> !registers.c, 0x90, "BCC"),
     BVS((registers)-> registers.v, 0x70, "BVS"),
     BVC((registers)-> !registers.v, 0x50, "BVC"),
+    // 65C02 instructions
+    BRA((registers)-> true, 0x80, "BRA");
     ;
 
     private final Function<Registers, Boolean> branchEvaluator;

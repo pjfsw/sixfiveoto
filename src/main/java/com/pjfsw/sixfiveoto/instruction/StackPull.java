@@ -8,7 +8,10 @@ import com.pjfsw.sixfiveoto.registers.Registers;
 
 public enum StackPull implements Instruction {
     PLA(Registers::a, 0x68, "PLA"),
-    PLP(Registers::sr, 0x28, "PLP");
+    PLP(Registers::sr, 0x28, "PLP"),
+    // 65C02 specific
+    PLX(Registers::x, 0xFA, "PLX"),
+    PLY(Registers::y, 0x7A, "PLY");
 
     private final BiConsumer<Registers, Integer> destination;
     private final int opcode;

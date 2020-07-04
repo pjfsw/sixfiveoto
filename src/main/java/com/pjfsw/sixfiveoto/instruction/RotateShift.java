@@ -11,25 +11,25 @@ public enum RotateShift implements Instruction {
     ASLZ(AddressingMode.ZEROPAGE, Registers::asl, 0x06, "ASL $%02X", 5),
     ASLZX(AddressingMode.ZEROPAGE_INDEXED_X, Registers::asl, 0x16, "ASL $%02X,X", 6),
     ASLA(AddressingMode.ABSOLUTE, Registers::asl, 0x0E, "ASL $%04X", 6),
-    ASLAX(AddressingMode.INDEXED_X, Registers::asl, 0x1E, "ASL $%04X,X", 7),
+    ASLAX(AddressingMode.INDEXED_X, Registers::asl, 0x1E, "ASL $%04X,X", 6),
 
     LSRI(AddressingMode.IMPLIED, Registers::lsr, 0x4A, "LSR A", 2),
     LSRZ(AddressingMode.ZEROPAGE, Registers::lsr, 0x46, "LSR $%02X", 5),
     LSRZX(AddressingMode.ZEROPAGE_INDEXED_X, Registers::lsr, 0x56, "LSR $%02X,X", 6),
     LSRA(AddressingMode.ABSOLUTE, Registers::lsr, 0x4E, "LSR $%04X", 6),
-    LSRAX(AddressingMode.INDEXED_X, Registers::lsr, 0x5E, "LSR $%04X,X", 7),
+    LSRAX(AddressingMode.INDEXED_X, Registers::lsr, 0x5E, "LSR $%04X,X", 6),
 
     ROLI(AddressingMode.IMPLIED, Registers::rol, 0x2A, "ROL A", 2),
     ROLZ(AddressingMode.ZEROPAGE, Registers::rol, 0x26, "ROL $%02X", 5),
     ROLZX(AddressingMode.ZEROPAGE_INDEXED_X, Registers::rol, 0x36, "ROL $%02X,X", 6),
     ROLA(AddressingMode.ABSOLUTE, Registers::rol, 0x2E, "ROL $%04X", 6),
-    ROLAX(AddressingMode.INDEXED_X, Registers::rol, 0x3E, "ROL $%04X,X", 7),
+    ROLAX(AddressingMode.INDEXED_X, Registers::rol, 0x3E, "ROL $%04X,X", 6),
 
     RORI(AddressingMode.IMPLIED, Registers::ror, 0x6A, "ROR A", 2),
     RORZ(AddressingMode.ZEROPAGE, Registers::ror, 0x66, "ROR $%02X", 5),
     RORZX(AddressingMode.ZEROPAGE_INDEXED_X, Registers::ror, 0x76, "ROR $%02X,X", 6),
     RORA(AddressingMode.ABSOLUTE, Registers::ror, 0x6E, "ROR $%04X", 6),
-    RORAX(AddressingMode.INDEXED_X, Registers::ror, 0x7E, "ROR $%04X,X", 7);
+    RORAX(AddressingMode.INDEXED_X, Registers::ror, 0x7E, "ROR $%04X,X", 6);
 
     private final AddressingMode addressingMode;
     private final int opcode;

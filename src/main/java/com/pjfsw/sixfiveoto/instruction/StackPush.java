@@ -8,7 +8,10 @@ import com.pjfsw.sixfiveoto.registers.Registers;
 
 public enum StackPush implements Instruction {
     PHA(Registers::a, 0x48, "PHA"),
-    PHP(Registers::sr, 0x08, "PHP");
+    PHP(Registers::sr, 0x08, "PHP"),
+    // 65C02 specific
+    PHX(Registers::x, 0xDA, "PHX"),
+    PHY(Registers::y, 0x5A, "PHY");
 
     private final Function<Registers, Integer> source;
     private final int opcode;

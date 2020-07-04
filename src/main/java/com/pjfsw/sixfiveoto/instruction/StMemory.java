@@ -30,7 +30,14 @@ public enum StMemory implements Instruction {
     STAIX(Registers::a, AddressingMode.INDEXED_INDIRECT, 0x81, "STA ($%02X,X)", 6),
 
     // Indirect indexed
-    STAIY(Registers::a, AddressingMode.INDIRECT_INDEXED, 0x91, "STA ($%02X,X)", 6);
+    STAIY(Registers::a, AddressingMode.INDIRECT_INDEXED, 0x91, "STA ($%02X,X)", 6),
+
+    // 65C02 opcodes
+    STZZ((reg) -> 0, AddressingMode.ZEROPAGE, 0x64, "STZ $%02X", 3),
+    STZZX((reg) -> 0, AddressingMode.ZEROPAGE_INDEXED_X, 0x74, "STZ $%02X,X", 4),
+    STZ((reg) -> 0, AddressingMode.ABSOLUTE, 0x9C, "STZ $%04X", 4),
+    STZX((reg) -> 0, AddressingMode.INDEXED_X, 0x9E, "STZ $%04X,X", 5);
+
 
 
 

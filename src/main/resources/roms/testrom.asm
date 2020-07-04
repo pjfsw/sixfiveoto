@@ -1,3 +1,5 @@
+.cpu _65c02
+
 * = $F000
 
 .label offset = $200
@@ -26,10 +28,9 @@ vbl:
     lda $8000
     beq vbl
 
-    lda #0
     ldx #0
 !:
-    sta $8000,x
+    stz $8000,x
     inx
     bne !-
 

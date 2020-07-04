@@ -24,7 +24,16 @@ public class SixFiveOTo {
     private long runCount;
     private long nanos;
     private long totalCycles;
+    long cycleCount = 0;
     private ScheduledExecutorService executorService;
+    private int frameCycleCount;
+
+    private final int clockSpeedHz = 2500000;
+
+    private final int screenRefreshRate = 60;
+    private final int refreshMultiplier = 10;
+    private final int refreshRate = refreshMultiplier * screenRefreshRate;
+    private final int cyclesPerPeriod = clockSpeedHz/refreshRate;
 
     private SixFiveOTo(byte[] prg) {
 
@@ -60,16 +69,19 @@ public class SixFiveOTo {
         cpu.reset();
         System.out.println("RESET " + Memory.format(registers.pc));
     }
-    private void runFullSpeed() {
-        int clockSpeedHz = 2500000;
+    private void updateFrameCycleCount(int cycles) {
+        frameCycleCount += cycles;
+        int cyclesPerFrame = clockSpeedHz / screenRefreshRate;
+        if (frameCycleCount >= cyclesPerFrame) {
+            screen.increaseFrameCounter();
+            frameCycleCount -= cyclesPerFrame;
+        }
+    }
 
-        int screenRefreshRate = 60;
-        int refreshMultiplier = 10;
-        int refreshRate = refreshMultiplier * screenRefreshRate;
-        int refreshPeriod = 1000000/refreshRate;
-        int cyclesPerPeriod = clockSpeedHz/refreshRate;
+    private void runFullSpeed() {
         runCount = 0;
         nanos = System.nanoTime();
+        int refreshPeriod = 1000000 / refreshRate;
         runner = executorService.scheduleAtFixedRate(() -> {
             runCount++;
             if (runCount % refreshRate == 0) {
@@ -81,7 +93,6 @@ public class SixFiveOTo {
                 totalCycles = 0;
 
             }
-            long cycleCount = 0;
             do {
                 int cycles = cpu.next();
                 if (cycles == 0) {
@@ -91,18 +102,15 @@ public class SixFiveOTo {
                     return;
                 }
                 cycleCount += cycles;
+                updateFrameCycleCount(cycles);
             } while (cycleCount < cyclesPerPeriod);
             totalCycles += cycleCount;
-            /*if (runCount % refreshMultiplier == 0) {
-                screen.draw();
-            }*/
-
+            cycleCount-= cyclesPerPeriod;
         }, 0, refreshPeriod, TimeUnit.MICROSECONDS);
     }
 
 
     private void stepOne() {
-
         StringBuilder sb = new StringBuilder();
         sb.append(Memory.format(registers.pc));
         sb.append("  ");
@@ -113,6 +121,7 @@ public class SixFiveOTo {
             System.out.println("CPU Crash");
             reset();
         }
+        updateFrameCycleCount(cycles);
     }
 
     private void start() {

@@ -40,11 +40,17 @@ vbl:
     sta.z color
 
     ldx #0
+    lda offset
+    lsr
+    lsr
+    lsr
+    lsr
+    lsr
 !:
-    stz $8000,x // 65C02 test
-    stz $8100,x // 65C02 test
-    stz $8200,x // 65C02 test
-    stz $8300,x // 65C02 test
+    sta $8000,x // 65C02 test
+    sta $8100,x // 65C02 test
+    sta $8200,x // 65C02 test
+    sta $8300,x // 65C02 test
     inx
     bne !-
 
@@ -52,8 +58,8 @@ vbl:
 
 .align $100
 sintablelo:
-    .fill 256, < ($8000+(WIDTH*floor(MIDPOINT+SCALE*sin(toRadians(i*360/256)))))
+    .fill 256, < ($8000+(WIDTH*floor(MIDPOINT+SCALE*sin(toRadians(i*360/128)))))
 sintablehi:
-    .fill 256, > ($8000+(WIDTH*floor(MIDPOINT+SCALE*sin(toRadians(i*360/256)))))
+    .fill 256, > ($8000+(WIDTH*floor(MIDPOINT+SCALE*sin(toRadians(i*360/128)))))
 colortable:
-    .byte $2, $13, $ff, $ff
+    .byte $00,$13

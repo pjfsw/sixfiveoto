@@ -34,12 +34,26 @@ public class Screen implements Poker, Peeker {
         frame.pack();
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.setVisible(true);
-        frame.createBufferStrategy(3);
+        frame.createBufferStrategy(2);
         strategy = frame.getBufferStrategy();
     }
 
     public void interrupt() {
         this.running = false;
+    }
+
+    public void increaseFrameCounter() {
+        frameCounter++;
+    }
+
+    private static void waitNs(long ns) {
+        if (ns > 0) {
+            try {
+                Thread.sleep(ns / 1000000, (int)(ns % 1000000));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public void loop() {
@@ -53,15 +67,9 @@ public class Screen implements Poker, Peeker {
                     graphics.dispose();
                 } while (strategy.contentsRestored());
                 strategy.show();
-                long wait = 16666666 - (int)(System.nanoTime() - ticks);
+                long wait = 16_000_000 - (int)(System.nanoTime() - ticks);
                 ticks = System.nanoTime();
-                if (wait > 0) {
-                    try {
-                        Thread.sleep(wait / 1000000, (int)(wait % 1000000));
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
+                waitNs(wait);
             } while (strategy.contentsLost());
         }
         frame.setVisible(false);
@@ -75,7 +83,6 @@ public class Screen implements Poker, Peeker {
     }
 
     public void draw(Graphics graphics) {
-        frameCounter++;
         pixelComponent.draw(graphics);
     }
 

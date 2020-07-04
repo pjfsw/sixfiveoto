@@ -20,7 +20,10 @@ public enum Cmp implements Instruction {
     CPXA(Registers::x, AddressingMode.ABSOLUTE, 0xEC, "CPX $%04X", 4),
     CPYI(Registers::y, AddressingMode.IMMEDIATE, 0xC0,  "CPY #$%02X", 2),
     CPYZ(Registers::y, AddressingMode.ZEROPAGE, 0xC4, "CPY $%02X", 3),
-    CPYA(Registers::y, AddressingMode.ABSOLUTE, 0xCC, "CPY $%04X", 4)
+    CPYA(Registers::y, AddressingMode.ABSOLUTE, 0xCC, "CPY $%04X", 4),
+
+    // 65C02
+    CMPZI(Registers::a, AddressingMode.INDIRECT, 0xD2, "CMP ($%02X)", 5)
     ;
 
     private final Function<Registers, Integer> comparand;

@@ -61,7 +61,14 @@ public enum AddressingMode {
         int offsetAddress = Memory.add(baseAddress, registers.y());
 
         return  Memory.penalty(baseAddress, offsetAddress);
-    }, 1);
+    }, 1),
+
+    // ($aa)  65C02 addressing mode
+    INDIRECT(
+        (peeker, registers) -> readZpWord(peeker, peeker.peek(registers.pc)),
+        (peeker, registers) -> 0,
+        1
+    );
 
     private final BiFunction<Peeker, Registers, Integer> addressingMode;
     private final BiFunction<Peeker, Registers, Integer> penalty;

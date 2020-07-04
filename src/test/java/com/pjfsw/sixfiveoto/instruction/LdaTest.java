@@ -175,4 +175,21 @@ public class LdaTest {
         assertEquals(POSITIVE, wb.registers().a());
     }
 
+    @Test
+    public void testIndirect() {
+        int ptraddr = 0x10;
+        int addr = 0x200;
+        Workbench wb = new Workbench(LdMemory.LDAZI.opcode(), ptraddr);
+        // value
+        wb.poke(addr, POSITIVE);
+        // pointer to 0x0123
+        wb.poke(ptraddr, Word.lo(addr));
+        wb.poke(ptraddr+1, Word.hi(addr));
+        // x y offset don't matter
+        wb.registers().y(17);
+        wb.registers().x(17);
+        assertEquals(5,wb.run(1));
+        assertEquals(POSITIVE, wb.registers().a());
+    }
+
 }

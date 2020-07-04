@@ -52,7 +52,13 @@ public enum LdMemory implements Instruction {
     ANDIY(Registers::a, AddressingMode.INDIRECT_INDEXED, LoadOperation.AND, 0x31, "AND ($%02X),Y", 5),
     EORIY(Registers::a, AddressingMode.INDIRECT_INDEXED, LoadOperation.EOR, 0x51, "EOR ($%02X),Y", 5),
     LDAIY(Registers::a, AddressingMode.INDIRECT_INDEXED, LoadOperation.LD, 0xB1, "LDA ($%02X),Y", 5),
-    ORAIY(Registers::a, AddressingMode.INDIRECT_INDEXED, LoadOperation.ORA, 0x11, "ORA ($%02X),Y", 5);
+    ORAIY(Registers::a, AddressingMode.INDIRECT_INDEXED, LoadOperation.ORA, 0x11, "ORA ($%02X),Y", 5),
+
+    // 65C02 Indirect
+    ANDZI(Registers::a, AddressingMode.INDIRECT, LoadOperation.AND, 0x32, "AND ($%02X)", 5),
+    EORZI(Registers::a, AddressingMode.INDIRECT, LoadOperation.EOR, 0x52, "EOR ($%02X)", 5),
+    LDAZI(Registers::a, AddressingMode.INDIRECT, LoadOperation.LD,  0xB2, "LDA ($%02X)", 5),
+    ORAZI(Registers::a, AddressingMode.INDIRECT, LoadOperation.ORA, 0x12, "ORA ($%02X)", 5);
 
 
     private final int opcode;

@@ -44,11 +44,12 @@ public class SixFiveOTo {
         addressDecoder.mapPeeker(rom, 0xF0, 0xFE);
 
         screen = new Screen(512,512);
-        addressDecoder.mapPoker(screen, 0x80, 0x80);
-        addressDecoder.mapPeeker(screen, 0x80, 0x80);
+        addressDecoder.mapPoker(screen, 0x80, 0x83);
+        addressDecoder.mapPeeker(screen, 0x80, 0x83);
 
         /**
          * RAM 0x0000 - 0x7FFF
+         * Gfx 0x8000 - 0x83FF
          * ROM 0xF000 - 0xFFFF
          */
         registers = new Registers();

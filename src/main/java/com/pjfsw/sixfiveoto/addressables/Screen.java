@@ -19,7 +19,7 @@ public class Screen implements Poker, Peeker {
     private final PixelFrame pixelComponent;
     private final JFrame frame;
     private final BufferStrategy strategy;
-    private boolean verticalBlank;
+    private int frameCounter;
     private volatile boolean running = true;
 
     public Screen(int w, int h) {
@@ -34,7 +34,7 @@ public class Screen implements Poker, Peeker {
         frame.pack();
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.setVisible(true);
-        frame.createBufferStrategy(2);
+        frame.createBufferStrategy(3);
         strategy = frame.getBufferStrategy();
     }
 
@@ -75,23 +75,20 @@ public class Screen implements Poker, Peeker {
     }
 
     public void draw(Graphics graphics) {
-        verticalBlank = true;
+        frameCounter++;
         pixelComponent.draw(graphics);
     }
 
     @Override
     public int peek(final int address) {
-        if (verticalBlank) {
-            verticalBlank = false;
-            return 1;
-        } else {
-            return 0;
-        }
+        int oldFrameCounter = frameCounter;
+        frameCounter = 0;
+        return oldFrameCounter;
     }
 
     private static class PixelFrame {
-        private final int w = 16;
-        private final int h = 16;
+        private final int w = 32;
+        private final int h = 32;
         private final BufferedImage img;
         private static final int[] redgreen = {0,36,73,109,146,182,219,255};
         private static final int[] blue = {0,85,170,255};

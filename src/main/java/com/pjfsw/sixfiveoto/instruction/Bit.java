@@ -6,7 +6,11 @@ import com.pjfsw.sixfiveoto.registers.Registers;
 
 public enum Bit implements Instruction {
     BITZ(AddressingMode.ZEROPAGE, 0x24, "BIT $%02X", 3),
-    BITA(AddressingMode.ABSOLUTE, 0x2C, "BIT $%04X", 4)
+    BITA(AddressingMode.ABSOLUTE, 0x2C, "BIT $%04X", 4),
+    // 65C02 instructions
+    BITI(AddressingMode.IMMEDIATE, 0x89, "BIT #$%02X", 2),
+    BITZX(AddressingMode.ZEROPAGE_INDEXED_X, 0x34, "BIT $%02X,X", 4),
+    BITAX(AddressingMode.INDEXED_X, 0x3C, "BIT $%04X,X", 4)
     ;
 
     private final AddressingMode addressingMode;
@@ -30,8 +34,10 @@ public enum Bit implements Instruction {
         int address = addressingMode.getEffectiveAddress(registers, peeker);
         int value = peeker.peek(address);
         registers.and(registers.a(), value);
-        registers.n = (value & 0x80) != 0;
-        registers.v = (value & 0x40) != 0;
+        if (AddressingMode.IMMEDIATE != addressingMode) {
+            registers.n = (value & 0x80) != 0;
+            registers.v = (value & 0x40) != 0;
+        }
         registers.incrementPc(addressingMode.getParameterSize());
         return cycles;
     }

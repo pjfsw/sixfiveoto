@@ -125,4 +125,13 @@ public class StaTest {
         assertEquals(VALUE, wb.peek(addr+offset));
     }
 
+    @Test
+    public void testStz() {
+        int addr = 0x200;
+        Workbench wb = new Workbench(StMemory.STZ.opcode(), Word.lo(addr), Word.hi(addr));
+        wb.registers().a(255);
+        assertEquals(4,wb.run(1));
+        assertEquals(0, wb.peek(addr));
+    }
+
 }

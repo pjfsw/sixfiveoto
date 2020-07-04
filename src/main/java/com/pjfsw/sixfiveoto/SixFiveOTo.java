@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 import com.pjfsw.sixfiveoto.addressables.MemoryModule;
 import com.pjfsw.sixfiveoto.addressables.RomVectors;
 import com.pjfsw.sixfiveoto.addressables.Screen;
+import com.pjfsw.sixfiveoto.addressables.via.Via6522;
 import com.pjfsw.sixfiveoto.registers.Registers;
 
 public class SixFiveOTo {
@@ -52,7 +53,11 @@ public class SixFiveOTo {
         }
         addressDecoder.mapPeeker(rom, 0xF0, 0xFE);
 
-        screen = new Screen(512,512);
+        Via6522 via = new Via6522();
+        addressDecoder.mapPoker(via, 0xD0, 0xD0);
+        addressDecoder.mapPeeker(via, 0xD0, 0xD0);
+        screen = new Screen();
+        screen.addDrawable(via);
         addressDecoder.mapPoker(screen, 0x80, 0x83);
         addressDecoder.mapPeeker(screen, 0x80, 0x83);
 

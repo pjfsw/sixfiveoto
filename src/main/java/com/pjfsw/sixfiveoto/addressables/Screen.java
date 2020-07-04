@@ -2,40 +2,51 @@ package com.pjfsw.sixfiveoto.addressables;
 
 import static java.awt.image.BufferedImage.TYPE_INT_RGB;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
-import java.awt.Rectangle;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JFrame;
 import javax.swing.WindowConstants;
 
 public class Screen implements Poker, Peeker {
+    private static final int W = 640;
+    private static final int H = 480;
     private final PixelFrame pixelComponent;
     private final JFrame frame;
     private final BufferStrategy strategy;
     private int frameCounter;
     private volatile boolean running = true;
+    private List<Drawable> drawables = new ArrayList<>();
 
-    public Screen(int w, int h) {
+    public Screen() {
 
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
         GraphicsDevice[] gs = ge.getScreenDevices();
         GraphicsConfiguration gc = gs[0].getConfigurations()[0];
 
         frame = new JFrame(gc);
-        frame.setPreferredSize(new Dimension(w,h));
-        pixelComponent = new PixelFrame(w, h);
+        frame.setPreferredSize(new Dimension(W,H));
+        int pixelSize = 256;
+        pixelComponent = new PixelFrame(pixelSize,pixelSize);
+        addDrawable(pixelComponent);
         frame.pack();
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.setVisible(true);
         frame.createBufferStrategy(2);
         strategy = frame.getBufferStrategy();
+    }
+
+    public void addDrawable(Drawable drawable) {
+        drawables.add(drawable);
     }
 
     public void interrupt() {
@@ -63,6 +74,9 @@ public class Screen implements Poker, Peeker {
                 // preparation for rendering ?
                 do {
                     Graphics graphics = strategy.getDrawGraphics();
+                    graphics.setColor(Color.BLACK);
+                    graphics.fillRect(0,0,W,H);
+                    graphics.translate(0, frame.getInsets().top);
                     draw(graphics);
                     graphics.dispose();
                 } while (strategy.contentsRestored());
@@ -83,7 +97,9 @@ public class Screen implements Poker, Peeker {
     }
 
     public void draw(Graphics graphics) {
-        pixelComponent.draw(graphics);
+        for (Drawable drawable : drawables) {
+            drawable.draw(graphics);
+        }
     }
 
     @Override
@@ -93,7 +109,8 @@ public class Screen implements Poker, Peeker {
         return oldFrameCounter;
     }
 
-    private static class PixelFrame {
+
+    private static class PixelFrame implements Drawable {
         private final int w = 32;
         private final int h = 32;
         private final BufferedImage img;
@@ -124,7 +141,7 @@ public class Screen implements Poker, Peeker {
 
         public void draw(Graphics g) {
             Graphics2D g2 = ((Graphics2D)g);
-            Rectangle bounds = g2.getDeviceConfiguration().getBounds();
+            g2.translate(1, 1);
             g2.drawImage(img, 0,0, targetWidth, targetHeight, null);
         }
     }

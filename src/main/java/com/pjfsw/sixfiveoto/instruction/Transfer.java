@@ -16,7 +16,8 @@ public enum Transfer implements Instruction {
     TSX(Registers::sp, Registers::x, 0xba, "TSX"),
     TXA(Registers::x, Registers::a, 0x8a, "TXA"),
     TXS(Registers::x, Registers::sp, 0x9a, "TXS"),
-    TYA(Registers::y, Registers::a, 0x98, "TYA");
+    TYA(Registers::y, Registers::a, 0x98, "TYA"),
+
     ;
 
     private final Function<Registers,Integer> from;

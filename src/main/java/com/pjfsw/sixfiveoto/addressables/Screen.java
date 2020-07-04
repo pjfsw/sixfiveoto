@@ -64,8 +64,8 @@ public class Screen implements Poker, Peeker {
                 }
             } while (strategy.contentsLost());
         }
-        //w.setVisible(false);
-        //w.dispose();
+        frame.setVisible(false);
+        frame.dispose();
 
     }
 

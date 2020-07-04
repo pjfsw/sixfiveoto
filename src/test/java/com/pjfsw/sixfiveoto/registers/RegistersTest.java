@@ -118,6 +118,92 @@ public class RegistersTest {
         assertEquals(0, registers.sp);
     }
 
+    @Test
+    public void testAsl() {
+        Registers registers = new Registers();
+
+        assertEquals(0x60, registers.asl(0x30));
+        assertFalse(registers.c);
+        assertFalse(registers.z);
+        assertFalse(registers.n);
+        assertEquals(0xc0, registers.asl(0x60));
+        assertFalse(registers.c);
+        assertFalse(registers.z);
+        assertTrue(registers.n);
+        assertEquals(0x80, registers.asl(0xc0));
+        assertTrue(registers.c);
+        assertFalse(registers.z);
+        assertTrue(registers.n);
+        assertEquals(0x00, registers.asl(0x80));
+        assertTrue(registers.c);
+        assertTrue(registers.z);
+        assertFalse(registers.n);
+        assertEquals(0x00, registers.asl(0x00));
+        assertFalse(registers.c);
+        assertTrue(registers.z);
+        assertFalse(registers.n);
+    }
+
+    @Test
+    public void testLsr() {
+        Registers registers = new Registers();
+
+        assertEquals(0x01, registers.lsr(0x02));
+        assertFalse(registers.c);
+        assertFalse(registers.z);
+        assertFalse(registers.n);
+
+        assertEquals(0x00, registers.lsr(0x01));
+        assertTrue(registers.c);
+        assertTrue(registers.z);
+        assertFalse(registers.n);
+
+        assertEquals(0x00, registers.lsr(0x00));
+        assertFalse(registers.c);
+        assertTrue(registers.z);
+        assertFalse(registers.n);
+    }
+
+    @Test
+    public void testRol() {
+        Registers registers = new Registers();
+        registers.c = false;
+        assertEquals(0x40, registers.rol(0x20));
+        assertFalse(registers.c);
+        assertFalse(registers.z);
+        assertFalse(registers.n);
+        assertEquals(0x80, registers.rol(0x40));
+        assertFalse(registers.c);
+        assertFalse(registers.z);
+        assertTrue(registers.n);
+        assertEquals(0x00, registers.rol(0x80));
+        assertTrue(registers.c);
+        assertTrue(registers.z);
+        assertFalse(registers.n);
+        assertEquals(0x01, registers.rol(0x00));
+        assertFalse(registers.c);
+        assertFalse(registers.z);
+        assertFalse(registers.n);
+    }
+
+    @Test
+    public void testRor() {
+        Registers registers = new Registers();
+        registers.c = false;
+        assertEquals(0x1, registers.ror(0x02));
+        assertFalse(registers.c);
+        assertFalse(registers.z);
+        assertFalse(registers.n);
+        assertEquals(0x0, registers.ror(0x01));
+        assertTrue(registers.c);
+        assertTrue(registers.z);
+        assertFalse(registers.n);
+        assertEquals(0x80, registers.ror(0x0));
+        assertFalse(registers.c);
+        assertFalse(registers.z);
+        assertTrue(registers.n);
+    }
+
     private static class Stack implements Peeker, Poker {
         private final int[] bytes = new int[512];
 

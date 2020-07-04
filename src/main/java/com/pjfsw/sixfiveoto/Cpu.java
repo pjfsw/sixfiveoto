@@ -21,8 +21,9 @@ import com.pjfsw.sixfiveoto.instruction.LdImmediate;
 import com.pjfsw.sixfiveoto.instruction.LdMemory;
 import com.pjfsw.sixfiveoto.instruction.ModifyFlags;
 import com.pjfsw.sixfiveoto.instruction.Nop;
-import com.pjfsw.sixfiveoto.instruction.Pha;
-import com.pjfsw.sixfiveoto.instruction.Pla;
+import com.pjfsw.sixfiveoto.instruction.RotateShift;
+import com.pjfsw.sixfiveoto.instruction.StackPush;
+import com.pjfsw.sixfiveoto.instruction.StackPull;
 import com.pjfsw.sixfiveoto.instruction.Rts;
 import com.pjfsw.sixfiveoto.instruction.StMemory;
 import com.pjfsw.sixfiveoto.instruction.Transfer;
@@ -82,8 +83,18 @@ public class Cpu {
                     ModifyFlags::opcode,
                     Function.identity())))
             .put(Nop.OPCODE, new Nop())
-            .put(Pha.OPCODE, new Pha())
-            .put(Pla.OPCODE, new Pla())
+            .putAll(Arrays.stream(StackPush.values())
+                .collect(toMap(
+                    StackPush::opcode,
+                    Function.identity())))
+            .putAll(Arrays.stream(StackPull.values())
+                .collect(toMap(
+                    StackPull::opcode,
+                    Function.identity())))
+            .putAll(Arrays.stream(RotateShift.values())
+                .collect(toMap(
+                    RotateShift::opcode,
+                    Function.identity())))
             .put(Rts.OPCODE, new Rts())
             .putAll(Arrays.stream(StMemory.values())
                 .collect(toMap(

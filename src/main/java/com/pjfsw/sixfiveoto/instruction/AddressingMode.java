@@ -7,6 +7,8 @@ import com.pjfsw.sixfiveoto.addressables.Peeker;
 import com.pjfsw.sixfiveoto.registers.Registers;
 
 public enum AddressingMode {
+    IMPLIED((peeker, registers) -> registers.pc, (peeker, registers) -> (0), 0),
+
     // #$aa
     IMMEDIATE((peeker, registers) -> registers.pc, (peeker, registers) -> (0), 1),
 

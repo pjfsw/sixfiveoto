@@ -15,6 +15,11 @@ public class Registers {
     public boolean z;
     public boolean n;
 
+    private static final int N_MASK = 0x80;
+    private static final int V_MASK = 0x40;
+    private static final int Z_MASK = 0x02;
+    private static final int C_MASK = 0x01;
+
     public void incrementPc(int steps) {
         pc = (pc + steps) & 0XFFFF;
     }
@@ -54,23 +59,43 @@ public class Registers {
         return e;
     }
 
-    public int and(int a, int b) {
+    public void and(int a, int b) {
         int result = a & b;
         setFlags(result);
-        return result;
     }
 
-    public int or(int a, int b) {
-        int result = a | b;
-        setFlags(result);
-        return result;
+    public int asl(int a) {
+        c = (a & 0x80) != 0;
+        a = (a << 1) & 0xFF;
+        setFlags(a);
+        return a;
     }
 
-    public int eor(int a, int b) {
-        int result = a ^ b;
-        setFlags(result);
-        return result;
+    public int lsr(int a) {
+        c = (a & 0x01) != 0;
+        a = a >> 1;
+        setFlags(a);
+        return a;
     }
+
+    public int rol(int a) {
+        int ci = c ? 0x01 : 0x00;
+        c = (a & 0x80) != 0;
+        a = ((a << 1) | ci) & 0xFF;
+        setFlags(a);
+
+        return a;
+    }
+
+    public int ror(int a) {
+        int ci = c ? 0x80 : 0x00;
+        c = (a & 0x01) != 0;
+        a = (a >> 1) | ci;
+        setFlags(a);
+        return a;
+    }
+
+
 
     @Override
     public String toString() {
@@ -79,6 +104,16 @@ public class Registers {
             v ? 'V' : '.',
             z ? 'Z' : '.',
             c ? 'C' : '.');
+    }
+    public void sr(final int regs) {
+        n = (regs & N_MASK) != 0;
+        v = (regs & V_MASK) != 0;
+        z = (regs & Z_MASK) != 0;
+        c = (regs & C_MASK) != 0;
+    }
+
+    public int sr() {
+        return (n ? N_MASK : 0) | (v ? V_MASK : 0) | (z ? Z_MASK : 0) | (c ? C_MASK : 0);
     }
 
     public void a(final int a) {

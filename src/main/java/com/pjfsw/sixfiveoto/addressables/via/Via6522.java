@@ -7,6 +7,10 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import com.pjfsw.sixfiveoto.addressables.Clockable;
 import com.pjfsw.sixfiveoto.addressables.Drawable;
@@ -34,11 +38,25 @@ public class Via6522 implements Peeker, Poker, Drawable, Resettable, Clockable {
     private static final int DDRA = 0x03;
     private int porta;
     private int portb;
-    private int[] registers = new int[16];
+    private final int[] registers = new int[16];
+    private final List<Supplier<Boolean>> inputs = new ArrayList<>();
+    private final List<Consumer<Boolean>> outputs = new ArrayList<>();
 
 
     public Via6522() {
         img = new BufferedImage(36,6, TYPE_INT_ARGB);
+        for (int i = 0; i < 16; i++) {
+            inputs.add(()-> false );
+            outputs.add((level)->{});
+        }
+    }
+
+    public void setInput(int port, int pin, Supplier<Boolean> input) {
+        inputs.set((port*8+(pin%8)) % 16, input);
+    }
+
+    public void setOutput(int port, int pin, Consumer<Boolean> output) {
+        outputs.set((port*8+(pin%8)) % 16, output);
     }
 
     public void reset() {
@@ -58,7 +76,7 @@ public class Via6522 implements Peeker, Poker, Drawable, Resettable, Clockable {
         if (reg == PORTA) {
             return porta;
         } else if (reg == PORTB) {
-            return PortManipulator.combineDdrOutIn(registers[DDRB], registers[PORTB], portb);
+            return PortManipulator.combineDdrOutIn(registers[DDRB], registers[PORTB], porta);
         } else {
             return registers[reg];
         }
@@ -69,19 +87,6 @@ public class Via6522 implements Peeker, Poker, Drawable, Resettable, Clockable {
         registers[address & 0x0f] = data;
     }
 
-    @Override
-    public void draw(final Graphics graphics) {
-        Graphics2D g2 = ((Graphics2D)graphics);
-        g2.translate(320,1);
-        g2.drawImage(img, 0,24, 320, 36, null);
-        g2.setFont(new Font("Courier", Font.PLAIN, 16));
-        g2.setColor(Color.WHITE);
-        g2.drawString("VIA", 0,16);
-        g2.drawString("A", 64, 72);
-        g2.drawString("B", 224, 72);
-
-    }
-
     private static int getPortColor(int ddr, int port, int bit) {
         if ((ddr & bit) == 0) {
             return ((port & bit) == 0) ? COLOR_READ0 : COLOR_READ1;
@@ -90,6 +95,24 @@ public class Via6522 implements Peeker, Poker, Drawable, Resettable, Clockable {
         }
     }
 
+    public int processPort(int ddr, int offset, int port) {
+        for (int i = offset; i < offset+8; i++) {
+            int mask = 1 << (i%8);
+            int maskb = mask & 0xFF;
+            if ((ddr & mask) == 0) {
+                if (inputs.get(i).get()) {
+                    port |= mask;
+                } else {
+                    port &= maskb;
+                }
+            } else {
+                outputs.get(i).accept((port & mask) != 0);
+            }
+        }
+        return port;
+    }
+
+
     @Override
     public void next(final int cycles) {
         int ddra = registers[DDRA];
@@ -97,6 +120,15 @@ public class Via6522 implements Peeker, Poker, Drawable, Resettable, Clockable {
 
         porta = PortManipulator.combineDdrOutIn(ddra, registers[PORTA], porta);
         portb = PortManipulator.combineDdrOutIn(ddrb, registers[PORTB], portb);
+
+        porta = processPort(ddra, 0, porta);
+        portb = processPort(ddrb, 8, portb);
+    }
+
+    @Override
+    public void draw(final Graphics graphics) {
+        int ddra = registers[DDRA];
+        int ddrb = registers[DDRB];
 
         for (int i = 0; i < 8; i++) {
             int bit = 1 << (7-i); // Draw MSB.....LSB
@@ -117,6 +149,14 @@ public class Via6522 implements Peeker, Poker, Drawable, Resettable, Clockable {
             // PORT B
             img.setRGB(i*2+18,4, getPortColor(ddrb, portb, bit));
         }
+
+        Graphics2D g2 = ((Graphics2D)graphics);
+        g2.drawImage(img, 0,24, 320, 36, null);
+        g2.setFont(new Font("Courier", Font.PLAIN, 16));
+        g2.setColor(Color.WHITE);
+        g2.drawString("VIA", 0,16);
+        g2.drawString("A", 64, 72);
+        g2.drawString("B", 224, 72);
 
     }
 }

@@ -9,6 +9,7 @@ import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
+import java.awt.Point;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
@@ -25,7 +26,7 @@ public class Screen implements Poker, Peeker {
     private final BufferStrategy strategy;
     private int frameCounter;
     private volatile boolean running = true;
-    private List<Drawable> drawables = new ArrayList<>();
+    private final List<PositionedDrawable> drawables = new ArrayList<>();
 
     public Screen() {
 
@@ -37,7 +38,7 @@ public class Screen implements Poker, Peeker {
         frame.setPreferredSize(new Dimension(W,H));
         int pixelSize = 256;
         pixelComponent = new PixelFrame(pixelSize,pixelSize);
-        addDrawable(pixelComponent);
+        addDrawable(new Point(0,0), pixelComponent);
         frame.pack();
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.setVisible(true);
@@ -45,8 +46,8 @@ public class Screen implements Poker, Peeker {
         strategy = frame.getBufferStrategy();
     }
 
-    public void addDrawable(Drawable drawable) {
-        drawables.add(drawable);
+    public void addDrawable(Point position, Drawable drawable) {
+        drawables.add(new PositionedDrawable(position, drawable));
     }
 
     public void interrupt() {
@@ -97,8 +98,10 @@ public class Screen implements Poker, Peeker {
     }
 
     public void draw(Graphics graphics) {
-        for (Drawable drawable : drawables) {
-            drawable.draw(graphics);
+        for (PositionedDrawable pd : drawables) {
+            Graphics g = graphics.create();
+            g.translate(pd.position.x, pd.position.y);
+            pd.drawable.draw(g);
         }
     }
 
@@ -144,5 +147,16 @@ public class Screen implements Poker, Peeker {
             g2.translate(1, 1);
             g2.drawImage(img, 0,0, targetWidth, targetHeight, null);
         }
+    }
+
+    private static class PositionedDrawable {
+        private final Point position;
+        private final Drawable drawable;
+
+        private PositionedDrawable(Point position, Drawable drawable) {
+            this.position = position;
+            this.drawable = drawable;
+        }
+
     }
 }

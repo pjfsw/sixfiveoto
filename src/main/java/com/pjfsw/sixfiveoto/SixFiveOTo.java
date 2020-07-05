@@ -1,6 +1,7 @@
 package com.pjfsw.sixfiveoto;
 
 import java.awt.KeyboardFocusManager;
+import java.awt.Point;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
@@ -24,6 +25,7 @@ import com.pjfsw.sixfiveoto.addressables.Resettable;
 import com.pjfsw.sixfiveoto.addressables.RomVectors;
 import com.pjfsw.sixfiveoto.addressables.Screen;
 import com.pjfsw.sixfiveoto.addressables.via.Via6522;
+import com.pjfsw.sixfiveoto.peripherals.Led;
 import com.pjfsw.sixfiveoto.registers.Registers;
 
 public class SixFiveOTo {
@@ -39,7 +41,7 @@ public class SixFiveOTo {
     private ScheduledExecutorService executorService;
     private int frameCycleCount;
 
-    private final int clockSpeedHz = 2500000;
+    private final int clockSpeedHz = 50_000_000;
 
     private final int screenRefreshRate = 60;
     private final int refreshMultiplier = 10;
@@ -66,13 +68,16 @@ public class SixFiveOTo {
         }
         addressDecoder.mapPeeker(rom, 0xF0, 0xFE);
 
+        Led led = Led.green();
         Via6522 via = new Via6522();
+        via.setOutput(0,4, led);
         resettables.add(via);
         clockables.add(via);
         addressDecoder.mapPoker(via, 0xD0, 0xD0);
         addressDecoder.mapPeeker(via, 0xD0, 0xD0);
         screen = new Screen();
-        screen.addDrawable(via);
+        screen.addDrawable(new Point(320,0), via);
+        screen.addDrawable(new Point(320,100), led);
         addressDecoder.mapPoker(screen, 0x80, 0x83);
         addressDecoder.mapPeeker(screen, 0x80, 0x83);
 

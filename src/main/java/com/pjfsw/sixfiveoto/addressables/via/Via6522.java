@@ -8,43 +8,115 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 
+import com.pjfsw.sixfiveoto.addressables.Clockable;
 import com.pjfsw.sixfiveoto.addressables.Drawable;
 import com.pjfsw.sixfiveoto.addressables.Peeker;
 import com.pjfsw.sixfiveoto.addressables.Poker;
+import com.pjfsw.sixfiveoto.addressables.Resettable;
 
-public class Via6522 implements Peeker, Poker, Drawable {
+public class Via6522 implements Peeker, Poker, Drawable, Resettable, Clockable {
     private final BufferedImage img;
-    private static final int INPUT_COLOR = 0xFF00FF00;
-    private static final int OUTPUT_COLOR = 0x7700FF00;
+    private static final int COLOR_FULL = 0xEE000000;
+    private static final int COLOR_DIM  = 0x44000000;
+    private static final int COLOR_YELLOW = 0x00FFFF00;
+    private static final int COLOR_GREEN = 0x0000FF00;
+    private static final int COLOR_RED = 0x00FF0000;
+
+    private static final int COLOR_DDRIN = COLOR_DIM | COLOR_YELLOW;
+    private static final int COLOR_DDROUT = COLOR_FULL | COLOR_YELLOW;
+    private static final int COLOR_READ0 = COLOR_DIM | COLOR_GREEN;
+    private static final int COLOR_READ1 = COLOR_FULL | COLOR_GREEN;
+    private static final int COLOR_WRITE0 = COLOR_DIM | COLOR_RED;
+    private static final int COLOR_WRITE1 = COLOR_FULL | COLOR_RED;
+    private static final int PORTB = 0x00;
+    private static final int PORTA = 0x01;
+    private static final int DDRB = 0x02;
+    private static final int DDRA = 0x03;
+    private int porta;
+    private int portb;
+    private int[] registers = new int[16];
+
 
     public Via6522() {
-        img = new BufferedImage(32,4, TYPE_INT_ARGB);
-        for (int i = 0; i < img.getWidth()/2; i++) {
-            img.setRGB(i*2,0,(i % 2 == 0) ? Color.WHITE.getRGB() : Color.GRAY.getRGB());
-            img.setRGB(i*2,2,(i % 3 == 0) ? INPUT_COLOR : OUTPUT_COLOR);
-        }
-/*        for (Font font : GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts()) {
-            System.out.println(font.getName());
-        }*/
+        img = new BufferedImage(36,6, TYPE_INT_ARGB);
     }
+
+    public void reset() {
+        registers[DDRA] = 0;
+        registers[DDRB] = 0;
+        registers[PORTA] = 0;
+        registers[PORTB] = 0;
+        porta = 0;
+        portb = 0;
+    }
+
     @Override
     public int peek(final int address) {
-        return 0;
+        // For Port A, reading an output pin returns whatever level the output pin is at. Depending
+        // For Port B, reading an output pin returns whatever ORB is stored (i.e. from poke)
+        int reg = address & 0x0f;
+        if (reg == PORTA) {
+            return porta;
+        } else if (reg == PORTB) {
+            return PortManipulator.combineDdrOutIn(registers[DDRB], registers[PORTB], portb);
+        } else {
+            return registers[reg];
+        }
     }
 
     @Override
     public void poke(final int address, final int data) {
-
+        registers[address & 0x0f] = data;
     }
 
     @Override
     public void draw(final Graphics graphics) {
         Graphics2D g2 = ((Graphics2D)graphics);
         g2.translate(320,1);
-        g2.drawImage(img, 0,24, 320, 32, null);
-        g2.setFont(new Font("Monospaced", Font.PLAIN, 18));
+        g2.drawImage(img, 0,24, 320, 36, null);
+        g2.setFont(new Font("Courier", Font.PLAIN, 16));
         g2.setColor(Color.WHITE);
-        g2.drawString("65C22", 0,16);
+        g2.drawString("VIA", 0,16);
+        g2.drawString("A", 64, 72);
+        g2.drawString("B", 224, 72);
+
+    }
+
+    private static int getPortColor(int ddr, int port, int bit) {
+        if ((ddr & bit) == 0) {
+            return ((port & bit) == 0) ? COLOR_READ0 : COLOR_READ1;
+        } else {
+            return ((port & bit) == 0) ? COLOR_WRITE0 : COLOR_WRITE1;
+        }
+    }
+
+    @Override
+    public void next(final int cycles) {
+        int ddra = registers[DDRA];
+        int ddrb = registers[DDRB];
+
+        porta = PortManipulator.combineDdrOutIn(ddra, registers[PORTA], porta);
+        portb = PortManipulator.combineDdrOutIn(ddrb, registers[PORTB], portb);
+
+        for (int i = 0; i < 8; i++) {
+            int bit = 1 << (7-i); // Draw MSB.....LSB
+
+            // DDR A
+            img.setRGB(i*2,0, (ddra & bit) != 0 ? COLOR_DDROUT : COLOR_DDRIN);
+            // DDR B
+            img.setRGB(i*2+18,0, (ddrb & bit) != 0 ? COLOR_DDROUT : COLOR_DDRIN);
+
+            // ORA A
+            img.setRGB(i*2, 2, getPortColor(0xFF, registers[PORTA], bit));
+            // ORA B
+            img.setRGB(i*2+18,2, getPortColor(0xFF, registers[PORTB], bit));
+
+
+            // PORT A
+            img.setRGB(i*2, 4, getPortColor(ddra, porta, bit));
+            // PORT B
+            img.setRGB(i*2+18,4, getPortColor(ddrb, portb, bit));
+        }
 
     }
 }

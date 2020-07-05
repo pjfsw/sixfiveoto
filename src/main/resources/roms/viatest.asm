@@ -18,6 +18,13 @@
     ldy #0
 !:
     {
+        lda PORTB
+        and #1
+        beq !+
+
+        ldx #0
+        ldy #0
+    !:
         stx PORTA
         sty PORTB
 
@@ -26,13 +33,6 @@
         lda $8000
         beq vbl
 
-        lda PORTB
-        and #1
-        beq !+
-
-        ldx #0
-        ldy #0
-    !:
     }
 
     inx

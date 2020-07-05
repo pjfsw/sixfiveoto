@@ -43,7 +43,7 @@ public class SixFiveOTo {
     private ScheduledExecutorService executorService;
     private int frameCycleCount;
 
-    private final int clockSpeedHz = 2_500_000;
+    private final int clockSpeedHz = 25_000_000;
 
     private final int screenRefreshRate = 60;
     private final int refreshMultiplier = 10;

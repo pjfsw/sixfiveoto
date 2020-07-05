@@ -41,7 +41,7 @@ public class SixFiveOTo {
     private ScheduledExecutorService executorService;
     private int frameCycleCount;
 
-    private final int clockSpeedHz = 50_000_000;
+    private final int clockSpeedHz = 2_500_000;
 
     private final int screenRefreshRate = 60;
     private final int refreshMultiplier = 10;
@@ -68,18 +68,24 @@ public class SixFiveOTo {
         }
         addressDecoder.mapPeeker(rom, 0xF0, 0xFE);
 
-        Led led = Led.green();
         Via6522 via = new Via6522();
-        via.setOutput(0,4, led);
         resettables.add(via);
         clockables.add(via);
         addressDecoder.mapPoker(via, 0xD0, 0xD0);
         addressDecoder.mapPeeker(via, 0xD0, 0xD0);
         screen = new Screen();
         screen.addDrawable(new Point(320,0), via);
-        screen.addDrawable(new Point(320,100), led);
         addressDecoder.mapPoker(screen, 0x80, 0x83);
         addressDecoder.mapPeeker(screen, 0x80, 0x83);
+
+        for (int i = 0; i < 8; i++) {
+            Led led = Led.green();
+            via.setOutput(0,7-i, led);
+            screen.addDrawable(new Point(320+i*32,100), led);
+            led = Led.green();
+            via.setOutput(1,7-i, led);
+            screen.addDrawable(new Point(320+i*32,132), led);
+        }
 
         /**
          * RAM 0x0000 - 0x7FFF

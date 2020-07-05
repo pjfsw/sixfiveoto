@@ -52,11 +52,11 @@ public class Via6522 implements Peeker, Poker, Drawable, Resettable, Clockable {
     }
 
     public void setInput(int port, int pin, Supplier<Boolean> input) {
-        inputs.set((port*8+(pin%8)) % 16, input);
+        inputs.set((port & 1) * 8 + (pin%8), input);
     }
 
     public void setOutput(int port, int pin, Consumer<Boolean> output) {
-        outputs.set((port*8+(pin%8)) % 16, output);
+        outputs.set((port & 1) * 8 + (pin%8), output);
     }
 
     public void reset() {
@@ -98,15 +98,15 @@ public class Via6522 implements Peeker, Poker, Drawable, Resettable, Clockable {
     public int processPort(int ddr, int offset, int port) {
         for (int i = offset; i < offset+8; i++) {
             int mask = 1 << (i%8);
-            int maskb = mask & 0xFF;
             if ((ddr & mask) == 0) {
                 if (inputs.get(i).get()) {
                     port |= mask;
                 } else {
+                    int maskb = mask ^ 0xFF;
                     port &= maskb;
                 }
             } else {
-                outputs.get(i).accept((port & mask) != 0);
+               outputs.get(i).accept((port & mask) != 0);
             }
         }
         return port;

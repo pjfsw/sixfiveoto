@@ -17,13 +17,23 @@
     ldx #0
     ldy #0
 !:
-    stx PORTA
-    sty PORTB
+    {
+        stx PORTA
+        sty PORTB
 
-vbl:
-    // Vertical blank
-    lda $8000
-    beq vbl
+    vbl:
+        // Vertical blank
+        lda $8000
+        beq vbl
+
+        lda PORTB
+        and #1
+        beq !+
+
+        ldx #0
+        ldy #0
+    !:
+    }
 
     inx
     dey

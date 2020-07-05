@@ -76,7 +76,7 @@ public class Via6522 implements Peeker, Poker, Drawable, Resettable, Clockable {
         if (reg == PORTA) {
             return porta;
         } else if (reg == PORTB) {
-            return PortManipulator.combineDdrOutIn(registers[DDRB], registers[PORTB], porta);
+            return PortManipulator.combineDdrOutIn(registers[DDRB], registers[PORTB], portb);
         } else {
             return registers[reg];
         }

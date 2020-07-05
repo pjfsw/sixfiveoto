@@ -10,7 +10,9 @@ import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -25,6 +27,7 @@ import com.pjfsw.sixfiveoto.addressables.Resettable;
 import com.pjfsw.sixfiveoto.addressables.RomVectors;
 import com.pjfsw.sixfiveoto.addressables.Screen;
 import com.pjfsw.sixfiveoto.addressables.via.Via6522;
+import com.pjfsw.sixfiveoto.peripherals.Switch;
 import com.pjfsw.sixfiveoto.peripherals.Led;
 import com.pjfsw.sixfiveoto.registers.Registers;
 
@@ -33,7 +36,6 @@ public class SixFiveOTo {
     private final Registers registers;
     private final Screen screen;
     private ScheduledFuture<?> runner;
-    private long crashCount;
     private long runCount;
     private long nanos;
     private long totalCycles;
@@ -47,8 +49,9 @@ public class SixFiveOTo {
     private final int refreshMultiplier = 10;
     private final int refreshRate = refreshMultiplier * screenRefreshRate;
     private final int cyclesPerPeriod = clockSpeedHz/refreshRate;
-    private List<Resettable> resettables = new ArrayList<>();
-    private List<Clockable> clockables = new ArrayList<>();
+    private final List<Resettable> resettables = new ArrayList<>();
+    private final List<Clockable> clockables = new ArrayList<>();
+    private final Map<Integer, Switch> buttons = new HashMap<>();
 
 
     private SixFiveOTo(byte[] prg) {
@@ -86,6 +89,10 @@ public class SixFiveOTo {
             via.setOutput(1,7-i, led);
             screen.addDrawable(new Point(320+i*32,132), led);
         }
+
+        Switch aSwitch = new Switch();
+        buttons.put(KeyEvent.VK_W, aSwitch);
+        via.setInput(1,0, aSwitch);
 
         /**
          * RAM 0x0000 - 0x7FFF
@@ -146,7 +153,6 @@ public class SixFiveOTo {
                 int cycles = next();
                 if (cycles == 0) {
                     System.out.println(cpu.toString());
-                    crashCount++;
                     reset();
                     return;
                 }
@@ -160,11 +166,10 @@ public class SixFiveOTo {
 
 
     private void stepOne() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(Memory.format(registers.pc));
-        sb.append("  ");
-        sb.append(cpu.toString());
-        System.out.println(sb.toString());
+        String sb = Memory.format(registers.pc)
+            + "  "
+            + cpu.toString();
+        System.out.println(sb);
         int cycles = cpu.next();
         if (cycles == 0) {
             System.out.println("CPU Crash");
@@ -179,6 +184,13 @@ public class SixFiveOTo {
             Executors.newSingleThreadScheduledExecutor();
 
         KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher((event) -> {
+            if (event.getID() == KeyEvent.KEY_RELEASED) {
+                Switch aSwitch = buttons.get(event.getKeyCode());
+                if (aSwitch != null) {
+                    aSwitch.accept(false);
+                    return true;
+                }
+            }
             if (event.getID() != KeyEvent.KEY_PRESSED) {
                 return false;
             }
@@ -200,6 +212,13 @@ public class SixFiveOTo {
                     screen.interrupt();
                     break;
                 default:
+                    Switch aSwitch = buttons.get(event.getKeyCode());
+                    if (aSwitch != null) {
+                        aSwitch.accept(true);
+                        return true;
+                    } else {
+                        return false;
+                    }
             }
             return true;
         });

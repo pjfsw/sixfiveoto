@@ -28,6 +28,7 @@ import com.pjfsw.sixfiveoto.instruction.StackPull;
 import com.pjfsw.sixfiveoto.instruction.Rts;
 import com.pjfsw.sixfiveoto.instruction.StMemory;
 import com.pjfsw.sixfiveoto.instruction.Transfer;
+import com.pjfsw.sixfiveoto.instruction.Txb;
 import com.pjfsw.sixfiveoto.registers.Registers;
 
 public class Cpu {
@@ -105,6 +106,10 @@ public class Cpu {
             .putAll(Arrays.stream(Transfer.values())
                 .collect(toMap(
                     Transfer::opcode,
+                    Function.identity())))
+            .putAll(Arrays.stream(Txb.values())
+                .collect(toMap(
+                    Txb::opcode,
                     Function.identity())))
             .build();
         System.out.println(String.format("%d opcodes supported", instructions.size()));

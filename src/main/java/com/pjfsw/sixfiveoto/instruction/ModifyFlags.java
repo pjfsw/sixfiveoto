@@ -4,6 +4,7 @@ import java.util.function.Consumer;
 
 import com.pjfsw.sixfiveoto.addressables.Peeker;
 import com.pjfsw.sixfiveoto.addressables.Poker;
+import com.pjfsw.sixfiveoto.mnemonicformatter.MnemonicFormatter;
 import com.pjfsw.sixfiveoto.registers.Registers;
 
 public enum ModifyFlags implements Instruction {
@@ -32,7 +33,12 @@ public enum ModifyFlags implements Instruction {
     }
 
     @Override
-    public String getMnemonic(final Integer parameter) {
+    public String getMnemonic() {
         return mnemonic;
+    }
+
+    @Override
+    public MnemonicFormatter getMnemonicFormatter() {
+        return MnemonicFormatter.IMPLIED;
     }
 }

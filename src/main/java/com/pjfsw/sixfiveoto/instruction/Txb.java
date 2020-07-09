@@ -4,13 +4,14 @@ import java.util.function.BiFunction;
 
 import com.pjfsw.sixfiveoto.addressables.Peeker;
 import com.pjfsw.sixfiveoto.addressables.Poker;
+import com.pjfsw.sixfiveoto.mnemonicformatter.MnemonicFormatter;
 import com.pjfsw.sixfiveoto.registers.Registers;
 
 public enum Txb implements Instruction {
-    TRBZ(AddressingMode.ZEROPAGE, Txb::trb, 0x14, "TRB $%02X", 5),
-    TRBA(AddressingMode.ABSOLUTE, Txb::trb, 0x1c, "TRB $%04X", 6),
-    TSBZ(AddressingMode.ZEROPAGE, Txb::tsb, 0x04, "TSB $%02X", 5),
-    TSBA(AddressingMode.ABSOLUTE, Txb::tsb, 0x0c, "TSB $%04X", 6)
+    TRBZ(AddressingMode.ZEROPAGE, Txb::trb, 0x14, "TRB", 5),
+    TRBA(AddressingMode.ABSOLUTE, Txb::trb, 0x1c, "TRB", 6),
+    TSBZ(AddressingMode.ZEROPAGE, Txb::tsb, 0x04, "TSB", 5),
+    TSBA(AddressingMode.ABSOLUTE, Txb::tsb, 0x0c, "TSB", 6)
     ;
 
     private final AddressingMode addressingMode;
@@ -52,7 +53,12 @@ public enum Txb implements Instruction {
     }
 
     @Override
-    public String getMnemonic(final Integer parameter) {
-        return String.format(mnemonic, parameter);
+    public String getMnemonic() {
+        return mnemonic;
+    }
+
+    @Override
+    public MnemonicFormatter getMnemonicFormatter() {
+        return addressingMode.getFormatter();
     }
 }

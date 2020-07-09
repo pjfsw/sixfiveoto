@@ -1,11 +1,8 @@
 package com.pjfsw.sixfiveoto.instruction;
 
-import static java.util.Collections.singletonList;
-
-import java.util.List;
-
 import com.pjfsw.sixfiveoto.addressables.Peeker;
 import com.pjfsw.sixfiveoto.addressables.Poker;
+import com.pjfsw.sixfiveoto.mnemonicformatter.MnemonicFormatter;
 import com.pjfsw.sixfiveoto.registers.Registers;
 
 public class Rts implements Instruction {
@@ -20,7 +17,12 @@ public class Rts implements Instruction {
     }
 
     @Override
-    public String getMnemonic(final Integer parameter) {
+    public String getMnemonic() {
         return "RTS";
+    }
+
+    @Override
+    public MnemonicFormatter getMnemonicFormatter() {
+        return MnemonicFormatter.IMPLIED;
     }
 }

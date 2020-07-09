@@ -3,6 +3,7 @@ package com.pjfsw.sixfiveoto.instruction;
 import com.pjfsw.sixfiveoto.Memory;
 import com.pjfsw.sixfiveoto.addressables.Peeker;
 import com.pjfsw.sixfiveoto.addressables.Poker;
+import com.pjfsw.sixfiveoto.mnemonicformatter.MnemonicFormatter;
 import com.pjfsw.sixfiveoto.registers.Registers;
 
 public class Jmp implements Instruction {
@@ -15,7 +16,12 @@ public class Jmp implements Instruction {
     }
 
     @Override
-    public String getMnemonic(Integer word) {
-        return String.format("JMP ",Memory.format(word));
+    public String getMnemonic() {
+        return "JMP";
+    }
+
+    @Override
+    public MnemonicFormatter getMnemonicFormatter() {
+        return MnemonicFormatter.ABSOLUTE;
     }
 }

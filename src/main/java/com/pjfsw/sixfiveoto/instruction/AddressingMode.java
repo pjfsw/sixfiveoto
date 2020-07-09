@@ -4,16 +4,18 @@ import java.util.function.BiFunction;
 
 import com.pjfsw.sixfiveoto.Memory;
 import com.pjfsw.sixfiveoto.addressables.Peeker;
+import com.pjfsw.sixfiveoto.mnemonicformatter.MnemonicFormatter;
 import com.pjfsw.sixfiveoto.registers.Registers;
 
 public enum AddressingMode {
-    IMPLIED((peeker, registers) -> registers.pc, (peeker, registers) -> (0), 0),
+    IMPLIED((peeker, registers) -> registers.pc, (peeker, registers) -> (0), 0, MnemonicFormatter.IMPLIED),
 
     // #$aa
-    IMMEDIATE((peeker, registers) -> registers.pc, (peeker, registers) -> (0), 1),
+    IMMEDIATE((peeker, registers) -> registers.pc, (peeker, registers) -> (0), 1, MnemonicFormatter.IMMEDIATE),
 
     // $aaaa
-    ABSOLUTE((peeker, registers) -> Memory.readWord(peeker, registers.pc), (peeker, registers) -> (0), 2),
+    ABSOLUTE((peeker, registers) -> Memory.readWord(peeker, registers.pc),
+        (peeker, registers) -> (0), 2, MnemonicFormatter.ABSOLUTE),
 
     // $aaaa,X
     INDEXED_X((peeker, registers) -> {
@@ -23,7 +25,7 @@ public enum AddressingMode {
     }, (peeker, registers) -> {
         int baseAddress = Memory.readWord(peeker, registers.pc);
         return Memory.penalty(baseAddress, Memory.add(baseAddress, registers.x()));
-    }, 2),
+    }, 2, MnemonicFormatter.INDEXED_X),
 
     // $aaaa,Y
     INDEXED_Y((peeker, registers) -> {
@@ -33,24 +35,28 @@ public enum AddressingMode {
     }, (peeker, registers) -> {
         int baseAddress = Memory.readWord(peeker, registers.pc);
         return Memory.penalty(baseAddress, Memory.add(baseAddress, registers.y()));
-    }, 2),
+    }, 2, MnemonicFormatter.INDEXED_Y),
 
     // $aa
-    ZEROPAGE((peeker, registers) -> peeker.peek(registers.pc), (peeker, registers) -> (0), 1),
+    ZEROPAGE((peeker, registers) -> peeker.peek(registers.pc), (peeker, registers) -> (0), 1,
+        MnemonicFormatter.ZEROPAGE),
 
     // $aa,x
     ZEROPAGE_INDEXED_X((peeker, registers) ->
-        Memory.add(peeker.peek(registers.pc), registers.x()) & 0xFF, (peeker, registers) -> (0), 1),
+        Memory.add(peeker.peek(registers.pc), registers.x()) & 0xFF, (peeker, registers) -> (0), 1,
+        MnemonicFormatter.ZEROPAGE_INDEXED_X),
 
     // $aa,y
     ZEROPAGE_INDEXED_Y((peeker, registers) ->
-        Memory.add(peeker.peek(registers.pc), registers.y()) & 0xFF, (peeker, registers) -> (0), 1),
+        Memory.add(peeker.peek(registers.pc), registers.y()) & 0xFF, (peeker, registers) -> (0), 1,
+        MnemonicFormatter.ZEROPAGE_INDEXED_Y),
 
     // ($aa,x)
     INDEXED_INDIRECT((peeker, registers) -> {
         int pointerAddress = Memory.add(peeker.peek(registers.pc), registers.x()) & 0xFF;
         return readZpWord(peeker, pointerAddress);
-    }, (peeker, registers) -> (0), 1),
+    }, (peeker, registers) -> (0), 1,
+        MnemonicFormatter.INDEXED_INDIRECT),
 
     // ($aa),y
     INDIRECT_INDEXED((peeker, registers) -> {
@@ -61,24 +67,27 @@ public enum AddressingMode {
         int offsetAddress = Memory.add(baseAddress, registers.y());
 
         return  Memory.penalty(baseAddress, offsetAddress);
-    }, 1),
+    }, 1, MnemonicFormatter.INDIRECT_INDEXED),
 
     // ($aa)  65C02 addressing mode
     INDIRECT(
         (peeker, registers) -> readZpWord(peeker, peeker.peek(registers.pc)),
         (peeker, registers) -> 0,
-        1
+        1, MnemonicFormatter.INDIRECT
     );
 
     private final BiFunction<Peeker, Registers, Integer> addressingMode;
     private final BiFunction<Peeker, Registers, Integer> penalty;
     private final int parameterSize;
+    private final MnemonicFormatter formatter;
 
     AddressingMode(BiFunction<Peeker, Registers, Integer> addressingMode,
-        BiFunction<Peeker, Registers, Integer> penalty, int parameterSize) {
+        BiFunction<Peeker, Registers, Integer> penalty, int parameterSize,
+        MnemonicFormatter formatter) {
         this.addressingMode = addressingMode;
         this.penalty = penalty;
         this.parameterSize = parameterSize;
+        this.formatter = formatter;
     }
 
     int getParameterSize() {
@@ -97,4 +106,7 @@ public enum AddressingMode {
         return peek.peek(address & 0xFF) | (peek.peek((address+1)&0xFF) << 8);
     }
 
+    public MnemonicFormatter getFormatter() {
+        return formatter;
+    }
 }

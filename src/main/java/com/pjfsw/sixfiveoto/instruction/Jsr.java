@@ -7,6 +7,7 @@ import com.pjfsw.sixfiveoto.Memory;
 import com.pjfsw.sixfiveoto.Word;
 import com.pjfsw.sixfiveoto.addressables.Peeker;
 import com.pjfsw.sixfiveoto.addressables.Poker;
+import com.pjfsw.sixfiveoto.mnemonicformatter.MnemonicFormatter;
 import com.pjfsw.sixfiveoto.registers.Registers;
 
 public class Jsr implements Instruction {
@@ -21,7 +22,12 @@ public class Jsr implements Instruction {
     }
 
     @Override
-    public String getMnemonic(final Integer parameter) {
-        return String.format("JSR $%04X", parameter);
+    public String getMnemonic() {
+        return "JSR";
+    }
+
+    @Override
+    public MnemonicFormatter getMnemonicFormatter() {
+        return MnemonicFormatter.ABSOLUTE;
     }
 }

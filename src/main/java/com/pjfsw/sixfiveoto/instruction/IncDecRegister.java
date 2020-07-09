@@ -5,6 +5,7 @@ import java.util.function.Function;
 
 import com.pjfsw.sixfiveoto.addressables.Peeker;
 import com.pjfsw.sixfiveoto.addressables.Poker;
+import com.pjfsw.sixfiveoto.mnemonicformatter.MnemonicFormatter;
 import com.pjfsw.sixfiveoto.registers.Registers;
 
 public enum IncDecRegister implements Instruction {
@@ -42,7 +43,12 @@ public enum IncDecRegister implements Instruction {
     }
 
     @Override
-    public String getMnemonic(final Integer word) {
+    public String getMnemonic() {
         return mnemonic;
+    }
+
+    @Override
+    public MnemonicFormatter getMnemonicFormatter() {
+        return MnemonicFormatter.IMPLIED;
     }
 }

@@ -17,6 +17,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -43,7 +45,7 @@ public class SixFiveOTo {
     private ScheduledExecutorService executorService;
     private int frameCycleCount;
 
-    private final int clockSpeedHz = 25_000_000;
+    private final int clockSpeedHz = 15_000_000;
 
     private final int screenRefreshRate = 60;
     private final int refreshMultiplier = 10;
@@ -54,8 +56,7 @@ public class SixFiveOTo {
     private final Map<Integer, Switch> buttons = new HashMap<>();
 
 
-    private SixFiveOTo(byte[] prg) {
-
+    private SixFiveOTo(byte[] prg, Map<Integer, String> symbols) {
         AddressDecoder addressDecoder = new AddressDecoder();
 
         int programBase = ((int)prg[0]&0xff) + (((int)(prg[1])&0xff) << 8);
@@ -100,7 +101,7 @@ public class SixFiveOTo {
          * ROM 0xF000 - 0xFFFF
          */
         registers = new Registers();
-        cpu = new Cpu(addressDecoder, registers);
+        cpu = new Cpu(addressDecoder, registers, symbols);
     }
 
     private void reset() {
@@ -152,7 +153,7 @@ public class SixFiveOTo {
             do {
                 int cycles = next();
                 if (cycles == 0) {
-                    System.out.println(cpu.toString());
+                    System.out.println(cpu.disassemble(registers.pc));
                     reset();
                     return;
                 }
@@ -166,10 +167,7 @@ public class SixFiveOTo {
 
 
     private void stepOne() {
-        String sb = Memory.format(registers.pc)
-            + "  "
-            + cpu.toString();
-        System.out.println(sb);
+        System.out.println(cpu.disassemble(registers.pc));
         int cycles = cpu.next();
         if (cycles == 0) {
             System.out.println("CPU Crash");
@@ -268,7 +266,28 @@ public class SixFiveOTo {
         }
         try {
             byte[] bytes = Files.readAllBytes(new File(filename).toPath());
-            new SixFiveOTo(bytes).start();
+            File symbolFile = new File(filename.replace(".prg", ".sym"));
+            Map<Integer, String> symbolMap = new HashMap<>();
+            if (symbolFile.isFile()) {
+                List<String> symbols =
+                    Files.readAllLines(symbolFile.toPath());
+                Pattern p = Pattern.compile(".label\\s*(\\w+)=\\s*(\\S+)");
+                for (String symbol: symbols) {
+                    Matcher m = p.matcher(symbol);
+                    if (m.matches()) {
+
+                        String s = m.group(2).substring(1);
+                        System.out.println(s);
+                        int address = Integer.parseInt(s, 16);
+                        symbolMap.put(address, m.group(1));
+
+                        System.out.println(String.format("Symbol: '%s'='%s'", m.group(1), m.group(2)));
+                    }
+                }
+
+            }
+
+            new SixFiveOTo(bytes, symbolMap).start();
         } catch (IOException e) {
             e.printStackTrace();
         }

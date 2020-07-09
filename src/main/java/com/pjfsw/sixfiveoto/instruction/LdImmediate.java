@@ -4,6 +4,7 @@ import java.util.function.BiConsumer;
 
 import com.pjfsw.sixfiveoto.addressables.Peeker;
 import com.pjfsw.sixfiveoto.addressables.Poker;
+import com.pjfsw.sixfiveoto.mnemonicformatter.MnemonicFormatter;
 import com.pjfsw.sixfiveoto.registers.Registers;
 
 public enum LdImmediate implements Instruction {
@@ -38,7 +39,12 @@ public enum LdImmediate implements Instruction {
     }
 
     @Override
-    public String getMnemonic(final Integer parameter) {
-        return String.format("%s #$%02X", mnemonic, parameter & 0xFF );
+    public String getMnemonic() {
+        return mnemonic;
+    }
+
+    @Override
+    public MnemonicFormatter getMnemonicFormatter() {
+        return MnemonicFormatter.IMMEDIATE;
     }
 }

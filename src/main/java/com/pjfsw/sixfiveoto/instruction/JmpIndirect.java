@@ -3,6 +3,7 @@ package com.pjfsw.sixfiveoto.instruction;
 import com.pjfsw.sixfiveoto.Memory;
 import com.pjfsw.sixfiveoto.addressables.Peeker;
 import com.pjfsw.sixfiveoto.addressables.Poker;
+import com.pjfsw.sixfiveoto.mnemonicformatter.MnemonicFormatter;
 import com.pjfsw.sixfiveoto.registers.Registers;
 
 public class JmpIndirect implements Instruction {
@@ -16,7 +17,12 @@ public class JmpIndirect implements Instruction {
     }
 
     @Override
-    public String getMnemonic(final Integer parameter) {
-        return String.format("JMP ($%04X)", parameter);
+    public String getMnemonic() {
+        return "JMP";
+    }
+
+    @Override
+    public MnemonicFormatter getMnemonicFormatter() {
+        return MnemonicFormatter.INDIRECT_ADDRESS;
     }
 }

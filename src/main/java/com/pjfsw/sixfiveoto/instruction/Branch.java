@@ -5,6 +5,7 @@ import java.util.function.Function;
 import com.pjfsw.sixfiveoto.Memory;
 import com.pjfsw.sixfiveoto.addressables.Peeker;
 import com.pjfsw.sixfiveoto.addressables.Poker;
+import com.pjfsw.sixfiveoto.mnemonicformatter.MnemonicFormatter;
 import com.pjfsw.sixfiveoto.registers.Registers;
 
 public enum Branch implements Instruction {
@@ -50,7 +51,12 @@ public enum Branch implements Instruction {
     }
 
     @Override
-    public String getMnemonic(final Integer parameter) {
-        return String.format("%s $%02X", mnemonic, parameter);
+    public String getMnemonic() {
+        return mnemonic;
+    }
+
+    @Override
+    public MnemonicFormatter getMnemonicFormatter() {
+        return MnemonicFormatter.RELATIVE;
     }
 }

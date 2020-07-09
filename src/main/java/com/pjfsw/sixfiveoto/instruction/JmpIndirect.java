@@ -25,4 +25,10 @@ public class JmpIndirect implements Instruction {
     public MnemonicFormatter getMnemonicFormatter() {
         return MnemonicFormatter.INDIRECT_ADDRESS;
     }
+
+    @Override
+    public int length() {
+        return 3;
+    }
+
 }

@@ -47,4 +47,10 @@ public enum LdImmediate implements Instruction {
     public MnemonicFormatter getMnemonicFormatter() {
         return MnemonicFormatter.IMMEDIATE;
     }
+
+    @Override
+    public int length() {
+        return 2;
+    }
+
 }

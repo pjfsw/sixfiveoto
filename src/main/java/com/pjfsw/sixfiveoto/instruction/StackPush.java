@@ -43,4 +43,10 @@ public enum StackPush implements Instruction {
     public MnemonicFormatter getMnemonicFormatter() {
         return MnemonicFormatter.IMPLIED;
     }
+
+    @Override
+    public int length() {
+        return 1;
+    }
+
 }

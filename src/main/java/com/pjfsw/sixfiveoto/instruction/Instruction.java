@@ -17,4 +17,6 @@ public interface Instruction {
 
     MnemonicFormatter getMnemonicFormatter();
 
+    int length();
+
 }

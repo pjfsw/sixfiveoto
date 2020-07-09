@@ -16,7 +16,7 @@
 
     ldx #0
     ldy #0
-!:
+derpes:
     {
         lda PORTB
         and #1
@@ -28,14 +28,14 @@
         stx PORTA
         sty PORTB
 
-    vbl:
+    //vbl:
         // Vertical blank
-        lda $8000
-        beq vbl
+      //  lda $8000
+        //beq vbl
 
     }
 
     inx
     dey
-    jmp !-
+    jmp derpes
 

@@ -52,4 +52,10 @@ public enum Transfer implements Instruction {
     public MnemonicFormatter getMnemonicFormatter() {
         return MnemonicFormatter.IMPLIED;
     }
+
+    @Override
+    public int length() {
+        return 1;
+    }
+
 }

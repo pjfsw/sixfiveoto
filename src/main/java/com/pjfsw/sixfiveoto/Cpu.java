@@ -30,7 +30,6 @@ import com.pjfsw.sixfiveoto.instruction.Rts;
 import com.pjfsw.sixfiveoto.instruction.StMemory;
 import com.pjfsw.sixfiveoto.instruction.Transfer;
 import com.pjfsw.sixfiveoto.instruction.Txb;
-import com.pjfsw.sixfiveoto.mnemonicformatter.MnemonicFormatter;
 import com.pjfsw.sixfiveoto.registers.Registers;
 
 public class Cpu {
@@ -41,8 +40,9 @@ public class Cpu {
     private final Map<Integer, Instruction> instructions;
     private final AddressDecoder addressDecoder;
     private final Registers registers;
-    private final Map<Integer, String> symbols;
     private long totalCycles = 0;
+
+    private final Map<Integer, String> symbols;
 
     public Cpu(AddressDecoder addressDecoder, Registers registers) {
         this(addressDecoder, registers, emptyMap());
@@ -133,37 +133,11 @@ public class Cpu {
         return totalCycles;
     }
 
-    public String disassemble(int pc)
-    {
-        int opcode = addressDecoder.peek(pc);
-        Instruction instruction = instructions.get(opcode);
-        String instructionAsText;
-        if (instruction != null) {
-            String mnemonic = instruction.getMnemonic();
-            MnemonicFormatter formatter =
-                instruction.getMnemonicFormatter();
-            instructionAsText = formatter.format(
-                mnemonic,pc+1,
-                Memory.readWord(addressDecoder, pc+1),
-                symbols
-            );
-        } else {
-            instructionAsText = String.format("???(%02X)", opcode);
-        }
-        String symbol = symbols.get(pc);
-        return String.format("%s %04X %-12s %s",
-            (symbol != null) ? (symbol + "\n") : "",
-            pc,
-            instructionAsText,
-            registers.toString());
-
-    }
-
     public int next() {
         Instruction instruction = instructions.get(addressDecoder.peek(registers.pc));
         registers.incrementPc(1);
         if (instruction != null) {
-            int cycles = instruction.execute(registers, addressDecoder, addressDecoder);;
+            int cycles = instruction.execute(registers, addressDecoder, addressDecoder);
             totalCycles += cycles;
             return cycles;
         } else {
@@ -171,4 +145,7 @@ public class Cpu {
         }
     }
 
+    public Disassembler createDisassembler() {
+        return new Disassembler(addressDecoder, instructions, symbols, registers.pc);
+    }
 }

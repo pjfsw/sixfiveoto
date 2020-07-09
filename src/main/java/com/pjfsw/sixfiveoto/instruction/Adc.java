@@ -69,4 +69,10 @@ public enum Adc implements Instruction {
     public MnemonicFormatter getMnemonicFormatter() {
         return addressingMode.getFormatter();
     }
+
+    @Override
+    public int length() {
+        return addressingMode.getParameterSize()+1;
+    }
+
 }

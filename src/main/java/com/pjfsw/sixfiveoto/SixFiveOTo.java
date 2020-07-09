@@ -37,6 +37,7 @@ public class SixFiveOTo {
     private final Cpu cpu;
     private final Registers registers;
     private final Screen screen;
+    private final Debugger debugger;
     private ScheduledFuture<?> runner;
     private long runCount;
     private long nanos;
@@ -102,6 +103,10 @@ public class SixFiveOTo {
          */
         registers = new Registers();
         cpu = new Cpu(addressDecoder, registers, symbols);
+
+        debugger = new Debugger(registers, symbols);
+        screen.addDrawable(new Point(0, 288), debugger);
+
     }
 
     private void reset() {
@@ -135,6 +140,7 @@ public class SixFiveOTo {
         return cycles;
     }
 
+
     private void runFullSpeed() {
         runCount = 0;
         nanos = System.nanoTime();
@@ -153,7 +159,6 @@ public class SixFiveOTo {
             do {
                 int cycles = next();
                 if (cycles == 0) {
-                    System.out.println(cpu.disassemble(registers.pc));
                     reset();
                     return;
                 }
@@ -165,14 +170,13 @@ public class SixFiveOTo {
         }, 0, refreshPeriod, TimeUnit.MICROSECONDS);
     }
 
-
     private void stepOne() {
-        System.out.println(cpu.disassemble(registers.pc));
         int cycles = cpu.next();
         if (cycles == 0) {
             System.out.println("CPU Crash");
             reset();
         }
+        debugger.update(cpu.createDisassembler());
         updateFrameCycleCount(cycles);
     }
 
@@ -195,9 +199,12 @@ public class SixFiveOTo {
             switch (event.getKeyCode()) {
                 case KeyEvent.VK_F8:
                     if (runner.isCancelled() || runner.isDone()) {
+                        debugger.setEnabled(false);
                         runFullSpeed();
                     } else {
                         runner.cancel(false);
+                        debugger.update(cpu.createDisassembler());
+                        debugger.setEnabled(true);
                     }
                     break;
                 case KeyEvent.VK_F6:

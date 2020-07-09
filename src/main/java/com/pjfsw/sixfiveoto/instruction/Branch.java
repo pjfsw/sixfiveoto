@@ -59,4 +59,10 @@ public enum Branch implements Instruction {
     public MnemonicFormatter getMnemonicFormatter() {
         return MnemonicFormatter.RELATIVE;
     }
+
+    @Override
+    public int length() {
+        return 2;
+    }
+
 }

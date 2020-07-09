@@ -30,4 +30,10 @@ public class Jsr implements Instruction {
     public MnemonicFormatter getMnemonicFormatter() {
         return MnemonicFormatter.ABSOLUTE;
     }
+
+    @Override
+    public int length() {
+        return 3;
+    }
+
 }

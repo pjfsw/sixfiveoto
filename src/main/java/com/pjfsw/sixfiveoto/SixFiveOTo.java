@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -46,10 +45,10 @@ public class SixFiveOTo {
     private long nanos;
     private long totalCycles;
     long cycleCount = 0;
-    private ScheduledExecutorService executorService;
+    private final ScheduledExecutorService executorService;
     private int frameCycleCount;
 
-    private final int clockSpeedHz = 15_000_000;
+    private final int clockSpeedHz = 20_000_000;
 
     private final int screenRefreshRate = 60;
     private final int refreshMultiplier = 10;
@@ -61,6 +60,9 @@ public class SixFiveOTo {
 
 
     private SixFiveOTo(byte[] prg, Map<Integer, String> symbols) {
+        executorService =
+            Executors.newScheduledThreadPool(2);
+
         AddressDecoder addressDecoder = new AddressDecoder();
 
         int programBase = ((int)prg[0]&0xff) + (((int)(prg[1])&0xff) << 8);
@@ -86,12 +88,6 @@ public class SixFiveOTo {
         addressDecoder.mapPoker(screen, 0x80, 0x83);
         addressDecoder.mapPeeker(screen, 0x80, 0x83);
 
-        /*for (int i = 0; i < 7; i++) {
-            Led led = Led.green();
-            via.setOutput(1,7-i, led);
-            screen.addDrawable(new Point(320+i*32,132), led);
-        }*/
-
         Gti gti = new Gti(16);
         resettables.add(gti);
         clockables.add(gti);
@@ -101,8 +97,8 @@ public class SixFiveOTo {
         via.setInput(0,7, gti.getSlaveOut()); // MISO
         via.setInput(1,7, gti.getSlaveReady()); // Slave Ready
         via.setInput(1,6, gti.getConnected()); // User connected
-        GtiTcpTerminal terminal = new GtiTcpTerminal(
-            Executors.newSingleThreadExecutor(),
+        GtiTcpTerminal terminal = new GtiTcpTerminal(executorService,
+
             gti::read, gti::write, gti::setConnected);
         clockables.add(terminal);
         try {
@@ -201,8 +197,6 @@ public class SixFiveOTo {
 
     private void start() {
         reset();
-        executorService =
-            Executors.newSingleThreadScheduledExecutor();
 
         KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher((event) -> {
             if (event.getID() == KeyEvent.KEY_RELEASED) {

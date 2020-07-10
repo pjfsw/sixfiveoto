@@ -1,15 +1,13 @@
 package com.pjfsw.sixfiveoto.gti;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Queue;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -17,11 +15,13 @@ import java.util.function.Supplier;
 import com.pjfsw.sixfiveoto.addressables.Clockable;
 
 public class GtiTcpTerminal implements Clockable {
+    private static final int CAPACITY = 16384;
     private final ExecutorService executorService;
     private final Supplier<Integer> input;
     private final Function<Integer, Boolean> output;
-    private final AtomicReference<GtiTerminal> terminalReference = new AtomicReference<>(null);
     private final Consumer<Boolean> connectedConsumer;
+    private final Queue<Integer> toTerminal;
+    private final Queue<Integer> fromTerminal;
 
     public GtiTcpTerminal(
         ExecutorService executorService,
@@ -33,6 +33,8 @@ public class GtiTcpTerminal implements Clockable {
         this.input = input;
         this.output = output;
         this.connectedConsumer = connectedConsumer;
+        toTerminal = new ArrayBlockingQueue<>(CAPACITY);
+        fromTerminal = new ArrayBlockingQueue<>(CAPACITY);
     }
 
     private static void sleep(int ms) {
@@ -46,22 +48,26 @@ public class GtiTcpTerminal implements Clockable {
     public void start() throws IOException {
         executorService.submit(() -> {
             try (ServerSocket serverSocket = new ServerSocket(4000)) {
-                System.out.println("DERPES");
-                while (terminalReference.get() == null) {
-                    System.out.println("Waiting for connection");
-                    try (Socket socket = serverSocket.accept();
-                        InputStream is = socket.getInputStream();
-                        OutputStream os = socket.getOutputStream()) {
-                        GtiTerminal terminal = new GtiTerminal(input, output, is, os);
-                        terminalReference.set(terminal);
-                        while (terminalReference.get() != null) {
-                            sleep(1000);
+                System.out.println("Waiting for connection");
+                try (Socket socket = serverSocket.accept();
+                    InputStream is = socket.getInputStream();
+                    OutputStream os = socket.getOutputStream()) {
+                    connectedConsumer.accept(true);
+                    GtiTerminal terminal = new GtiTerminal(
+                        toTerminal::poll,
+                        fromTerminal::offer,
+                        is, os);
+                    while (!terminal.isClosed()) {
+                        for (int i = 0; i < 1000; i++) {
+                            terminal.poll();
                         }
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                        sleep(16);
                     }
+                } catch (IOException e) {
+                    e.printStackTrace();
                     sleep(1000);
                 }
+                connectedConsumer.accept(false);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -70,16 +76,16 @@ public class GtiTcpTerminal implements Clockable {
 
     @Override
     public void next(final int cycles) {
-        GtiTerminal terminal = this.terminalReference.get();
-        try {
-            if (terminal != null) {
-                connectedConsumer.accept(true);
-                terminal.poll();
+        if (toTerminal.size() < CAPACITY) {
+            int v = input.get();
+            if (v != -1) {
+                toTerminal.offer(v);
             }
-        } catch (IOException e) {
-            connectedConsumer.accept(false);
-            e.printStackTrace();
-            this.terminalReference.set(null);
+        }
+        Integer v = fromTerminal.poll();
+        if (v != null) {
+            output.apply(v);
         }
     }
+
 }

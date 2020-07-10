@@ -13,29 +13,51 @@ public class GtiTerminal {
     private final OutputStream os;
     private int nextByteToCpu = -1;
     private int nextByteToUser = -1;
+    private volatile boolean closed = false;
 
     public GtiTerminal(Supplier<Integer> input, Function<Integer,Boolean> output, InputStream is, OutputStream os) {
         this.input = input;
         this.output = output;
         this.is = is;
         this.os = os;
+        this.closed = false;
     }
 
-    public void poll() throws IOException {
-        if (nextByteToCpu == -1) {
-            if (is.available() > 0) {
-                nextByteToCpu = is.read();
+    private static int getNonNull(Integer integer) {
+        if (integer == null) {
+            return -1;
+        } else {
+            return integer;
+        }
+    }
+
+    public void poll() {
+        if (closed) {
+            return;
+        }
+        try {
+            if (nextByteToCpu == -1) {
+                if (is.available() > 0) {
+                    nextByteToCpu = is.read();
+                }
             }
+            if (nextByteToCpu != -1 && output.apply(nextByteToCpu)) {
+                nextByteToCpu = -1;
+            }
+            if (nextByteToUser == -1) {
+                nextByteToUser = getNonNull(input.get());
+            }
+            if (nextByteToUser != -1) {
+                os.write(nextByteToUser);
+                nextByteToUser = -1;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            closed = true;
         }
-        if (nextByteToCpu != -1 && output.apply(nextByteToCpu)) {
-            nextByteToCpu = -1;
-        }
-        if (nextByteToUser == -1) {
-            nextByteToUser = input.get();
-        }
-        if (nextByteToUser != -1) {
-            os.write(nextByteToUser);
-            nextByteToUser = -1;
-        }
+    }
+
+    public boolean isClosed() {
+        return closed;
     }
 }

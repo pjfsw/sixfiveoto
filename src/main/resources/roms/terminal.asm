@@ -1,4 +1,5 @@
 .cpu _65c02
+.encoding "ascii"
 
 .label VIA = $D000
 .label PORTB = VIA
@@ -16,6 +17,8 @@
 .const WRITE_1 = $40
 .const WRITE_0 = $00
 
+.label TEXTPTR = $01
+
 //        via.setOutput(0,0, gti.getClockIn()); // SPI Clock
 //        via.setOutput(0,2, gti.getSlaveSelect()); // Slave Select
 //        via.setOutput(0,6, gti.getSlaveIn()); // MOSI
@@ -27,23 +30,41 @@
     lda #A_OUTPUTS
     sta DDRA
 
+    jsr resetText
+
 derpes:
     lda #CLOCK0_SELECT
     sta PORTA
 
-    lda #'X'
+    jsr nextLetter
     jsr exchangeByte
 
     lda #CLOCK0_IDLE
     sta PORTA
 
-!:
-    lda $8000
-    beq !-
-
     jmp derpes
 
+nextLetter:
+    inc TEXTPTR
+    bne !+
+    inc TEXTPTR+1
+!:
+    lda.z (TEXTPTR)
+    bne !+
 
+resetText:
+    lda #<(text)
+    sta TEXTPTR
+    lda #>(text)
+    sta TEXTPTR+1
+    lda.z (TEXTPTR)
+!:
+    rts
+
+.align $100
+text:
+    .text "Derpes"
+    .byte 13,10,0
 // * CPU flow:
 // * Clock = 0
 // * Slave select = 0

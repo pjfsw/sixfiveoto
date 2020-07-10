@@ -52,6 +52,7 @@ public class Gti implements Clockable, Resettable {
     boolean in = false;
     boolean clock = false;
     boolean selected = false;
+    boolean connected = false;
     private final Queue<Integer> toWorld;
     private final Queue<Integer> toCpu;
     int toCpuByte = 0;
@@ -83,7 +84,11 @@ public class Gti implements Clockable, Resettable {
             out = (toCpuByte & (1 << bitPosition)) != 0;
             ready = true;
             position++;
-        } else if (!clock) {
+        }
+        if (!connected) {
+            toWorld.clear();
+        }
+        if (!clock) {
             ready = toWorld.size() == capacity;
         }
         internalClock = clock;
@@ -142,6 +147,14 @@ public class Gti implements Clockable, Resettable {
 
     public Consumer<Boolean> getSlaveSelect() {
         return (select) -> this.selected = !select; // active low
+    }
+
+    public Supplier<Boolean> getConnected() {
+        return () -> connected;
+    }
+
+    public void setConnected(boolean connected) {
+        this.connected = connected;
     }
 
 }

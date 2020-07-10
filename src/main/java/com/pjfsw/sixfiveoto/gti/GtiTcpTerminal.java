@@ -10,6 +10,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -20,11 +21,18 @@ public class GtiTcpTerminal implements Clockable {
     private final Supplier<Integer> input;
     private final Function<Integer, Boolean> output;
     private final AtomicReference<GtiTerminal> terminalReference = new AtomicReference<>(null);
+    private final Consumer<Boolean> connectedConsumer;
 
-    GtiTcpTerminal(ExecutorService executorService, Supplier<Integer> input, Function<Integer,Boolean> output) {
+    public GtiTcpTerminal(
+        ExecutorService executorService,
+        Supplier<Integer> input,
+        Function<Integer,Boolean> output,
+        Consumer<Boolean> connectedConsumer
+    ) {
         this.executorService = executorService;
         this.input = input;
         this.output = output;
+        this.connectedConsumer = connectedConsumer;
     }
 
     private static void sleep(int ms) {
@@ -65,9 +73,11 @@ public class GtiTcpTerminal implements Clockable {
         GtiTerminal terminal = this.terminalReference.get();
         try {
             if (terminal != null) {
+                connectedConsumer.accept(true);
                 terminal.poll();
             }
         } catch (IOException e) {
+            connectedConsumer.accept(false);
             e.printStackTrace();
             this.terminalReference.set(null);
         }

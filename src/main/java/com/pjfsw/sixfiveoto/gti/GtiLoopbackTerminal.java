@@ -10,7 +10,8 @@ public class GtiLoopbackTerminal implements Function<Integer, Boolean>, Supplier
     private Integer value;
 
     public void run() throws IOException {
-        GtiTcpTerminal terminal = new GtiTcpTerminal(Executors.newSingleThreadExecutor(), this, this);
+        GtiTcpTerminal terminal = new GtiTcpTerminal(Executors.newSingleThreadExecutor(), this, this,
+            (connected)->{});
         terminal.start();
         while(true) {
             terminal.next(1);

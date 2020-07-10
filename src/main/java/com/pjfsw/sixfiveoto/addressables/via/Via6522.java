@@ -7,10 +7,6 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 import com.pjfsw.sixfiveoto.addressables.Clockable;
 import com.pjfsw.sixfiveoto.addressables.Drawable;
@@ -39,24 +35,18 @@ public class Via6522 implements Peeker, Poker, Drawable, Resettable, Clockable {
     private int porta;
     private int portb;
     private final int[] registers = new int[16];
-    private final List<Supplier<Boolean>> inputs = new ArrayList<>();
-    private final List<Consumer<Boolean>> outputs = new ArrayList<>();
+    private final Pin[] pins = new Pin[16];
 
 
     public Via6522() {
         img = new BufferedImage(36,6, TYPE_INT_ARGB);
         for (int i = 0; i < 16; i++) {
-            inputs.add(()-> false );
-            outputs.add((level)->{});
+            pins[i] = new Pin();
         }
     }
 
-    public void setInput(int port, int pin, Supplier<Boolean> input) {
-        inputs.set((port & 1) * 8 + (pin%8), input);
-    }
-
-    public void setOutput(int port, int pin, Consumer<Boolean> output) {
-        outputs.set((port & 1) * 8 + (pin%8), output);
+    public void setPin(int port, int pinNumber, Pin pin) {
+        pins[(port & 1) * 8 + (pinNumber % 8)] = pin;
     }
 
     public void reset() {
@@ -99,14 +89,14 @@ public class Via6522 implements Peeker, Poker, Drawable, Resettable, Clockable {
         for (int i = offset; i < offset+8; i++) {
             int mask = 1 << (i%8);
             if ((ddr & mask) == 0) {
-                if (inputs.get(i).get()) {
+                if (pins[i].value) {
                     port |= mask;
                 } else {
                     int maskb = mask ^ 0xFF;
                     port &= maskb;
                 }
             } else {
-               outputs.get(i).accept((port & mask) != 0);
+               pins[i].value = (port & mask) != 0;
             }
         }
         return port;

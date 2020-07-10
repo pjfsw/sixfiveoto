@@ -2,11 +2,10 @@ package com.pjfsw.sixfiveoto.gti;
 
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 import com.pjfsw.sixfiveoto.addressables.Clockable;
 import com.pjfsw.sixfiveoto.addressables.Resettable;
+import com.pjfsw.sixfiveoto.addressables.via.Pin;
 
 /**
  * Generic Transfer Interface
@@ -47,12 +46,13 @@ import com.pjfsw.sixfiveoto.addressables.Resettable;
  */
 public class Gti implements Clockable, Resettable {
     private final int capacity;
-    boolean out = false;
-    boolean ready = false;
-    boolean in = false;
-    boolean clock = false;
-    boolean selected = false;
-    boolean connected = false;
+    Pin out = new Pin();
+    Pin ready = new Pin();
+    Pin in = new Pin();
+    Pin clock = new Pin();
+    Pin notSelected = new Pin();
+    Pin connected = new Pin();
+
     private final Queue<Integer> toWorld;
     private final Queue<Integer> toCpu;
     int toCpuByte = 0;
@@ -69,29 +69,29 @@ public class Gti implements Clockable, Resettable {
 
     @Override
     public void next(final int cycles) {
-        if (!selected) {
+        if (notSelected.value) {
             resetState();
         } else if (position == 8) {
             toWorld.offer(toWorldByte);
             position = 0;
             bytePosition++;
-        } else if (clock && !internalClock) {
+        } else if (clock.value && !internalClock) {
             int bitPosition = 7-position; // MSB first
-            toWorldByte |= (in ? 1 : 0) << bitPosition; // MSB first
+            toWorldByte |= (in.value ? 1 : 0) << bitPosition; // MSB first
             if (position == 0) {
                 toCpuByte = getNextToCpuByte();
             }
-            out = (toCpuByte & (1 << bitPosition)) != 0;
-            ready = true;
+            out.value = (toCpuByte & (1 << bitPosition)) != 0;
+            ready.value = true;
             position++;
         }
-        if (!connected) {
+        if (!connected.value) {
             toWorld.clear();
         }
-        if (!clock) {
-            ready = toWorld.size() == capacity;
+        if (!clock.value) {
+            ready.value = toWorld.size() == capacity;
         }
-        internalClock = clock;
+        internalClock = clock.value;
     }
 
     private int getNextToCpuByte() {
@@ -120,8 +120,8 @@ public class Gti implements Clockable, Resettable {
     }
 
     private void resetState() {
-        out = false;
-        ready = false;
+        out.value = false;
+        ready.value = false;
         position = 0;
         toCpuByte = 0;
         toWorldByte = 0;
@@ -129,32 +129,32 @@ public class Gti implements Clockable, Resettable {
         bytePosition = 0;
     }
 
-    public Supplier<Boolean> getSlaveOut() {
-        return () -> out;
+    public Pin getSlaveOut() {
+        return out;
     }
 
-    public Supplier<Boolean> getSlaveReady() {
-        return () -> ready;
+    public Pin getSlaveReady() {
+        return ready;
     }
 
-    public Consumer<Boolean> getClockIn() {
-        return (clock) -> this.clock = clock;
+    public Pin getClockIn() {
+        return clock;
     }
 
-    public Consumer<Boolean> getSlaveIn() {
-        return (data) -> this.in = data;
+    public Pin getSlaveIn() {
+        return in;
     }
 
-    public Consumer<Boolean> getSlaveSelect() {
-        return (select) -> this.selected = !select; // active low
+    public Pin getSlaveSelect() {
+        return notSelected;
     }
 
-    public Supplier<Boolean> getConnected() {
-        return () -> connected;
+    public Pin getConnected() {
+        return connected;
     }
 
     public void setConnected(boolean connected) {
-        this.connected = connected;
+        this.connected.value = connected;
     }
 
 }

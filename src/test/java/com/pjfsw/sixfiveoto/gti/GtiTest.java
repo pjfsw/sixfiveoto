@@ -25,18 +25,18 @@ import org.junit.jupiter.api.Test;
 public class GtiTest {
     private int exchangeBytes(Gti gti, int fromCpu) {
         int actual = 0;
-        gti.getClockIn().accept(false);
-        gti.getSlaveSelect().accept(false);
+        gti.getClockIn().value = false;
+        gti.getSlaveSelect().value = false;
         for (int i = 0; i < 8; i++) {
             gti.next(1);
             int bitPosition = 7-i;
-            assertFalse(gti.getSlaveReady().get());
-            gti.getSlaveIn().accept((fromCpu & (1 << bitPosition)) != 0);
-            gti.getClockIn().accept(true);
+            assertFalse(gti.getSlaveReady().value);
+            gti.getSlaveIn().value =((fromCpu & (1 << bitPosition)) != 0);
+            gti.getClockIn().value = true;
             gti.next(1);
-            assertTrue(gti.getSlaveReady().get());
-            actual |= (gti.getSlaveOut().get() ? 1 : 0) << bitPosition;
-            gti.getClockIn().accept(false);
+            assertTrue(gti.getSlaveReady().value);
+            actual |= (gti.getSlaveOut().value ? 1 : 0) << bitPosition;
+            gti.getClockIn().value = false;
         }
         gti.next(1);
         return actual;
@@ -65,10 +65,10 @@ public class GtiTest {
         assertEquals(-1, gti.read());
         assertEquals(1, exchangeBytes(gti, fromCpuExpected));
         assertEquals(toCpuExpected, exchangeBytes(gti, fromCpuExpected));
-        assertTrue(gti.getSlaveReady().get());
+        assertTrue(gti.getSlaveReady().value);
         assertEquals(fromCpuExpected, gti.read());
         gti.next(1);
-        assertFalse(gti.getSlaveReady().get());
+        assertFalse(gti.getSlaveReady().value);
     }
 
     @Test
@@ -76,8 +76,8 @@ public class GtiTest {
         Gti gti = new Gti(1);
         assertEquals(-1, gti.read());
         exchangeBytes(gti, 17);
-        assertFalse(gti.getSlaveReady().get());
+        assertFalse(gti.getSlaveReady().value);
         exchangeBytes(gti, 17);
-        assertFalse(gti.getSlaveReady().get());
+        assertFalse(gti.getSlaveReady().value);
     }
 }

@@ -91,12 +91,12 @@ public class SixFiveOTo {
         Gti gti = new Gti(16);
         resettables.add(gti);
         clockables.add(gti);
-        via.setOutput(0,0, gti.getClockIn()); // SPI Clock
-        via.setOutput(0,2, gti.getSlaveSelect()); // Slave Select
-        via.setOutput(0,6, gti.getSlaveIn()); // MOSI
-        via.setInput(0,7, gti.getSlaveOut()); // MISO
-        via.setInput(1,7, gti.getSlaveReady()); // Slave Ready
-        via.setInput(1,6, gti.getConnected()); // User connected
+        via.setPin(0,0, gti.getClockIn()); // SPI Clock
+        via.setPin(0,2, gti.getSlaveSelect()); // Slave Select
+        via.setPin(0,6, gti.getSlaveIn()); // MOSI
+        via.setPin(0,7, gti.getSlaveOut()); // MISO
+        via.setPin(1,7, gti.getSlaveReady()); // Slave Ready
+        via.setPin(1,6, gti.getConnected()); // User connected
         GtiTcpTerminal terminal = new GtiTcpTerminal(executorService,
 
             gti::read, gti::write, gti::setConnected);
@@ -107,9 +107,9 @@ public class SixFiveOTo {
             e.printStackTrace();
         }
 
-        Switch aSwitch = new Switch();
+        /*Switch aSwitch = new Switch();
         buttons.put(KeyEvent.VK_W, aSwitch);
-        via.setInput(1,0, aSwitch);
+        via.setPin(1,0, aSwitch);*/
 
         /**
          * RAM 0x0000 - 0x7FFF

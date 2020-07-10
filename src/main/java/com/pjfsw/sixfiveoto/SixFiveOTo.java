@@ -29,6 +29,7 @@ import com.pjfsw.sixfiveoto.addressables.Resettable;
 import com.pjfsw.sixfiveoto.addressables.RomVectors;
 import com.pjfsw.sixfiveoto.addressables.Screen;
 import com.pjfsw.sixfiveoto.addressables.via.Via6522;
+import com.pjfsw.sixfiveoto.gti.Gti;
 import com.pjfsw.sixfiveoto.peripherals.Switch;
 import com.pjfsw.sixfiveoto.peripherals.Led;
 import com.pjfsw.sixfiveoto.registers.Registers;
@@ -83,14 +84,21 @@ public class SixFiveOTo {
         addressDecoder.mapPoker(screen, 0x80, 0x83);
         addressDecoder.mapPeeker(screen, 0x80, 0x83);
 
-        for (int i = 0; i < 8; i++) {
+        for (int i = 0; i < 7; i++) {
             Led led = Led.green();
-            via.setOutput(0,7-i, led);
-            screen.addDrawable(new Point(320+i*32,100), led);
-            led = Led.green();
             via.setOutput(1,7-i, led);
             screen.addDrawable(new Point(320+i*32,132), led);
         }
+
+        Gti gti = new Gti(16);
+        resettables.add(gti);
+        clockables.add(gti);
+        via.setOutput(0,0, gti.getClockIn()); // SPI Clock
+        via.setOutput(0,2, gti.getSlaveSelect()); // Slave Select
+        via.setOutput(0,6, gti.getSlaveIn()); // MOSI
+        via.setInput(0,7, gti.getSlaveOut()); // MISO
+        via.setInput(1,7, gti.getSlaveReady()); // Slave Ready
+
 
         Switch aSwitch = new Switch();
         buttons.put(KeyEvent.VK_W, aSwitch);

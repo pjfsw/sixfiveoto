@@ -48,7 +48,7 @@ public class SixFiveOTo {
     private final ScheduledExecutorService executorService;
     private int frameCycleCount;
 
-    private final int clockSpeedHz = 14_000_000;
+    private final int clockSpeedHz = 1_000_000;
 
     private final int screenRefreshRate = 60;
     private final int refreshMultiplier = 10;
@@ -88,7 +88,7 @@ public class SixFiveOTo {
         addressDecoder.mapPoker(screen, 0x80, 0x83);
         addressDecoder.mapPeeker(screen, 0x80, 0x83);
 
-        Gti gti = new Gti(16);
+        Gti gti = new Gti(80);
         resettables.add(gti);
         clockables.add(gti);
         via.setPin(0,0, gti.getClockIn()); // SPI Clock

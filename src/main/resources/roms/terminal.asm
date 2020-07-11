@@ -18,6 +18,7 @@
 .const WRITE_0 = $00
 
 .label INPUT = $0200
+.label INPUTEND = INPUT + 20
 .label TEXTPTR = $01
 .label INPUTPTR = $03
 
@@ -51,7 +52,6 @@
 
     lda #CLOCK0_SELECT
     sta PORTA
-    jsr exchangeByte
     lda #10
     jsr exchangeByte
     lda #13
@@ -106,9 +106,15 @@ readInput:
     }
 
     lda #0
-    jmp !-
-!:
 
+    ldx #<INPUTEND
+    cpx INPUTPTR
+    bne !-
+    ldx #>INPUTEND
+    cpx INPUTPTR+1
+    bne !-
+
+!:
     lda #CLOCK0_IDLE
     sta PORTA
 

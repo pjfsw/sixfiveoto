@@ -8,7 +8,7 @@ public enum MnemonicFormatter {
     IMPLIED((mnemonic,pc, argument, symbols)->
         mnemonic),
     IMMEDIATE((mnemonic, pc, argument, symbols)->
-        String.format("%s #$%02X", mnemonic, argument & 0xF)),
+        String.format("%s #$%02X", mnemonic, argument & 0xFF)),
     ABSOLUTE((mnemonic, pc, address, symbols)->
         String.format("%s %s", mnemonic,
             symbols.getOrDefault(address, String.format("$%04X", address)))),
@@ -20,22 +20,22 @@ public enum MnemonicFormatter {
             symbols.getOrDefault(address, String.format("$%04X,Y", address)))),
     ZEROPAGE((mnemonic, pc, address, symbols)->
         String.format("%s %s", mnemonic,
-            symbols.getOrDefault(address, String.format("$%02X", address & 0xF)))),
+            symbols.getOrDefault(address, String.format("$%02X", address & 0xFF)))),
     ZEROPAGE_INDEXED_X((mnemonic, pc, address, symbols)->
         String.format("%s %s", mnemonic,
-            symbols.getOrDefault(address, String.format("$%02X,X", address & 0xF)))),
+            symbols.getOrDefault(address, String.format("$%02X,X", address & 0xFF)))),
     ZEROPAGE_INDEXED_Y((mnemonic, pc, address, symbols)->
         String.format("%s %s", mnemonic,
-            symbols.getOrDefault(address, String.format("$%02X,Y", address & 0xF)))),
+            symbols.getOrDefault(address, String.format("$%02X,Y", address & 0xFF)))),
     INDEXED_INDIRECT((mnemonic, pc, address, symbols)->
         String.format("%s %s", mnemonic,
-            symbols.getOrDefault(address, String.format("($%02X,X)", address & 0xF)))),
+            symbols.getOrDefault(address, String.format("($%02X,X)", address & 0xFF)))),
     INDIRECT_INDEXED((mnemonic, pc, address, symbols)->
         String.format("%s %s", mnemonic,
-            symbols.getOrDefault(address, String.format("($%02X),Y", address & 0xF)))),
+            symbols.getOrDefault(address, String.format("($%02X),Y", address & 0xFF)))),
     INDIRECT((mnemonic, pc, address, symbols)->
         String.format("%s %s", mnemonic,
-            symbols.getOrDefault(address, String.format("($%02X)", address & 0xF)))),
+            symbols.getOrDefault(address, String.format("($%02X)", address & 0xFF)))),
     INDIRECT_ADDRESS((mnemonic, pc, address, symbols)->
         String.format("%s %s", mnemonic,
             symbols.getOrDefault(address, String.format("($%04X)", address)))),

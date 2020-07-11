@@ -17,7 +17,10 @@
 .const WRITE_1 = $40
 .const WRITE_0 = $00
 
+.label INPUT = $0200
 .label TEXTPTR = $01
+.label INPUTPTR = $03
+
 
 //        via.setOutput(0,0, gti.getClockIn()); // SPI Clock
 //        via.setOutput(0,2, gti.getSlaveSelect()); // Slave Select
@@ -30,41 +33,101 @@
     lda #A_OUTPUTS
     sta DDRA
 
-    jsr resetText
+!:
+    jsr readInput
 
-derpes:
+    lda #<text
+    sta TEXTPTR
+    lda #>text
+    sta TEXTPTR+1
+
+    jsr writeText
+
+    lda #<INPUT
+    sta TEXTPTR
+    lda #>INPUT
+    sta TEXTPTR+1
+    jsr writeText
+
+    lda #CLOCK0_SELECT
+    sta PORTA
+    jsr exchangeByte
+    lda #10
+    jsr exchangeByte
+    lda #13
+    jsr exchangeByte
+    lda #CLOCK0_IDLE
+    sta PORTA
+
+
+    jmp !-
+
+writeText:
     lda #CLOCK0_SELECT
     sta PORTA
 
-    jsr nextLetter
+!:
+    lda.z (TEXTPTR)
+    beq !+
     jsr exchangeByte
+
+    inc TEXTPTR
+    bne !-
+    inc TEXTPTR+1
+    jmp !-
+!:
+    lda #CLOCK0_IDLE
+    sta PORTA
+    rts
+
+readInput:
+    lda #<INPUT
+    sta INPUTPTR
+    lda #>INPUT
+    sta INPUTPTR+1
+
+    lda #CLOCK0_SELECT
+    sta PORTA
+
+    lda #'?'
+!:
+    jsr exchangeByte
+
+    cmp #13
+    beq !+
+
+    // Only store ASCII >= 32
+    {
+        cmp #32
+        bcc !+
+
+        jsr storeCharacter
+    !:
+    }
+
+    lda #0
+    jmp !-
+!:
 
     lda #CLOCK0_IDLE
     sta PORTA
 
-    jmp derpes
+    lda #0
+    jsr storeCharacter
+    rts
 
-nextLetter:
-    inc TEXTPTR
+storeCharacter:
+    sta (INPUTPTR)
+    inc INPUTPTR
     bne !+
-    inc TEXTPTR+1
-!:
-    lda.z (TEXTPTR)
-    bne !+
-
-resetText:
-    lda #<(text)
-    sta TEXTPTR
-    lda #>(text)
-    sta TEXTPTR+1
-    lda.z (TEXTPTR)
+    inc INPUTPTR+1
 !:
     rts
 
 .align $100
 text:
-    .text "Hello world from 6502!"
-    .byte 13,10,0
+    .text "Your message is: "
+    .byte 0
 // * CPU flow:
 // * Clock = 0
 // * Slave select = 0
@@ -97,6 +160,8 @@ exchangeByte:
     !:                  // Wait slave ready = 1
         bit PORTB
         bpl !-
+
+        and #$FE
 
         bit PORTA
         bpl !+

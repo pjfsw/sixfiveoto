@@ -30,35 +30,23 @@ import com.pjfsw.sixfiveoto.addressables.via.Pin;
  *
  * Set Slave Select=1
  *
- * Example: Simple terminal bi directional transfer
- *
- * Master  Slave
- * XX      YY        Master has XX bytes to send, slave has YY bytes to send*
- * bn      bn        Exchange bytes, either end write 00 when no more to send
- *
- * Alternative: us ascii optimized bi directional transfer
- *
- * Master       Slave
- * nxxx xxxx    nyyy yyyy    n=0 x/y contains the 7-bit value to send
- *                           n=1 x/y bytes to send
- * bbbb bbbb    bbbb bbbb    if n=1 exchange remaining bytes, write 00 when no more to send
+ * A value of 0 means no data - TODO escaping
  *
  */
 public class Gti implements Clockable, Resettable {
     private final int capacity;
-    Pin out = new Pin();
-    Pin ready = new Pin();
-    Pin in = new Pin();
-    Pin clock = new Pin();
-    Pin notSelected = new Pin();
-    Pin connected = new Pin();
+    private final Pin out = new Pin();
+    private final Pin ready = new Pin();
+    private final Pin in = new Pin();
+    private final Pin clock = new Pin();
+    private final Pin notSelected = new Pin();
+    private final Pin connected = new Pin();
 
     private final Queue<Integer> toWorld;
     private final Queue<Integer> toCpu;
     int toCpuByte = 0;
     int toWorldByte = 0;
     int position = 0 ;
-    int bytePosition = 0 ;
     boolean internalClock = false;
 
     public Gti(int capacity) {
@@ -72,9 +60,11 @@ public class Gti implements Clockable, Resettable {
         if (notSelected.value) {
             resetState();
         } else if (position == 8) {
-            toWorld.offer(toWorldByte);
+            if (toWorldByte > 0) {
+                toWorld.offer(toWorldByte);
+                toWorldByte = 0;
+            }
             position = 0;
-            bytePosition++;
         } else if (clock.value && !internalClock) {
             int bitPosition = 7-position; // MSB first
             toWorldByte |= (in.value ? 1 : 0) << bitPosition; // MSB first
@@ -95,12 +85,8 @@ public class Gti implements Clockable, Resettable {
     }
 
     private int getNextToCpuByte() {
-        if (bytePosition == 0) {
-            return toCpu.size();
-        } else {
-            Integer value = toCpu.poll();
-            return (value != null) ? value : 0;
-        }
+        Integer value = toCpu.poll();
+        return (value != null) ? value : 0;
     }
 
     public int read() {
@@ -116,7 +102,6 @@ public class Gti implements Clockable, Resettable {
     public void reset() {
         resetState();
         toWorld.clear();
-        toCpu.clear();
     }
 
     private void resetState() {
@@ -126,7 +111,7 @@ public class Gti implements Clockable, Resettable {
         toCpuByte = 0;
         toWorldByte = 0;
         internalClock = false;
-        bytePosition = 0;
+        toCpu.clear();  // Don't care about input when not selected
     }
 
     public Pin getSlaveOut() {

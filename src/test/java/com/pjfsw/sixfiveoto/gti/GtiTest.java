@@ -46,11 +46,10 @@ public class GtiTest {
     public void test() {
         int toCpuExpected = 0x5e;
         int fromCpuExpected = 0xa5;
-        Gti gti = new Gti(2);
+        Gti gti = new Gti(1);
         gti.setConnected(true);
         assertTrue(gti.write(toCpuExpected));
         assertEquals(-1, gti.read());
-        assertEquals(1, exchangeBytes(gti, fromCpuExpected));
         assertEquals(toCpuExpected, exchangeBytes(gti, fromCpuExpected));
         assertEquals(fromCpuExpected, gti.read());
     }
@@ -59,11 +58,10 @@ public class GtiTest {
     public void testQueueFull() {
         int toCpuExpected = 0x5e;
         int fromCpuExpected = 0xa5;
-        Gti gti = new Gti(2);
+        Gti gti = new Gti(1);
         gti.setConnected(true);
         assertTrue(gti.write(toCpuExpected));
         assertEquals(-1, gti.read());
-        assertEquals(1, exchangeBytes(gti, fromCpuExpected));
         assertEquals(toCpuExpected, exchangeBytes(gti, fromCpuExpected));
         assertTrue(gti.getSlaveReady().value);
         assertEquals(fromCpuExpected, gti.read());

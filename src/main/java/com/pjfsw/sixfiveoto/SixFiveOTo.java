@@ -259,34 +259,40 @@ public class SixFiveOTo {
     }
 
     public static void main(String[] args) {
-        if (args.length < 1) {
+        String prgName = "";
+
+        for (String arg : args) {
+            if (arg.toLowerCase().endsWith(".asm")) {
+                try {
+                    String assembler = System.getProperty("assembler");
+                    if (assembler == null) {
+                        System.out.println("Cannot assemble on the fly as 'assembler' property is not defined!");
+                        System.out.println("Use Java property -D\"java -jar /path/to/KickAssembler/KickAss.jar\"");
+                        System.out.println("Send a .PRG file as argument to launch emulator directly");
+                        System.exit(1);
+                    }
+                    prgName = compileSource(assembler, arg);
+                    if (prgName == null) {
+                        System.err.println("Terminating because of compilation failure");
+                        System.exit(1);
+                    }
+                } catch (InterruptedException | IOException e) {
+                    e.printStackTrace();
+                    System.exit(1);
+                }
+            } else if (arg.toLowerCase().endsWith(".prg")) {
+                prgName = arg;
+            }
+        }
+
+        if (prgName.isEmpty()) {
             System.err.println("Specify .prg or .asm file to load");
             System.exit(1);
         }
 
-        String filename = args[0];
-        if (filename.toLowerCase().endsWith(".asm")) {
-            try {
-                String assembler = System.getProperty("assembler");
-                if (assembler == null) {
-                    System.out.println("Cannot assemble on the fly as 'assembler' property is not defined!");
-                    System.out.println("Use Java property -D\"java -jar /path/to/KickAssembler/KickAss.jar\"");
-                    System.out.println("Send a .PRG file as argument to launch emulator directly");
-                    System.exit(1);
-                }
-                filename = compileSource(assembler, filename);
-                if (filename == null) {
-                    System.err.println("Terminating because of compilation failure");
-                    System.exit(1);
-                }
-            } catch (InterruptedException | IOException e) {
-                e.printStackTrace();
-                System.exit(1);
-            }
-        }
         try {
-            byte[] bytes = Files.readAllBytes(new File(filename).toPath());
-            File symbolFile = new File(filename.replace(".prg", ".sym"));
+            byte[] bytes = Files.readAllBytes(new File(prgName).toPath());
+            File symbolFile = new File(prgName.replace(".prg", ".sym"));
             Map<Integer, String> symbolMap = new HashMap<>();
             if (symbolFile.isFile()) {
                 List<String> symbols =
@@ -305,12 +311,10 @@ public class SixFiveOTo {
                     }
                 }
 
+                new SixFiveOTo(bytes, symbolMap).start();
             }
-
-            new SixFiveOTo(bytes, symbolMap).start();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-
 }

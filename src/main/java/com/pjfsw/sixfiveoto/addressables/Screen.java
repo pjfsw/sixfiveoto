@@ -19,9 +19,9 @@ import javax.swing.JFrame;
 import javax.swing.WindowConstants;
 
 public class Screen implements Poker, Peeker {
-    private static final int W = 640;
-    private static final int H = 480;
-    private final PixelFrame pixelComponent;
+    public static final int W = 816;
+    public static final int H = 720;
+    //private final PixelFrame pixelComponent;
     private final JFrame frame;
     private final BufferStrategy strategy;
     private int frameCounter;
@@ -37,8 +37,8 @@ public class Screen implements Poker, Peeker {
         frame = new JFrame(gc);
         frame.setPreferredSize(new Dimension(W,H));
         int pixelSize = 256;
-        pixelComponent = new PixelFrame(pixelSize,pixelSize);
-        addDrawable(new Point(0,0), pixelComponent);
+        /*pixelComponent = new PixelFrame(pixelSize,pixelSize);
+        addDrawable(new Point(0,0), pixelComponent);*/
         frame.pack();
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.setVisible(true);
@@ -94,7 +94,7 @@ public class Screen implements Poker, Peeker {
 
     @Override
     public void poke(final int address, final int data) {
-        pixelComponent.poke(address,data);
+//        pixelComponent.poke(address,data);
     }
 
     public void draw(Graphics graphics) {

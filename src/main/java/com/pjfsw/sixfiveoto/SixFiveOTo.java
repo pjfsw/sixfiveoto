@@ -85,7 +85,7 @@ public class SixFiveOTo {
         addressDecoder.mapPoker(via, 0xD0, 0xD0);
         addressDecoder.mapPeeker(via, 0xD0, 0xD0);
         screen = new Screen();
-        screen.addDrawable(new Point(320,0), via);
+        screen.addDrawable(new Point(Screen.W - Via6522.W ,Gameduino.H+1), via);
         addressDecoder.mapPoker(screen, 0x80, 0x83);
         addressDecoder.mapPeeker(screen, 0x80, 0x83);
 
@@ -96,7 +96,7 @@ public class SixFiveOTo {
         via.setPin(0,7, spi.getSlaveOut());
         Gameduino gameduino = new Gameduino(spi);
         clockables.add(gameduino);
-        screen.addDrawable(new Point(320,288), gameduino);
+        screen.addDrawable(new Point((Screen.W - Gameduino.W)/2,1), gameduino);
 
 //        Gti gti = new Gti(80);
 //        resettables.add(gti);
@@ -130,7 +130,7 @@ public class SixFiveOTo {
         cpu = new Cpu(addressDecoder, registers, symbols);
 
         debugger = new Debugger(registers, symbols);
-        screen.addDrawable(new Point(0, 288), debugger);
+        screen.addDrawable(new Point((Screen.W - Gameduino.W)/2, Gameduino.H+1), debugger);
 
     }
 

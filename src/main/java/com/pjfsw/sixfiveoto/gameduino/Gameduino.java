@@ -1,12 +1,16 @@
 package com.pjfsw.sixfiveoto.gameduino;
 
+import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 
 import com.pjfsw.sixfiveoto.addressables.Clockable;
 import com.pjfsw.sixfiveoto.addressables.Drawable;
 import com.pjfsw.sixfiveoto.spi.Spi;
 
 public class Gameduino implements Drawable, Clockable {
+    public static final int W = 800;
+    public static final int H = 600;
     private final Spi spi;
     private boolean readMode;
     private int address;
@@ -46,6 +50,8 @@ public class Gameduino implements Drawable, Clockable {
 
     @Override
     public void draw(final Graphics graphics) {
-
+        Graphics2D g2 = (Graphics2D)graphics;
+        g2.setColor(Color.WHITE);
+        g2.drawRect(0,0,W,H);
     }
 }

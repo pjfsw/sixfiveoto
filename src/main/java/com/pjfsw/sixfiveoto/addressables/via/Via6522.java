@@ -15,6 +15,7 @@ import com.pjfsw.sixfiveoto.addressables.Poker;
 import com.pjfsw.sixfiveoto.addressables.Resettable;
 
 public class Via6522 implements Peeker, Poker, Drawable, Resettable, Clockable {
+    public static final int W = 320;
     private final BufferedImage img;
     private static final int COLOR_FULL = 0xEE000000;
     private static final int COLOR_DIM  = 0x44000000;
@@ -141,7 +142,7 @@ public class Via6522 implements Peeker, Poker, Drawable, Resettable, Clockable {
         }
 
         Graphics2D g2 = ((Graphics2D)graphics);
-        g2.drawImage(img, 0,24, 320, 36, null);
+        g2.drawImage(img, 0,24, W, 36, null);
         g2.setFont(new Font("Courier", Font.PLAIN, 16));
         g2.setColor(Color.WHITE);
         g2.drawString("VIA", 0,16);

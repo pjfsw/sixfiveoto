@@ -63,7 +63,7 @@ resetText:
 
 .align $100
 text:
-    .text "Derpes"
+    .text "Hello world from 6502!"
     .byte 13,10,0
 // * CPU flow:
 // * Clock = 0

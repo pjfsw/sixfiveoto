@@ -48,7 +48,7 @@ public class SixFiveOTo {
     private final ScheduledExecutorService executorService;
     private int frameCycleCount;
 
-    private final int clockSpeedHz = 20_000_000;
+    private final int clockSpeedHz = 14_000_000;
 
     private final int screenRefreshRate = 60;
     private final int refreshMultiplier = 10;
@@ -186,7 +186,7 @@ public class SixFiveOTo {
     }
 
     private void stepOne() {
-        int cycles = cpu.next();
+        int cycles = next();
         if (cycles == 0) {
             System.out.println("CPU Crash");
             reset();

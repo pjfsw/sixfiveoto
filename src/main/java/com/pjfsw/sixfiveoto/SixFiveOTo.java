@@ -29,11 +29,12 @@ import com.pjfsw.sixfiveoto.addressables.Resettable;
 import com.pjfsw.sixfiveoto.addressables.RomVectors;
 import com.pjfsw.sixfiveoto.addressables.Screen;
 import com.pjfsw.sixfiveoto.addressables.via.Via6522;
+import com.pjfsw.sixfiveoto.gameduino.Gameduino;
 import com.pjfsw.sixfiveoto.gti.Gti;
 import com.pjfsw.sixfiveoto.gti.GtiTcpTerminal;
 import com.pjfsw.sixfiveoto.peripherals.Switch;
-import com.pjfsw.sixfiveoto.peripherals.Led;
 import com.pjfsw.sixfiveoto.registers.Registers;
+import com.pjfsw.sixfiveoto.spi.Spi;
 
 public class SixFiveOTo {
     private final Cpu cpu;
@@ -88,24 +89,33 @@ public class SixFiveOTo {
         addressDecoder.mapPoker(screen, 0x80, 0x83);
         addressDecoder.mapPeeker(screen, 0x80, 0x83);
 
-        Gti gti = new Gti(80);
-        resettables.add(gti);
-        clockables.add(gti);
-        via.setPin(0,0, gti.getClockIn()); // SPI Clock
-        via.setPin(0,2, gti.getSlaveSelect()); // Slave Select
-        via.setPin(0,6, gti.getSlaveIn()); // MOSI
-        via.setPin(0,7, gti.getSlaveOut()); // MISO
-        via.setPin(1,7, gti.getSlaveReady()); // Slave Ready
-        via.setPin(1,6, gti.getConnected()); // User connected
-        GtiTcpTerminal terminal = new GtiTcpTerminal(executorService,
+        Spi spi = new Spi();
+        via.setPin(0,0, spi.getClock());
+        via.setPin(0,1, spi.getSlaveSelect());
+        via.setPin(0,6, spi.getSlaveIn());
+        via.setPin(0,7, spi.getSlaveOut());
+        Gameduino gameduino = new Gameduino(spi);
+        clockables.add(gameduino);
+        screen.addDrawable(new Point(320,288), gameduino);
 
-            gti::read, gti::write, gti::setConnected);
-        clockables.add(terminal);
-        try {
-            terminal.start();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//        Gti gti = new Gti(80);
+//        resettables.add(gti);
+//        clockables.add(gti);
+//        via.setPin(0,0, gti.getClockIn()); // SPI Clock
+//        via.setPin(0,2, gti.getSlaveSelect()); // Slave Select
+//        via.setPin(0,6, gti.getSlaveIn()); // MOSI
+//        via.setPin(0,7, gti.getSlaveOut()); // MISO
+//        via.setPin(1,7, gti.getSlaveReady()); // Slave Ready
+//        via.setPin(1,6, gti.getConnected()); // User connected
+//        GtiTcpTerminal terminal = new GtiTcpTerminal(executorService,
+//
+//            gti::read, gti::write, gti::setConnected);
+//        clockables.add(terminal);
+//        try {
+//            terminal.start();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
 
         /*Switch aSwitch = new Switch();
         buttons.put(KeyEvent.VK_W, aSwitch);

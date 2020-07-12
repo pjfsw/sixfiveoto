@@ -17,9 +17,11 @@ public class Gameduino implements Drawable, Clockable {
     private final int[] registers = new int[32768];
     private int lastPosition;
 
-    public Gameduino(Spi spi) {
+    public Gameduino(Spi spi, int[] memoryDump) {
         this.spi = spi;
-        registers[0x2800] = 0x6D;
+
+        System.arraycopy(memoryDump, 0, registers, 0, memoryDump.length);
+        //registers[0x2800] = 0x6D;
     }
 
     @Override

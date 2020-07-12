@@ -89,14 +89,23 @@ public class SixFiveOTo {
         addressDecoder.mapPoker(screen, 0x80, 0x83);
         addressDecoder.mapPeeker(screen, 0x80, 0x83);
 
-        Spi spi = new Spi();
-        via.setPin(0,0, spi.getClock());
-        via.setPin(0,1, spi.getSlaveSelect());
-        via.setPin(0,6, spi.getSlaveIn());
-        via.setPin(0,7, spi.getSlaveOut());
-        Gameduino gameduino = new Gameduino(spi);
-        clockables.add(gameduino);
-        screen.addDrawable(new Point((Screen.W - Gameduino.W)/2,1), gameduino);
+        try {
+
+            int[] dump = readDump("src/main/resources/dumps/gddump.txt");
+
+            Spi spi = new Spi();
+            via.setPin(0,0, spi.getClock());
+            via.setPin(0,1, spi.getSlaveSelect());
+            via.setPin(0,6, spi.getSlaveIn());
+            via.setPin(0,7, spi.getSlaveOut());
+
+            Gameduino gameduino = new Gameduino(spi, dump);
+            clockables.add(gameduino);
+            screen.addDrawable(new Point((Screen.W - Gameduino.W)/2,1), gameduino);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
 
 //        Gti gti = new Gti(80);
 //        resettables.add(gti);
@@ -131,6 +140,21 @@ public class SixFiveOTo {
 
         debugger = new Debugger(registers, symbols);
         screen.addDrawable(new Point((Screen.W - Gameduino.W)/2, Gameduino.H+1), debugger);
+
+    }
+
+    private static int[] readDump(String fileName) throws IOException {
+        List<Integer> dump = new ArrayList<Integer>();
+        List<String> lines = Files.readAllLines(
+            new File(fileName).toPath());
+        for (String line : lines) {
+            for (String number : line.split(",")) {
+                dump.add(Integer.parseInt(number.trim(), 16));
+            }
+        }
+
+        return dump.stream().mapToInt(i->i).toArray();
+
 
     }
 

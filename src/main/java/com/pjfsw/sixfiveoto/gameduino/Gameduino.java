@@ -28,6 +28,9 @@ public class Gameduino implements Drawable, Clockable {
 
     private static final int RAM_CHR = 0x1000;
     private static final int RAM_PAL = 0x2000;
+    private static final int RAM_SPR = 0x3000;
+    private static final int RAM_SPRPAL = 0x3800;
+    private static final int RAM_SPRIMG = 0x4000;
 
     private final Spi spi;
     private boolean readMode;
@@ -36,6 +39,7 @@ public class Gameduino implements Drawable, Clockable {
     private int lastPosition;
 
     private final BufferedImage[] ramChr = new BufferedImage[256];
+    private final BufferedImage[] spriteImages = new BufferedImage[256];
 
     private final int[] fiveBitColors = new int[32];
 
@@ -52,6 +56,7 @@ public class Gameduino implements Drawable, Clockable {
         // RAMCHR
         for (int i = 0; i < 256; i++) {
             createRamChr(i);
+            createSprite(i);
         }
     }
 
@@ -64,11 +69,74 @@ public class Gameduino implements Drawable, Clockable {
                 int bitPos = (3-(x%4))*2; // 6, 4, 2, 0
                 int bitMask = (1 << (bitPos+1)) | (1 << bitPos); // 192, 48, 12, 3
                 int colorIndex = (charData & bitMask) >> bitPos;
-                int paletteOffset = RAM_PAL + i * 8 + colorIndex * 2;
-                int lsbValue = registers[paletteOffset];
-                int msbValue = registers[paletteOffset+1];
-                int colorValue = (msbValue << 8) | lsbValue;
-                ramChr[i].setRGB(x,y, palToRGB(colorValue));
+                int colorValue = getColorRegisterValue(RAM_PAL + i * 8 + colorIndex * 2);
+                ramChr[i].setRGB(x,y, colorValue);
+            }
+        }
+    }
+
+    private static int get8BitPalette(long controlData) {
+        if ((controlData & 0xC000) == 0) {
+            return (int)((controlData >> 12) & 3);
+        } else {
+            return -1;
+        }
+    }
+
+    private static int get4BitPalette(long controlData) {
+        if ((controlData & 0xC000) == 0x4000) {
+            return (int)((controlData >> 12) & 1);
+        } else {
+            return -1;
+        }
+    }
+
+    private static int get2BitPalette(long controlData) {
+        if ((controlData & 0x8000) == 0x8000) {
+            return (int)((controlData >> 12) & 1);
+        } else {
+            return -1;
+        }
+    }
+
+    private long getSpriteData(int sprite) {
+        return registers[RAM_SPR + sprite * 4]
+            + (registers[RAM_SPR + sprite * 4 + 1] << 8)
+            + (registers[RAM_SPR + sprite * 4 + 2] << 16)
+            + (registers[RAM_SPR + sprite * 4 + 3] << 24);
+    }
+
+    private void createSprite(int i) {
+        spriteImages[i] = new BufferedImage(16,16, TYPE_INT_ARGB);
+        long spriteData = getSpriteData(i);
+        int sourceImage = (int)(spriteData >> 25) & 63;
+
+        int palette;
+        if ((palette = get8BitPalette(spriteData)) != -1) {
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    int colorIndex = registers[RAM_SPRIMG + sourceImage  * 256 + y * 16 + x];
+                    spriteImages[i].setRGB(x,y, getColorRegisterValue(RAM_SPRPAL + palette * 512 + colorIndex*2));
+                    //spriteImages[i].setRGB(x,y, 0xFFFFFFFF);
+                }
+            }
+        } else if ((palette = get4BitPalette(spriteData)) != -1) {
+            int nibble = (int)((spriteData >> 13) & 1);
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    int colorByte = registers[RAM_SPRIMG + sourceImage * 256 + y * 16 + x];
+                    int colorIndex = (colorByte >> (4*nibble)) & 15;
+                    spriteImages[i].setRGB(x,y, getColorRegisterValue(RAM_SPRPAL + palette * 32 + colorIndex*2));
+
+                    //spriteImages[i].setRGB(x,y, 0xFF333333);
+                }
+            }
+        } else {
+            palette = get2BitPalette(spriteData);
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    spriteImages[i].setRGB(x,y, 0xFFFF0000);
+                }
             }
         }
     }
@@ -83,6 +151,13 @@ public class Gameduino implements Drawable, Clockable {
         int b = ((pal) & 0x1f);
         int alpha = ((pal & 0x8000) == 0) ? 0xFF000000 : 0;
         return (fiveBitColors[r] << 16) | (fiveBitColors[g] << 8) | fiveBitColors[b] | alpha;
+    }
+
+    private int getColorRegisterValue(int register) {
+        int lsbValue = registers[register];
+        int msbValue = registers[register+1];
+        int colorValue = (msbValue << 8) | lsbValue;
+        return palToRGB(colorValue);
     }
 
     @Override
@@ -138,6 +213,15 @@ public class Gameduino implements Drawable, Clockable {
                 transform.scale(2,2);
                 g2.drawImage(ramChr[charCode], transform, null);
             }
+        }
+        for (int i = 0; i < 256; i++) {
+            AffineTransform transform = spriteImages[i].createGraphics().getTransform();
+            long spriteData = getSpriteData(i);
+            int x = (int)(spriteData & 511);
+            int y = (int)((spriteData >> 16) & 511);
+            transform.translate(x*2, y*2);
+            transform.scale(2,2);
+            g2.drawImage(spriteImages[i], transform, null);
         }
     }
 }

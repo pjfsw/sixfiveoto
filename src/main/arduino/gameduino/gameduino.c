@@ -47,7 +47,7 @@ void setup() {
       //sprintf(output, "%04X ", i);
       //Serial.print(output);
     }
-    sprintf(output, "0x%02X, ", v);
+    sprintf(output, "%02X, ", v);
     Serial.print(output);
   }
   Serial.println();

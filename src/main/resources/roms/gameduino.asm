@@ -1,3 +1,6 @@
+.cpu _65c02
+.encoding "ascii"
+
 .label VIA = $D000
 .label PORTB = VIA
 .label PORTA = VIA+1
@@ -16,6 +19,10 @@
 .const WRITE_1 = MOSI
 .const WRITE_0 = $00
 
+.label TEXTPTR = $01
+.label IDENTIFIER = $0200
+.label COLOR = $0201
+
 * = $F000
     lda #A_OUTPUTS
     sta DDRA
@@ -27,11 +34,54 @@
     lda #$00
     jsr spi_transfer
     jsr spi_transfer
-    tax
+    sta IDENTIFIER
     lda #CLOCK0_IDLE
     sta SPI_PORT
 
-    jmp *
+    lda #CLOCK0_SELECT
+    sta SPI_PORT
+    lda #$80
+    jsr spi_transfer
+    lda #$00
+    jsr spi_transfer
+
+    lda #<text
+    sta TEXTPTR
+    lda #>text
+    sta TEXTPTR+1
+    lda (TEXTPTR)
+!:
+    {
+        jsr spi_transfer
+        inc TEXTPTR
+        bne !+
+        inc TEXTPTR+1
+    !:
+    }
+    lda (TEXTPTR)
+    bne !-
+
+    lda #CLOCK0_IDLE
+    sta SPI_PORT
+
+loop:
+    // Set background color
+    lda #CLOCK0_SELECT
+    sta SPI_PORT
+    lda #($80 | $28)
+    jsr spi_transfer
+    lda #$0e
+    jsr spi_transfer
+    lda COLOR
+    and #$1f
+    jsr spi_transfer
+    lda #CLOCK0_IDLE
+    sta SPI_PORT
+    inc COLOR
+!:
+    lda $8000
+    beq !-
+    jmp loop
 
 spi_transfer:
     ldx #WRITE_0
@@ -52,3 +102,7 @@ spi_transfer:
     !:
     }
     rts
+
+text:
+    .text "GAMEDUINO ASCII TEST FROM 6502!"
+    .byte 0

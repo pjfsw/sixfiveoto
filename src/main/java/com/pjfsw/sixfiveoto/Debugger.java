@@ -24,7 +24,7 @@ public class Debugger implements Drawable {
     private boolean enabled;
     private int pc;
     private String registerValues = "";
-    private AtomicReference<List<Row>> instructions = new AtomicReference<>(emptyList());
+    private final AtomicReference<List<Row>> instructions = new AtomicReference<>(emptyList());
 
     public Debugger(Registers registers, Map<Integer, String> symbols) {
         this.registers = registers;

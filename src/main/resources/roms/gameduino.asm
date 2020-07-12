@@ -22,6 +22,7 @@
 .label TEXTPTR = $01
 .label IDENTIFIER = $0200
 .label COLOR = $0201
+.label CHAR = $0202
 
 * = $F000
     lda #A_OUTPUTS
@@ -29,10 +30,7 @@
 
     lda #CLOCK0_SELECT
     sta SPI_PORT
-    lda #$28
-    jsr spi_transfer
-    lda #$00
-    jsr spi_transfer
+    spi_read($2800)
     jsr spi_transfer
     sta IDENTIFIER
     lda #CLOCK0_IDLE
@@ -40,10 +38,7 @@
 
     lda #CLOCK0_SELECT
     sta SPI_PORT
-    lda #$80
-    jsr spi_transfer
-    lda #$00
-    jsr spi_transfer
+    spi_write(0)
 
     lda #<text
     sta TEXTPTR
@@ -66,22 +61,49 @@
 
 loop:
     // Set background color
-    lda #CLOCK0_SELECT
-    sta SPI_PORT
-    lda #($80 | $28)
-    jsr spi_transfer
-    lda #$0e
-    jsr spi_transfer
+    spi_begin()
+    spi_write($220e)
     lda COLOR
     and #$1f
     jsr spi_transfer
-    lda #CLOCK0_IDLE
-    sta SPI_PORT
+    lda #0
+    jsr spi_transfer
+    spi_end()
+    spi_begin()
+    spi_write($1000 + 67 * 16)
+    lda CHAR
+    jsr spi_transfer
+    spi_end()
+
     inc COLOR
+    inc CHAR
 !:
     lda $8000
     beq !-
     jmp loop
+
+.macro spi_begin() {
+    lda #CLOCK0_SELECT
+    sta SPI_PORT
+}
+
+.macro spi_end() {
+    lda #CLOCK0_IDLE
+    sta SPI_PORT
+}
+.macro spi_write(address) {
+    lda #>($8000 | address)
+    jsr spi_transfer
+    lda #<address
+    jsr spi_transfer
+}
+
+.macro spi_read(address) {
+    lda #>address
+    jsr spi_transfer
+    lda #<address
+    jsr spi_transfer
+}
 
 spi_transfer:
     ldx #WRITE_0

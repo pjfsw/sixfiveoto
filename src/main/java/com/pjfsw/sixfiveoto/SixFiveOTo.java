@@ -30,8 +30,6 @@ import com.pjfsw.sixfiveoto.addressables.RomVectors;
 import com.pjfsw.sixfiveoto.addressables.Screen;
 import com.pjfsw.sixfiveoto.addressables.via.Via6522;
 import com.pjfsw.sixfiveoto.gameduino.Gameduino;
-import com.pjfsw.sixfiveoto.gti.Gti;
-import com.pjfsw.sixfiveoto.gti.GtiTcpTerminal;
 import com.pjfsw.sixfiveoto.peripherals.Switch;
 import com.pjfsw.sixfiveoto.registers.Registers;
 import com.pjfsw.sixfiveoto.spi.Spi;
@@ -49,7 +47,7 @@ public class SixFiveOTo {
     private final ScheduledExecutorService executorService;
     private int frameCycleCount;
 
-    private final int clockSpeedHz = 1_000_000;
+    private final int clockSpeedHz = 2_500_000;
 
     private final int screenRefreshRate = 60;
     private final int refreshMultiplier = 10;

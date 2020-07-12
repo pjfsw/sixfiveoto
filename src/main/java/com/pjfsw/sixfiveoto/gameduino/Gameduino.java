@@ -7,6 +7,9 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.pjfsw.sixfiveoto.addressables.Clockable;
 import com.pjfsw.sixfiveoto.addressables.Drawable;
@@ -32,9 +35,11 @@ public class Gameduino implements Drawable, Clockable {
     private final int[] registers = new int[32768];
     private int lastPosition;
 
-    private BufferedImage[] ramChr = new BufferedImage[256];
+    private final BufferedImage[] ramChr = new BufferedImage[256];
 
     private final int[] fiveBitColors = new int[32];
+
+    private final Set<Integer> ramChrToRebuild = ConcurrentHashMap.newKeySet();
 
 
     public Gameduino(Spi spi, int[] memoryDump) {
@@ -46,20 +51,24 @@ public class Gameduino implements Drawable, Clockable {
         }
         // RAMCHR
         for (int i = 0; i < 256; i++) {
-            ramChr[i] = new BufferedImage(8,8, TYPE_INT_ARGB);
-            for (int y = 0; y < 8; y++) {
-                for (int x = 0; x < 8; x++) {
-                    int ramPos = i * 16 + y * 2 + x / 4;
-                    int charData = registers[RAM_CHR + ramPos];
-                    int bitPos = (3-(x%4))*2; // 6, 4, 2, 0
-                    int bitMask = (1 << (bitPos+1)) | (1 << bitPos); // 192, 48, 12, 3
-                    int colorIndex = (charData & bitMask) >> bitPos;
-                    int paletteOffset = RAM_PAL + i * 8 + colorIndex * 2;
-                    int lsbValue = registers[paletteOffset];
-                    int msbValue = registers[paletteOffset+1];
-                    int colorValue = (msbValue << 8) | lsbValue;
-                    ramChr[i].setRGB(x,y, palToRGB(colorValue));
-                }
+            createRamChr(i);
+        }
+    }
+
+    private void createRamChr(int i) {
+        ramChr[i] = new BufferedImage(8,8, TYPE_INT_ARGB);
+        for (int y = 0; y < 8; y++) {
+            for (int x = 0; x < 8; x++) {
+                int ramPos = i * 16 + y * 2 + x / 4;
+                int charData = registers[RAM_CHR + ramPos];
+                int bitPos = (3-(x%4))*2; // 6, 4, 2, 0
+                int bitMask = (1 << (bitPos+1)) | (1 << bitPos); // 192, 48, 12, 3
+                int colorIndex = (charData & bitMask) >> bitPos;
+                int paletteOffset = RAM_PAL + i * 8 + colorIndex * 2;
+                int lsbValue = registers[paletteOffset];
+                int msbValue = registers[paletteOffset+1];
+                int colorValue = (msbValue << 8) | lsbValue;
+                ramChr[i].setRGB(x,y, palToRGB(colorValue));
             }
         }
     }
@@ -96,6 +105,12 @@ public class Gameduino implements Drawable, Clockable {
                 spi.setFromDeviceData(registers[address]);
             } else {
                 registers[address] = spi.getToDeviceData();
+                if (address >= RAM_PAL & address < RAM_PAL + 2048) {
+                    ramChrToRebuild.add((address-RAM_PAL)/8);
+                }
+                if (address >= RAM_CHR & address < RAM_CHR + 4096) {
+                    ramChrToRebuild.add((address-RAM_CHR)/16);
+                }
             }
             address++;
         }
@@ -105,6 +120,11 @@ public class Gameduino implements Drawable, Clockable {
     @Override
     public void draw(final Graphics graphics) {
         Graphics2D g2 = (Graphics2D)graphics;
+        for (Iterator<Integer> it = ramChrToRebuild.iterator(); it.hasNext(); ) {
+            Integer id = it.next();
+            createRamChr(id);
+            ramChrToRebuild.remove(id);
+        }
         g2.setBackground(new Color(getBackgroundColor()));
         g2.clearRect(0,0, 800,600);
         g2.setColor(Color.DARK_GRAY);

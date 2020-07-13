@@ -26,6 +26,9 @@
 .label COLOR = $0201
 .label CHAR = $0202
 
+.label position = 2
+.label SPRITEIMG = 63
+
 * = $F000
     lda #A_OUTPUTS
     sta DDRA
@@ -64,31 +67,53 @@
     lda IDENTIFIER
 
     jsr init4ColorSprite
-    jmp *
 
-loop:
-    // Set background color
-    spi_write_address($220e)
-    lda COLOR
-    and #$1f
+fetdemo:
+    // Position
+    .var sprite = 255
+    .var y = 100
+    spi_write_address($3000 + sprite * 4)
+    ldx position
+    lda costable,x
     jsr spi_write_byte
-    lda #0
+    spi_write($80)
+    ldx position
+    lda sintable,x
     jsr spi_write_byte
-    spi_end()
-    spi_write_address($1000 + 67 * 16)
-    lda CHAR
-    jsr spi_write_byte
+    spi_write((y >> 8) | (SPRITEIMG << 1))
     spi_end()
 
-    inc COLOR
-    inc CHAR
+    clc
 !:
     lda $8000
+    adc position
+    sta position
     beq !-
-    jmp loop
+    jmp fetdemo
+
+
+//loop:
+//    // Set background color
+//    spi_write_address($220e)
+//    lda COLOR
+//    and #$1f
+//    jsr spi_write_byte
+//    lda #0
+//    jsr spi_write_byte
+//    spi_end()
+//    spi_write_address($1000 + 67 * 16)
+//    lda CHAR
+//    jsr spi_write_byte
+//    spi_end()
+//
+//    inc COLOR
+//    inc CHAR
+//!:
+//    lda $8000
+//    beq !-
+//    jmp loop
 
 init4ColorSprite:
-    .var img = 63
 
   // SPrite image data
 //  gd_write(0x4000 + 256 * img);
@@ -96,7 +121,7 @@ init4ColorSprite:
 //    SPI.transfer(i % 4);
 //  }
 //  gd_end();
-    spi_write_address($4000 + 256*img)
+    spi_write_address($4000 + 256*SPRITEIMG)
 
     ldx #0
 !:
@@ -109,9 +134,6 @@ init4ColorSprite:
     bne !-
 
     spi_end()
-
-    .var x = 120
-    .var y = 120
 
     // 4 color palette
     spi_write_address($2880)
@@ -126,16 +148,6 @@ init4ColorSprite:
 
     spi_write($0f)
     spi_write($7f)
-    spi_end()
-
-
-    .var sprite = 255
-    // Position
-    spi_write_address($3000 + sprite * 4)
-    spi_write(x & $ff)
-    spi_write($80 | (x >> 8))
-    spi_write(y & $ff)
-    spi_write((y >> 8) | (img << 1))
     spi_end()
 
     rts
@@ -229,3 +241,10 @@ spi_read_byte:
 text:
     .text "GAMEDUINO ASCII TEST FROM 6502!"
     .byte 0
+
+.align $100
+costable:
+    .fill 256, round(127.5+127.5*cos(toRadians(i*360/256)))
+
+sintable:
+    .fill 256, round(127.5+127.5*sin(toRadians(i*360/256)))

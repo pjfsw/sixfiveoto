@@ -28,6 +28,8 @@ public class Gameduino implements Drawable, Clockable {
 
     private static final int RAM_CHR = 0x1000;
     private static final int RAM_PAL = 0x2000;
+    private static final int PALETTE_16A = 0x2840;
+    private static final int PALETTE_4A = 0x2880;
     private static final int RAM_SPR = 0x3000;
     private static final int RAM_SPRPAL = 0x3800;
     private static final int RAM_SPRIMG = 0x4000;
@@ -116,7 +118,7 @@ public class Gameduino implements Drawable, Clockable {
             for (int y = 0; y < 16; y++) {
                 for (int x = 0; x < 16; x++) {
                     int colorIndex = registers[RAM_SPRIMG + sourceImage  * 256 + y * 16 + x];
-                    spriteImages[i].setRGB(x,y, getColorRegisterValue(RAM_SPRPAL + palette * 512 + colorIndex*2));
+                    spriteImages[i].setRGB(x,y, getColorRegisterValue(RAM_SPRPAL +palette * 512 + colorIndex*2));
                     //spriteImages[i].setRGB(x,y, 0xFFFFFFFF);
                 }
             }
@@ -126,7 +128,7 @@ public class Gameduino implements Drawable, Clockable {
                 for (int x = 0; x < 16; x++) {
                     int colorByte = registers[RAM_SPRIMG + sourceImage * 256 + y * 16 + x];
                     int colorIndex = (colorByte >> (4*nibble)) & 15;
-                    spriteImages[i].setRGB(x,y, getColorRegisterValue(RAM_SPRPAL + palette * 32 + colorIndex*2));
+                    spriteImages[i].setRGB(x,y, getColorRegisterValue(PALETTE_16A + palette * 32 + colorIndex*2));
 
                     //spriteImages[i].setRGB(x,y, 0xFF333333);
                 }

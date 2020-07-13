@@ -6,6 +6,7 @@
 .label PORTA = VIA+1
 .label DDRB = VIA+2
 .label DDRA = VIA+3
+.label SR = VIA+10
 .label SPI_PORT = PORTA
 
 .const CLOCK = $01
@@ -15,6 +16,7 @@
 
 .const A_OUTPUTS = CLOCK | SS | MOSI
 .const CLOCK0_SELECT = (SS | CLOCK) ^ $ff
+.const CLOCK1_SELECT = (SS) ^ $ff
 .const CLOCK0_IDLE = CLOCK ^ $ff
 .const WRITE_1 = MOSI
 .const WRITE_0 = $00
@@ -134,7 +136,17 @@ spi_write_byte:
     !:
         inc SPI_PORT    // +6   raise clock
         dec SPI_PORT    // +6   clear clock
-    }                   // 27*8+4=172   31*8+4=196
+    }                   // Min: 27*8+4=172 cycles  Max: 31*8+4=196 cycles
+    rts
+
+spi_write_byte_sr:      // Write byte to SPI using shift register
+    ldx #CLOCK0_SELECT  // +2
+    ldy #CLOCK1_SELECT  // +2
+    sta SR              // +4
+    .for (var i = 0; i < 8; i++) { // 8 cycles
+        sty SPI_PORT    // +4
+        stx SPI_PORT    // +4
+    }                   // 8*8+8 = 72 cycles
     rts
 
 

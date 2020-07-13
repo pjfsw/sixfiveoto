@@ -30,7 +30,7 @@
 
     lda #CLOCK0_SELECT
     sta SPI_PORT
-    spi_read($2800)
+    spi_read_address($2800)
     jsr spi_transfer
     sta IDENTIFIER
     lda #CLOCK0_IDLE
@@ -38,7 +38,7 @@
 
     lda #CLOCK0_SELECT
     sta SPI_PORT
-    spi_write(0)
+    spi_write_address(0)
 
     lda #<text
     sta TEXTPTR
@@ -62,17 +62,17 @@
 loop:
     // Set background color
     spi_begin()
-    spi_write($220e)
+    spi_write_address($220e)
     lda COLOR
     and #$1f
-    jsr spi_transfer
+    jsr spi_write_byte
     lda #0
-    jsr spi_transfer
+    jsr spi_write_byte
     spi_end()
     spi_begin()
-    spi_write($1000 + 67 * 16)
+    spi_write_address($1000 + 67 * 16)
     lda CHAR
-    jsr spi_transfer
+    jsr spi_write_byte
     spi_end()
 
     inc COLOR
@@ -91,37 +91,52 @@ loop:
     lda #CLOCK0_IDLE
     sta SPI_PORT
 }
-.macro spi_write(address) {
+.macro spi_write_address(address) {
     lda #>($8000 | address)
-    jsr spi_transfer
+    jsr spi_write_byte
     lda #<address
-    jsr spi_transfer
+    jsr spi_write_byte
 }
 
-.macro spi_read(address) {
+.macro spi_read_address(address) {
     lda #>address
-    jsr spi_transfer
+    jsr spi_write_byte
     lda #<address
-    jsr spi_transfer
+    jsr spi_write_byte
 }
 
 spi_transfer:
-    ldx #WRITE_0
-    ldy #WRITE_1
-    .for (var i = 0; i < 8; i++) {
-        stx SPI_PORT    // default MOSI = 0
-        asl             // shift MSB into carry, shift 0 into LSB
-        bcc !+          // if carry clear we are done (is 0)
-        sty SPI_PORT    // carry set, MOSI = 1
+    ldx #WRITE_0        // +2
+    ldy #WRITE_1        // +2
+    .for (var i = 0; i < 8; i++) { // $00/$00: 27  $FF/$FF: 31 cycles
+        stx SPI_PORT    // +4   default MOSI = 0
+        asl             // +2   shift MSB into carry, shift 0 into LSB
+        bcc !+          // +2/3 if carry clear we are done (is 0)
+        sty SPI_PORT    // +4   carry set, MOSI = 1
     !:
-        inc SPI_PORT    // raise clock
-        dec SPI_PORT    // clear clock
-        bit SPI_PORT
-        bpl !+          // input=0, skip
-        ora #$01        // set lowest bit
+        inc SPI_PORT    // +6   raise clock
+        dec SPI_PORT    // +6   clear clock
+        bit SPI_PORT    // +3
+        bpl !+          // +2/3 input=0, skip
+        ora #$01        // +2   set LSB=1
     !:
-    }
+    }                   // 27*8+4=220   31*8+4=252
     rts
+
+spi_write_byte:
+    ldx #WRITE_0        // +2
+    ldy #WRITE_1        // +2
+    .for (var i = 0; i < 8; i++) { // $00: 21  $FF: 24 cycles
+        stx SPI_PORT    // +4   default MOSI = 0
+        asl             // +2   shift MSB into carry, shift 0 into LSB
+        bcc !+          // +2/3 if carry clear we are done (is 0)
+        sty SPI_PORT    // +4   carry set, MOSI = 1
+    !:
+        inc SPI_PORT    // +6   raise clock
+        dec SPI_PORT    // +6   clear clock
+    }                   // 27*8+4=172   31*8+4=196
+    rts
+
 
 text:
     .text "GAMEDUINO ASCII TEST FROM 6502!"

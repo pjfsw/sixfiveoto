@@ -62,11 +62,12 @@
     sta SPI_PORT
 
     lda IDENTIFIER
+
+    jsr init4ColorSprite
     jmp *
 
 loop:
     // Set background color
-    spi_begin()
     spi_write_address($220e)
     lda COLOR
     and #$1f
@@ -74,7 +75,6 @@ loop:
     lda #0
     jsr spi_write_byte
     spi_end()
-    spi_begin()
     spi_write_address($1000 + 67 * 16)
     lda CHAR
     jsr spi_write_byte
@@ -87,6 +87,59 @@ loop:
     beq !-
     jmp loop
 
+init4ColorSprite:
+    .var img = 63
+
+  // SPrite image data
+//  gd_write(0x4000 + 256 * img);
+//  for (int i = 0; i < 256; i++) {
+//    SPI.transfer(i % 4);
+//  }
+//  gd_end();
+    spi_write_address($4000 + 256*img)
+
+    ldx #0
+!:
+    txa
+    and #$03
+    phx
+    jsr spi_write_byte
+    plx
+    inx
+    bne !-
+
+    spi_end()
+
+    .var x = 120
+    .var y = 120
+
+    // 4 color palette
+    spi_write_address($2880)
+    spi_write(0)
+    spi_write(0)
+
+    spi_write($FF)
+    spi_write($7F)
+
+    spi_write($1F)
+    spi_write($00)
+
+    spi_write($0f)
+    spi_write($7f)
+    spi_end()
+
+
+    .var sprite = 255
+    // Position
+    spi_write_address($3000 + sprite * 4)
+    spi_write(x & $ff)
+    spi_write($80 | (x >> 8))
+    spi_write(y & $ff)
+    spi_write((y >> 8) | (img << 1))
+    spi_end()
+
+    rts
+
 .macro spi_begin() {
     lda #CLOCK0_SELECT
     sta SPI_PORT
@@ -96,7 +149,13 @@ loop:
     lda #CLOCK0_IDLE
     sta SPI_PORT
 }
+
+.macro spi_write(value) {
+    lda #value
+    jsr spi_write_byte
+}
 .macro spi_write_address(address) {
+    spi_begin()
     lda #>($8000 | address)
     jsr spi_write_byte
     lda #<address
@@ -104,6 +163,7 @@ loop:
 }
 
 .macro spi_read_address(address) {
+    spi_begin()
     lda #>address
     jsr spi_write_byte
     lda #<address

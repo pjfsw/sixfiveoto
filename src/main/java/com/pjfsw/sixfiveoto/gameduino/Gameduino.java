@@ -46,6 +46,9 @@ public class Gameduino implements Drawable, Clockable {
     private final int[] fiveBitColors = new int[32];
 
     private final Set<Integer> ramChrToRebuild = ConcurrentHashMap.newKeySet();
+    private final Set<Integer> spriteToRebuild = ConcurrentHashMap.newKeySet();
+    private final Set<Integer> sprite4c = ConcurrentHashMap.newKeySet();
+    private final Set<Integer> sprite16c = ConcurrentHashMap.newKeySet();
 
 
     public Gameduino(Spi spi, int[] memoryDump) {
@@ -113,13 +116,15 @@ public class Gameduino implements Drawable, Clockable {
         long spriteData = getSpriteData(i);
         int sourceImage = (int)(spriteData >> 25) & 63;
 
+        sprite4c.remove(i);
+        sprite16c.remove(i);
+
         int palette;
         if ((palette = get8BitPalette(spriteData)) != -1) {
             for (int y = 0; y < 16; y++) {
                 for (int x = 0; x < 16; x++) {
                     int colorIndex = registers[RAM_SPRIMG + sourceImage  * 256 + y * 16 + x];
                     spriteImages[i].setRGB(x,y, getColorRegisterValue(RAM_SPRPAL +palette * 512 + colorIndex*2));
-                    //spriteImages[i].setRGB(x,y, 0xFFFFFFFF);
                 }
             }
         } else if ((palette = get4BitPalette(spriteData)) != -1) {
@@ -133,13 +138,18 @@ public class Gameduino implements Drawable, Clockable {
                     //spriteImages[i].setRGB(x,y, 0xFF333333);
                 }
             }
+            sprite16c.add(i);
         } else {
             palette = get2BitPalette(spriteData);
+            int bitPair = (int)((spriteData >> 13) & 3);
             for (int y = 0; y < 16; y++) {
                 for (int x = 0; x < 16; x++) {
-                    spriteImages[i].setRGB(x,y, 0xFFFF0000);
+                    int colorByte = registers[RAM_SPRIMG + sourceImage * 256 + y * 16 + x];
+                    int colorIndex = (colorByte >> (2*bitPair)) & 3;
+                    spriteImages[i].setRGB(x,y, getColorRegisterValue(PALETTE_4A + palette * 8 + colorIndex*2));
                 }
             }
+            sprite4c.add(i);
         }
     }
 
@@ -182,11 +192,23 @@ public class Gameduino implements Drawable, Clockable {
                 spi.setFromDeviceData(registers[address]);
             } else {
                 registers[address] = spi.getToDeviceData();
-                if (address >= RAM_PAL & address < RAM_PAL + 2048) {
+                if (address >= RAM_PAL & address < RAM_PAL + 0x0800) {
                     ramChrToRebuild.add((address-RAM_PAL)/8);
                 }
-                if (address >= RAM_CHR & address < RAM_CHR + 4096) {
+                if (address >= RAM_CHR & address < RAM_CHR + 0x1000) {
                     ramChrToRebuild.add((address-RAM_CHR)/16);
+                }
+                if (address >= RAM_SPR & address < RAM_SPR + 0x0800) {
+                    spriteToRebuild.add(((address-RAM_SPR)/4) % 256); // TODO sprite pages
+                }
+                if (address >= RAM_SPRIMG & address < RAM_SPRIMG + 0x4000) {
+                    spriteToRebuild.add(((address-RAM_SPRIMG)/256) % 256); // TODO sprite pages
+                }
+                if (address >= PALETTE_16A & address < PALETTE_16A + 0x40) {
+                    spriteToRebuild.addAll(sprite16c);
+                }
+                if (address >= PALETTE_4A & address < PALETTE_4A + 0x10) {
+                    spriteToRebuild.addAll(sprite4c);
                 }
             }
             address++;
@@ -201,6 +223,11 @@ public class Gameduino implements Drawable, Clockable {
             Integer id = it.next();
             createRamChr(id);
             ramChrToRebuild.remove(id);
+        }
+        for (Iterator<Integer> it = spriteToRebuild.iterator(); it.hasNext(); ) {
+            Integer id = it.next();
+            createSprite(id);
+            spriteToRebuild.remove(id);
         }
         g2.setBackground(new Color(getBackgroundColor()));
         g2.clearRect(0,0, 800,600);

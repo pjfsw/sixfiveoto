@@ -33,7 +33,7 @@
     lda #CLOCK0_SELECT
     sta SPI_PORT
     spi_read_address($2800)
-    jsr spi_transfer
+    jsr spi_read_byte
     sta IDENTIFIER
     lda #CLOCK0_IDLE
     sta SPI_PORT
@@ -60,6 +60,9 @@
 
     lda #CLOCK0_IDLE
     sta SPI_PORT
+
+    lda IDENTIFIER
+    jmp *
 
 loop:
     // Set background color
@@ -139,16 +142,29 @@ spi_write_byte:
     }                   // Min: 27*8+4=172 cycles  Max: 31*8+4=196 cycles
     rts
 
-spi_write_byte_sr:      // Write byte to SPI using shift register
-    ldx #CLOCK0_SELECT  // +2
-    ldy #CLOCK1_SELECT  // +2
-    sta SR              // +4
-    .for (var i = 0; i < 8; i++) { // 8 cycles
-        sty SPI_PORT    // +4
-        stx SPI_PORT    // +4
-    }                   // 8*8+8 = 72 cycles
+spi_read_byte:
+    ldx #$7F            // +2
+    .for (var i = 0;i < 8; i++) { // 18 cycles
+        cpx SPI_PORT    // +4
+        rol             // +2
+        inc SPI_PORT    // +6
+        dec SPI_PORT    // +6
+    }
+    eor #$ff            // 2  = 148 cycles
     rts
 
+
+
+//spi_write_byte_sr:      // Write byte to SPI using shift register
+//    ldx #CLOCK0_SELECT  // +2
+//    ldy #CLOCK1_SELECT  // +2
+//    sta SR              // +4
+//    .for (var i = 0; i < 8; i++) { // 8 cycles
+//        sty SPI_PORT    // +4
+//        stx SPI_PORT    // +4
+//    }                   // 8*8+8 = 72 cycles
+//    rts
+//
 
 text:
     .text "GAMEDUINO ASCII TEST FROM 6502!"

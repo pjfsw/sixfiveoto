@@ -32,12 +32,12 @@ public class SpiTest {
 
         for (int i = 0; i < 8; i++) {
             int bitPos = 7-i;
+            actualFromDevice |= (spi.getSlaveOut().value ? 1 : 0) << bitPos;
             spi.getSlaveIn().value = (expectedToDevice & (1<<bitPos)) != 0;
             spi.getClock().value = true;
             spi.update();
             spi.getClock().value = false;
             spi.update();
-            actualFromDevice |= (spi.getSlaveOut().value ? 1 : 0) << bitPos;
         }
         assertEquals(0x5F, actualFromDevice);
         assertEquals(expectedToDevice, spi.getToDeviceData());

@@ -53,7 +53,7 @@ public class Debugger implements Drawable {
             g2.setFont(font);
             g2.setColor(Color.DARK_GRAY);
 
-            g2.fillRect(0,ROWS_OFFSET-font.getSize(), 320, ROWSIZE+2);
+            g2.fillRect(0,ROWS_OFFSET-font.getSize(), 320, ROWSIZE+4);
             g2.setColor(Color.WHITE);
 
             int i = 0;

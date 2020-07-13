@@ -23,6 +23,10 @@ public class Spi {
     public void update() {
         if (slaveNotSelected.value) {
             resetState();
+        } else if (!clock.value) {
+            int relativePosition = position % 8;
+            int bitPosition = 7 - relativePosition; // MSB first
+            slaveOut.value = (toMasterByte & (1 << bitPosition)) != 0;
         } else if (clock.value && !internalClock) {
             int relativePosition = position % 8;
             if (relativePosition == 0) {
@@ -30,7 +34,6 @@ public class Spi {
             }
             int bitPosition = 7 - relativePosition; // MSB first
             toDeviceByte |= (slaveIn.value ? 1 : 0) << bitPosition;
-            slaveOut.value = (toMasterByte & (1 << bitPosition)) != 0;
             position++;
         }
 
@@ -52,7 +55,7 @@ public class Spi {
     private void resetState() {
         position = 0;
         toDeviceByte = 0;
-        internalClock = false;
+        internalClock = true;
     }
 
     public Pin getSlaveOut() {

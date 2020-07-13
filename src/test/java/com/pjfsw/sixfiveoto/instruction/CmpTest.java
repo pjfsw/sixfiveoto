@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
 import com.google.common.collect.ImmutableList;
+import com.pjfsw.sixfiveoto.Word;
 import com.pjfsw.sixfiveoto.Workbench;
 
 public class CmpTest {
@@ -34,6 +35,25 @@ public class CmpTest {
         wb.run(1);
         assertFalse(wb.registers().c);
         assertFalse(wb.registers().z);
+    }
+
+    @Test
+    void testCpxAbsolute1() {
+        int addr = 0x200;
+        Workbench wb = new Workbench(ImmutableList.of(Cmp.CPXA.opcode(), Word.lo(addr), Word.hi(addr)));
+        wb.registers().x(0x80);
+        wb.poke(addr, 0x81);
+        wb.run(1);
+        assertFalse(wb.registers().c);
+    }
+    @Test
+    void testCpxAbsolute0() {
+        int addr = 0x200;
+        Workbench wb = new Workbench(ImmutableList.of(Cmp.CPXA.opcode(), Word.lo(addr), Word.hi(addr)));
+        wb.registers().x(0x80);
+        wb.poke(addr, 0);
+        wb.run(1);
+        assertTrue(wb.registers().c);
     }
 
 }

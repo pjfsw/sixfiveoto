@@ -133,6 +133,10 @@ public class Cpu {
         return totalCycles;
     }
 
+    public int getNextOpcode() {
+        return addressDecoder.peek(registers.pc);
+    }
+
     public int next() {
         Instruction instruction = instructions.get(addressDecoder.peek(registers.pc));
         registers.incrementPc(1);

@@ -30,6 +30,7 @@ import com.pjfsw.sixfiveoto.addressables.RomVectors;
 import com.pjfsw.sixfiveoto.addressables.Screen;
 import com.pjfsw.sixfiveoto.addressables.via.Via6522;
 import com.pjfsw.sixfiveoto.gameduino.Gameduino;
+import com.pjfsw.sixfiveoto.instruction.Jsr;
 import com.pjfsw.sixfiveoto.peripherals.Switch;
 import com.pjfsw.sixfiveoto.registers.Registers;
 import com.pjfsw.sixfiveoto.spi.Spi;
@@ -56,6 +57,7 @@ public class SixFiveOTo {
     private final List<Resettable> resettables = new ArrayList<>();
     private final List<Clockable> clockables = new ArrayList<>();
     private final Map<Integer, Switch> buttons = new HashMap<>();
+    private int runUntilPc = -1;
 
 
     private SixFiveOTo(byte[] prg, Map<Integer, String> symbols) {
@@ -103,6 +105,8 @@ public class SixFiveOTo {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        clockables.add(via); // TODO ugly fix because we need to sample the output of devices before next instruction
 
 
 //        Gti gti = new Gti(80);
@@ -161,6 +165,9 @@ public class SixFiveOTo {
         for (Resettable resettable : resettables) {
             resettable.reset();
         }
+        if (runner == null || runner.isCancelled() || runner.isDone()) {
+            debugger.update(cpu.createDisassembler());
+        }
         System.out.println("RESET " + Memory.format(registers.pc));
     }
     private void updateFrameCycleCount(int cycles) {
@@ -187,8 +194,17 @@ public class SixFiveOTo {
         return cycles;
     }
 
+    private void stepMode() {
+        if (runner != null) {
+            runner.cancel(false);
+        }
+        debugger.update(cpu.createDisassembler());
+        debugger.setEnabled(true);
+    }
 
     private void runFullSpeed() {
+        debugger.setEnabled(false);
+
         runCount = 0;
         nanos = System.nanoTime();
         int refreshPeriod = 1000000 / refreshRate;
@@ -211,7 +227,10 @@ public class SixFiveOTo {
                 }
                 cycleCount += cycles;
                 updateFrameCycleCount(cycles);
-            } while (cycleCount < cyclesPerPeriod);
+            } while (runUntilPc != registers.pc && cycleCount < cyclesPerPeriod);
+            if (runUntilPc == registers.pc) {
+                stepMode();
+            }
             totalCycles += cycleCount;
             cycleCount-= cyclesPerPeriod;
         }, 0, refreshPeriod, TimeUnit.MICROSECONDS);
@@ -227,7 +246,7 @@ public class SixFiveOTo {
         updateFrameCycleCount(cycles);
     }
 
-    private void start() {
+    private void start(boolean fullSpeed) {
         reset();
 
         KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher((event) -> {
@@ -242,23 +261,38 @@ public class SixFiveOTo {
                 return false;
             }
             switch (event.getKeyCode()) {
+                case KeyEvent.VK_END:
+                    reset();
+                    break;
+
                 case KeyEvent.VK_F8:
-                    if (runner.isCancelled() || runner.isDone()) {
-                        debugger.setEnabled(false);
+                    if (runner == null || runner.isCancelled() || runner.isDone()) {
                         runFullSpeed();
                     } else {
-                        runner.cancel(false);
-                        debugger.update(cpu.createDisassembler());
-                        debugger.setEnabled(true);
+                        stepMode();
                     }
                     break;
-                case KeyEvent.VK_F6:
-                    if (runner.isDone()) {
+                case KeyEvent.VK_F5:
+                    if (runner == null || runner.isDone()) {
                         stepOne();
                     }
                     break;
+                case KeyEvent.VK_F6:
+                    if (runner == null || runner.isDone()) {
+                        if (cpu.getNextOpcode() == Jsr.OPCODE) {
+                            Disassembler disassembler = cpu.createDisassembler();
+                            disassembler.disassemble();
+                            runUntilPc = disassembler.getPc();
+                            runFullSpeed();
+                        } else {
+                            stepOne();
+                        }
+                    }
+                    break;
                 case KeyEvent.VK_ESCAPE:
-                    runner.cancel(true);
+                    if (runner != null) {
+                        runner.cancel(true);
+                    }
                     screen.interrupt();
                     break;
                 default:
@@ -272,8 +306,11 @@ public class SixFiveOTo {
             }
             return true;
         });
-
-        runFullSpeed();
+        if (fullSpeed) {
+            runFullSpeed();
+        } else {
+            stepMode();
+        }
         screen.loop();
     }
 
@@ -292,8 +329,12 @@ public class SixFiveOTo {
 
     public static void main(String[] args) {
         String prgName = "";
+        boolean runFullSpeed = true;
 
         for (String arg : args) {
+            if (arg.equals("-step")) {
+                runFullSpeed = false;
+            }
             if (arg.toLowerCase().endsWith(".asm")) {
                 try {
                     String assembler = System.getProperty("assembler");
@@ -343,7 +384,7 @@ public class SixFiveOTo {
                     }
                 }
 
-                new SixFiveOTo(bytes, symbolMap).start();
+                new SixFiveOTo(bytes, symbolMap).start(runFullSpeed);
             }
         } catch (IOException e) {
             e.printStackTrace();

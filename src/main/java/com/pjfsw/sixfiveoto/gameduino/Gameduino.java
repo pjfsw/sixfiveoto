@@ -134,8 +134,6 @@ public class Gameduino implements Drawable, Clockable {
                     int colorByte = registers[RAM_SPRIMG + sourceImage * 256 + y * 16 + x];
                     int colorIndex = (colorByte >> (4*nibble)) & 15;
                     spriteImages[i].setRGB(x,y, getColorRegisterValue(PALETTE_16A + palette * 32 + colorIndex*2));
-
-                    //spriteImages[i].setRGB(x,y, 0xFF333333);
                 }
             }
             sprite16c.add(i);
@@ -192,22 +190,24 @@ public class Gameduino implements Drawable, Clockable {
                 spi.setFromDeviceData(registers[address]);
             } else {
                 registers[address] = spi.getToDeviceData();
-                if (address >= RAM_PAL & address < RAM_PAL + 0x0800) {
+
+                // TODO Only rebuild after SPI command is finished. Cache in another set?
+                if (address >= RAM_PAL && (address < RAM_PAL + 0x0800)) {
                     ramChrToRebuild.add((address-RAM_PAL)/8);
                 }
-                if (address >= RAM_CHR & address < RAM_CHR + 0x1000) {
+                if (address >= RAM_CHR && (address < RAM_CHR + 0x1000)) {
                     ramChrToRebuild.add((address-RAM_CHR)/16);
                 }
-                if (address >= RAM_SPR & address < RAM_SPR + 0x0800) {
+                if (address >= RAM_SPR && (address < RAM_SPR + 0x0800) && ((address % 2) == 1)) {
                     spriteToRebuild.add(((address-RAM_SPR)/4) % 256); // TODO sprite pages
                 }
-                if (address >= RAM_SPRIMG & address < RAM_SPRIMG + 0x4000) {
+                if (address >= RAM_SPRIMG && (address < RAM_SPRIMG + 0x4000)) {
                     spriteToRebuild.add(((address-RAM_SPRIMG)/256) % 256); // TODO sprite pages
                 }
-                if (address >= PALETTE_16A & address < PALETTE_16A + 0x40) {
+                if (address >= PALETTE_16A && (address < PALETTE_16A + 0x40)) {
                     spriteToRebuild.addAll(sprite16c);
                 }
-                if (address >= PALETTE_4A & address < PALETTE_4A + 0x10) {
+                if (address >= PALETTE_4A && (address < PALETTE_4A + 0x10)) {
                     spriteToRebuild.addAll(sprite4c);
                 }
             }

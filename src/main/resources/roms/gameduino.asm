@@ -108,16 +108,14 @@ loop:
 spi_transfer:
     ldx #WRITE_0
     ldy #WRITE_1
-    clc
     .for (var i = 0; i < 8; i++) {
         stx SPI_PORT    // default MOSI = 0
-        rol             // shift MSB into carry
+        asl             // shift MSB into carry, shift 0 into LSB
         bcc !+          // if carry clear we are done (is 0)
         sty SPI_PORT    // carry set, MOSI = 1
     !:
         inc SPI_PORT    // raise clock
         dec SPI_PORT    // clear clock
-        and #$fe        // clear lowest bit
         bit SPI_PORT
         bpl !+          // input=0, skip
         ora #$01        // set lowest bit

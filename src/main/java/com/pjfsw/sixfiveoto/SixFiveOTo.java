@@ -267,6 +267,7 @@ public class SixFiveOTo {
 
                 case KeyEvent.VK_F8:
                     if (runner == null || runner.isCancelled() || runner.isDone()) {
+                        runUntilPc = -1;
                         runFullSpeed();
                     } else {
                         stepMode();

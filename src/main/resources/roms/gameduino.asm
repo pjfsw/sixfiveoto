@@ -23,7 +23,7 @@
 
 .label TEXTPTR = $01
 .label IDENTIFIER = $0200
-.label COLOR = $0201
+.label FRAMES = $0201
 .label CHAR = $0202
 
 .label position = 2
@@ -72,6 +72,10 @@ fetdemo:
     // Position
     .var sprite = 255
     .var y = 100
+
+    ldx #33 // Draw 34 sprites
+!:
+    phx
     spi_write_address($3000 + sprite * 4)
     ldx position
     lda costable,x
@@ -83,12 +87,26 @@ fetdemo:
     spi_write((y >> 8) | (SPRITEIMG << 1))
     spi_end()
 
-    clc
+    plx
+    dex
+    bne !-
+
 !:
     lda $8000
+    beq !-
+
+    sta FRAMES
+    clc
     adc position
     sta position
-    beq !-
+    // Set background color
+    spi_write_address($280e)
+    ldx FRAMES
+    lda framerateColors,x
+    and #$1f
+    jsr spi_write_byte
+    spi_end()
+
     jmp fetdemo
 
 
@@ -241,6 +259,9 @@ spi_read_byte:
 text:
     .text "GAMEDUINO ASCII TEST FROM 6502!"
     .byte 0
+
+framerateColors:
+    .byte 0, 0, 7, 15, 31
 
 .align $100
 costable:

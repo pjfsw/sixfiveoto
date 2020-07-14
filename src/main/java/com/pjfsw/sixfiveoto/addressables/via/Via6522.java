@@ -8,6 +8,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import com.pjfsw.sixfiveoto.addressables.Clockable;
@@ -50,8 +51,8 @@ public class Via6522 implements Peeker, Poker, Drawable, Resettable, Clockable {
         }
     }
     //private final Pin[] pins = new Pin[16];
-    private final List<PinConnection> portAConnections = new ArrayList<>();
-    private final List<PinConnection> portBConnections = new ArrayList<>();
+    private PinConnection[] portAConnections = new PinConnection[0];
+    private PinConnection[] portBConnections = new PinConnection[0];
 
 
     public Via6522() {
@@ -60,12 +61,14 @@ public class Via6522 implements Peeker, Poker, Drawable, Resettable, Clockable {
 
 
     public void connectPortA(int pinNumber, Pin pin) {
-        portAConnections.add(new PinConnection(pinNumber, pin));
+        portAConnections = Arrays.copyOf(portAConnections, portAConnections.length+1);
+        portAConnections[portAConnections.length-1] = new PinConnection(pinNumber, pin);
 
     }
 
     public void connectPortB(int pinNumber, Pin pin) {
-        portBConnections.add(new PinConnection(pinNumber, pin));
+        portBConnections = Arrays.copyOf(portBConnections, portBConnections.length+1);
+        portBConnections[portBConnections.length-1] = new PinConnection(pinNumber, pin);
     }
 
 
@@ -109,7 +112,7 @@ public class Via6522 implements Peeker, Poker, Drawable, Resettable, Clockable {
         }
     }
 
-    public int processPort(int ddr, int port, List<PinConnection> connections) {
+    public int processPort(int ddr, int port, PinConnection[] connections) {
         for (PinConnection connection : connections) {
             int mask = 1 << connection.pinNumber;
             if ((ddr & mask) == 0 && connection.pin.value != null) {

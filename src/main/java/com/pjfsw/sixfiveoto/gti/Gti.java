@@ -35,12 +35,12 @@ import com.pjfsw.sixfiveoto.addressables.via.Pin;
  */
 public class Gti implements Clockable, Resettable {
     private final int capacity;
-    private final Pin out = new Pin();
-    private final Pin ready = new Pin();
-    private final Pin in = new Pin();
-    private final Pin clock = new Pin();
-    private final Pin notSelected = new Pin();
-    private final Pin connected = new Pin();
+    private final Pin out = Pin.output();
+    private final Pin ready = Pin.output();
+    private final Pin in = Pin.input();
+    private final Pin clock = Pin.input();
+    private final Pin notSelected = Pin.input();
+    private final Pin connected = Pin.input();
 
     private final Queue<Integer> toWorld;
     private final Queue<Integer> toCpu;

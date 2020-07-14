@@ -1,6 +1,8 @@
 package com.pjfsw.sixfiveoto.addressables.via;
 
 public class Pin {
+    public volatile Boolean value;
+
     public static Pin input() {
         Pin pin = new Pin();
         pin.value = false;
@@ -11,5 +13,4 @@ public class Pin {
         return new Pin();
     }
 
-    public volatile Boolean value;
 }

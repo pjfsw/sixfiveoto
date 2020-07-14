@@ -36,9 +36,9 @@ public enum RotateShift implements Instruction {
     private final int opcode;
     private final String mnemonic;
     private final int cycles;
-    private final BiFunction<Registers, Integer, Integer> operation;
+    private final LoadFunction operation;
 
-    RotateShift(AddressingMode addressingMode, BiFunction<Registers,Integer,Integer> operation, int opcode, String mnemonic, int cycles) {
+    RotateShift(AddressingMode addressingMode, LoadFunction operation, int opcode, String mnemonic, int cycles) {
         this.addressingMode = addressingMode;
         this.operation = operation;
         this.opcode = opcode;
@@ -53,10 +53,10 @@ public enum RotateShift implements Instruction {
     @Override
     public int execute(final Registers registers, final Peeker peeker, final Poker poker) {
         if (addressingMode == AddressingMode.IMPLIED) {
-            registers.a(operation.apply(registers, registers.a()));
+            registers.a(operation.compute(registers, registers.a()));
         } else {
             int address = addressingMode.getEffectiveAddress(registers, peeker);
-            poker.poke(address, operation.apply(registers, peeker.peek(address)));
+            poker.poke(address, operation.compute(registers, peeker.peek(address)));
         }
 
         registers.incrementPc(addressingMode.getParameterSize());

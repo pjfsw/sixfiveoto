@@ -4,21 +4,37 @@ import java.util.function.BiFunction;
 
 import com.pjfsw.sixfiveoto.registers.Registers;
 
-public enum LoadOperation implements BiFunction<Registers, Integer, Integer> {
-    LD((reg,nw)->(nw)),
-    AND((reg,nw)->(reg.a() & nw)),
-    ORA((reg,nw)->(reg.a() | nw)),
-    EOR((reg,nw)->(reg.a() ^ nw))
+public enum LoadOperation {
+    LD(LoadOperation::load),
+    AND(LoadOperation::and),
+    ORA(LoadOperation::or),
+    EOR(LoadOperation::eor)
     ;
 
-    private final BiFunction<Registers, Integer, Integer> function;
+    private final LoadFunction function;
 
-    LoadOperation(BiFunction<Registers, Integer, Integer> function) {
+    LoadOperation(LoadFunction function) {
         this.function = function;
     }
 
-    @Override
-    public Integer apply(final Registers registers, final Integer integer) {
-        return function.apply(registers, integer);
+    public int compute(final Registers registers, final int integer) {
+        return function.compute(registers, integer);
     }
+
+    private static int load(Registers registers, int value) {
+        return value;
+    }
+
+    private static int and(Registers registers, int value) {
+        return registers.a() & value;
+    }
+
+    private static int or(Registers registers, int value) {
+        return registers.a() | value;
+    }
+
+    private static int eor(Registers registers, int value) {
+        return registers.a() ^ value;
+    }
+
 }

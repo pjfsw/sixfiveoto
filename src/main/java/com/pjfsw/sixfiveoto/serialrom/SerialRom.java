@@ -114,6 +114,7 @@ public class SerialRom implements Clockable, Drawable {
         g2.drawString("Drive",2,0);
 
         boolean active = (System.currentTimeMillis() - lastActive) < 250;
+        //boolean active=true;
 
         g2.setColor(active ? UNUSED_ACTIVE : UNUSED_IDLE);
         g2.fillRect(2,1, SCALE, H-2);

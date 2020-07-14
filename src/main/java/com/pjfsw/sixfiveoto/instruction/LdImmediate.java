@@ -1,7 +1,5 @@
 package com.pjfsw.sixfiveoto.instruction;
 
-import java.util.function.BiConsumer;
-
 import com.pjfsw.sixfiveoto.addressables.Peeker;
 import com.pjfsw.sixfiveoto.addressables.Poker;
 import com.pjfsw.sixfiveoto.mnemonicformatter.MnemonicFormatter;
@@ -15,12 +13,12 @@ public enum LdImmediate implements Instruction {
     LDY(Registers::y, LoadOperation.LD, 0xA0, "LDY"),
     ORA(Registers::a, LoadOperation.ORA, 0x09, "ORA");
 
-    private final BiConsumer<Registers, Integer> to;
+    private final ToRegister to;
     private final int opcode;
     private final String mnemonic;
     private final LoadOperation loadOperation;
 
-    LdImmediate(BiConsumer<Registers,Integer> to, LoadOperation loadOperation, int opcode, String mnemonic) {
+    LdImmediate(ToRegister to, LoadOperation loadOperation, int opcode, String mnemonic) {
         this.to = to;
         this.loadOperation = loadOperation;
         this.opcode = opcode;
@@ -33,7 +31,7 @@ public enum LdImmediate implements Instruction {
 
     @Override
     public int execute(final Registers registers, final Peeker peeker, final Poker poker) {
-        to.accept(registers, loadOperation.apply(registers, peeker.peek(registers.pc)));
+        to.store(registers, loadOperation.compute(registers, peeker.peek(registers.pc)));
         registers.incrementPc(1);
         return 2;
     }
@@ -52,5 +50,4 @@ public enum LdImmediate implements Instruction {
     public int length() {
         return 2;
     }
-
 }

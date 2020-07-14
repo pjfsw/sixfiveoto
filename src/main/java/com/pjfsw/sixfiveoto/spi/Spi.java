@@ -36,7 +36,6 @@ public class Spi {
             toDeviceByte |= (slaveIn.value ? 1 : 0) << bitPosition;
             position++;
         }
-
         internalClock = clock.value;
     }
 

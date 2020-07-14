@@ -27,13 +27,13 @@ public enum Cmp implements Instruction {
     CMPZI(Registers::a, AddressingMode.INDIRECT, 0xD2, "CMP", 5)
     ;
 
-    private final Function<Registers, Integer> comparand;
+    private final FromRegister comparand;
     private final AddressingMode addressingMode;
     private final int opcode;
     private final String mnemonic;
     private final int cycles;
 
-    Cmp(Function<Registers,Integer> comparand, AddressingMode addressingMode,
+    Cmp(FromRegister comparand, AddressingMode addressingMode,
         int opcode, String mnemonic, int cycles) {
 
         this.comparand = comparand;
@@ -52,7 +52,7 @@ public enum Cmp implements Instruction {
         int address = addressingMode.getEffectiveAddress(registers, peeker);
         registers.incrementPc(addressingMode.getParameterSize());
         registers.c = true;
-        registers.sbc(comparand.apply(registers), peeker.peek(address));
+        registers.sbc(comparand.load(registers), peeker.peek(address));
         return cycles + addressingMode.getPenalty(registers, peeker);
     }
 

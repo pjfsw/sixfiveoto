@@ -2,6 +2,7 @@ package com.pjfsw.sixfiveoto.spi;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.junit.jupiter.api.Test;
 
@@ -16,7 +17,7 @@ public class SpiTest {
         spi.update();
         spi.getClock().value = false;
         spi.update();
-        assertFalse(spi.getSlaveOut().value);
+        assertNull(spi.getSlaveOut().value);
         assertEquals(0, spi.getPosition());
     }
 

@@ -64,12 +64,12 @@ public enum LdMemory implements Instruction {
 
     private final int opcode;
     private final String mnemonic;
-    private final BiConsumer<Registers, Integer> to;
+    private final ToRegister to;
     private final LoadOperation loadOperation;
     private final AddressingMode addressingMode;
     private final int cycles;
 
-    LdMemory(BiConsumer<Registers,Integer> to, AddressingMode addressingMode, LoadOperation loadOperation,
+    LdMemory(ToRegister to, AddressingMode addressingMode, LoadOperation loadOperation,
         int opcode, String mnemonic, int cycles) {
         this.to = to;
         this.addressingMode = addressingMode;
@@ -87,7 +87,7 @@ public enum LdMemory implements Instruction {
     public int execute(final Registers registers, final Peeker peeker, final Poker poker) {
         int address = addressingMode.getEffectiveAddress(registers, peeker);
 
-        to.accept(registers, loadOperation.apply(registers,peeker.peek(address)));
+        to.store(registers, loadOperation.compute(registers,peeker.peek(address)));
         int cycles = this.cycles + addressingMode.getPenalty(registers, peeker);
         registers.incrementPc(addressingMode.getParameterSize());
         return cycles;

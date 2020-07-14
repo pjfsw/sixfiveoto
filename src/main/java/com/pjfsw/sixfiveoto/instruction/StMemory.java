@@ -45,11 +45,11 @@ public enum StMemory implements Instruction {
 
     private final int opcode;
     private final String mnemonic;
-    private final Function<Registers, Integer> from;
+    private final FromRegister from;
     private final AddressingMode addressingMode;
     private final int cycles;
 
-    StMemory(Function<Registers,Integer> from, AddressingMode addressingMode, int opcode,
+    StMemory(FromRegister from, AddressingMode addressingMode, int opcode,
         String mnemonic, int cycles) {
         this.from = from;
         this.addressingMode = addressingMode;
@@ -65,7 +65,7 @@ public enum StMemory implements Instruction {
     @Override
     public int execute(final Registers registers, final Peeker peeker, final Poker poker) {
         int address = addressingMode.getEffectiveAddress(registers, peeker);
-        poker.poke(address, from.apply(registers));
+        poker.poke(address, from.load(registers));
         registers.incrementPc(addressingMode.getParameterSize());
         return cycles;
     }

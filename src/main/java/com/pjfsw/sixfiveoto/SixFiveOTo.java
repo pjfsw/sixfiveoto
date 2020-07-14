@@ -94,10 +94,11 @@ public class SixFiveOTo {
             int[] dump = readDump("src/main/resources/dumps/gddump.txt");
 
             Spi spi = new Spi();
-            via.setPin(0,0, spi.getClock());
-            via.setPin(0,1, spi.getSlaveSelect());
-            via.setPin(0,6, spi.getSlaveIn());
-            via.setPin(0,7, spi.getSlaveOut());
+            via.connectPortA(0, spi.getClock());
+            via.connectPortA(6, spi.getSlaveIn());
+            via.connectPortA(7, spi.getSlaveOut());
+
+            via.connectPortB(1, spi.getSlaveSelect());
 
             Gameduino gameduino = new Gameduino(spi, dump);
             clockables.add(gameduino);

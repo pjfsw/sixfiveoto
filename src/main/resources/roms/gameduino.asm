@@ -7,17 +7,21 @@
 .label DDRB = VIA+2
 .label DDRA = VIA+3
 .label SR = VIA+10
+
+.label SS_PORT = PORTB
+.const GD_SS = 1 << 1
+
 .label SPI_PORT = PORTA
-
 .const CLOCK = $01
-.const SS = $02
-.const MOSI = $40
-.const MISO = $80
+.const MOSI = 1 << 6
+.const MISO = 1 << 7
 
-.const A_OUTPUTS = CLOCK | SS | MOSI
-.const CLOCK0_SELECT = (SS | CLOCK) ^ $ff
-.const CLOCK1_SELECT = (SS) ^ $ff
-.const CLOCK0_IDLE = CLOCK ^ $ff
+.const A_OUTPUTS = CLOCK | MOSI
+.const B_OUTPUTS = GD_SS
+
+.const GD_SELECT = GD_SS ^ $ff
+.const IDLE = $ff
+
 .const WRITE_1 = MOSI
 .const WRITE_0 = $00
 
@@ -33,18 +37,15 @@
 * = $F000
     lda #A_OUTPUTS
     sta DDRA
+    lda #B_OUTPUTS
+    sta DDRB
 
-    lda #CLOCK0_SELECT
-    sta SPI_PORT
-    spi_read_address($2800)
+    gd_read_address($2800)
     jsr spi_read_byte
     sta IDENTIFIER
-    lda #CLOCK0_IDLE
-    sta SPI_PORT
+    spi_end()
 
-    lda #CLOCK0_SELECT
-    sta SPI_PORT
-    spi_write_address(0)
+    gd_write_address(0)
 
     lda #<text
     sta TEXTPTR
@@ -62,8 +63,7 @@
     lda (TEXTPTR)
     bne !-
 
-    lda #CLOCK0_IDLE
-    sta SPI_PORT
+    spi_end()
 
     lda IDENTIFIER
 
@@ -73,7 +73,7 @@ fetdemo:
     .var spritesToDraw = 48
     .var y = 100
 
-    spi_write_address($3000 + (255-spritesToDraw) * 4)
+    gd_write_address($3000 + (255-spritesToDraw) * 4)
 
     ldx #spritesToDraw // Draw 34 sprites
 !:
@@ -107,7 +107,7 @@ fetdemo:
     adc position
     sta position
     // Set background color
-    spi_write_address($280e)
+    gd_write_address($280e)
     ldx FRAMES
     lda framerateColors,x
     and #$1f
@@ -145,8 +145,8 @@ init4ColorSprite:
 //  for (int i = 0; i < 256; i++) {
 //    SPI.transfer(i % 4);
 //  }
-//  gd_end();
-    spi_write_address($4000 + 256*SPRITEIMG)
+//  spi_end();
+    gd_write_address($4000 + 256*SPRITEIMG)
 
     ldx #0
 !:
@@ -161,7 +161,7 @@ init4ColorSprite:
     spi_end()
 
     // 4 color palette
-    spi_write_address($2880)
+    gd_write_address($2880)
     spi_write(0)
     spi_write(0)
 
@@ -177,30 +177,30 @@ init4ColorSprite:
 
     rts
 
-.macro spi_begin() {
-    lda #CLOCK0_SELECT
-    sta SPI_PORT
+.macro gd_begin() {
+    lda #GD_SELECT
+    sta SS_PORT
 }
 
 .macro spi_end() {
-    lda #CLOCK0_IDLE
-    sta SPI_PORT
+    lda #IDLE
+    sta SS_PORT
 }
 
 .macro spi_write(value) {
     lda #value
     jsr spi_write_byte
 }
-.macro spi_write_address(address) {
-    spi_begin()
+.macro gd_write_address(address) {
+    gd_begin()
     lda #>($8000 | address)
     jsr spi_write_byte
     lda #<address
     jsr spi_write_byte
 }
 
-.macro spi_read_address(address) {
-    spi_begin()
+.macro gd_read_address(address) {
+    gd_begin()
     lda #>address
     jsr spi_write_byte
     lda #<address

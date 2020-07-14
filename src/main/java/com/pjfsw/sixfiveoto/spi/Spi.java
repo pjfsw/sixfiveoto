@@ -13,10 +13,10 @@ public class Spi {
     private int toMasterByte;
 
     public Spi() {
-        slaveOut = new Pin();
-        slaveIn = new Pin();
-        clock = new Pin();
-        slaveNotSelected = new Pin();
+        slaveOut = Pin.output();
+        slaveIn = Pin.input();
+        clock = Pin.input();
+        slaveNotSelected = Pin.input();
         resetState();
     }
 
@@ -56,6 +56,7 @@ public class Spi {
         position = 0;
         toDeviceByte = 0;
         internalClock = true;
+        slaveOut.value = null;
     }
 
     public Pin getSlaveOut() {

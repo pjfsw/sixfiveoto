@@ -26,6 +26,7 @@
 .label FRAMES = $0201
 .label CHAR = $0202
 
+.label relPosition = 3
 .label position = 2
 .label SPRITEIMG = 63
 
@@ -69,27 +70,33 @@
     jsr init4ColorSprite
 
 fetdemo:
-    // Position
-    .var sprite = 255
+    .var spritesToDraw = 48
     .var y = 100
 
-    ldx #33 // Draw 34 sprites
+    spi_write_address($3000 + (255-spritesToDraw) * 4)
+
+    ldx #spritesToDraw // Draw 34 sprites
 !:
     phx
-    spi_write_address($3000 + sprite * 4)
-    ldx position
+    txa
+    asl
+    clc
+    adc position
+    sta relPosition
+    tax
     lda costable,x
     jsr spi_write_byte
     spi_write($80)
-    ldx position
+    ldx relPosition
     lda sintable,x
     jsr spi_write_byte
     spi_write((y >> 8) | (SPRITEIMG << 1))
-    spi_end()
 
     plx
     dex
     bne !-
+
+    spi_end()
 
 !:
     lda $8000
@@ -261,11 +268,11 @@ text:
     .byte 0
 
 framerateColors:
-    .byte 0, 0, 7, 15, 31
+    .byte 0, 0, 15, 23, 31
 
 .align $100
 costable:
     .fill 256, round(127.5+127.5*cos(toRadians(i*360/256)))
 
 sintable:
-    .fill 256, round(127.5+127.5*sin(toRadians(i*360/256)))
+    .fill 256, round(127.5+127.5*sin(toRadians(i*360/128)))

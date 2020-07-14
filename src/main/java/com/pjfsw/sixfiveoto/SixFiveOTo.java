@@ -33,6 +33,7 @@ import com.pjfsw.sixfiveoto.gameduino.Gameduino;
 import com.pjfsw.sixfiveoto.instruction.Jsr;
 import com.pjfsw.sixfiveoto.peripherals.Switch;
 import com.pjfsw.sixfiveoto.registers.Registers;
+import com.pjfsw.sixfiveoto.serialrom.SerialRom;
 import com.pjfsw.sixfiveoto.spi.Spi;
 
 public class SixFiveOTo {
@@ -48,7 +49,7 @@ public class SixFiveOTo {
     private final ScheduledExecutorService executorService;
     private int frameCycleCount;
 
-    private final int clockSpeedHz = 2_500_000;
+    private final int clockSpeedHz = 20_000_000;
 
     private final int screenRefreshRate = 60;
     private final int refreshMultiplier = 10;
@@ -107,31 +108,23 @@ public class SixFiveOTo {
             e.printStackTrace();
         }
 
+        Spi spi = new Spi();
+        via.connectPortA(0, spi.getClock());
+        via.connectPortA(6, spi.getSlaveIn());
+        via.connectPortA(7, spi.getSlaveOut());
+        via.connectPortB(2, spi.getSlaveSelect());
+
+        String text = "WE ARE READING THIS FOR THE %d TIME! ";
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 131072/text.length(); i++) {
+            sb.append(String.format(text, i));
+        }
+
+        SerialRom cartridge = new SerialRom(spi,  sb.chars().toArray());
+        clockables.add(cartridge);
+        screen.addDrawable(new Point((Screen.W - SerialRom.W)/2, screen.getScreenHeight()-SerialRom.H-1), cartridge);
+
         clockables.add(via); // TODO ugly fix because we need to sample the output of devices before next instruction
-
-
-//        Gti gti = new Gti(80);
-//        resettables.add(gti);
-//        clockables.add(gti);
-//        via.setPin(0,0, gti.getClockIn()); // SPI Clock
-//        via.setPin(0,2, gti.getSlaveSelect()); // Slave Select
-//        via.setPin(0,6, gti.getSlaveIn()); // MOSI
-//        via.setPin(0,7, gti.getSlaveOut()); // MISO
-//        via.setPin(1,7, gti.getSlaveReady()); // Slave Ready
-//        via.setPin(1,6, gti.getConnected()); // User connected
-//        GtiTcpTerminal terminal = new GtiTcpTerminal(executorService,
-//
-//            gti::read, gti::write, gti::setConnected);
-//        clockables.add(terminal);
-//        try {
-//            terminal.start();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-
-        /*Switch aSwitch = new Switch();
-        buttons.put(KeyEvent.VK_W, aSwitch);
-        via.setPin(1,0, aSwitch);*/
 
         /**
          * RAM 0x0000 - 0x7FFF

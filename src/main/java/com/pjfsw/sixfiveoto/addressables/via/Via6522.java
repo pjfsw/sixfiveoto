@@ -18,6 +18,7 @@ import com.pjfsw.sixfiveoto.addressables.Resettable;
 
 public class Via6522 implements Peeker, Poker, Drawable, Resettable, Clockable {
     public static final int W = 320;
+    public static final int H = 80;
     private final BufferedImage img;
     private static final int COLOR_FULL = 0xEE000000;
     private static final int COLOR_DIM  = 0x44000000;

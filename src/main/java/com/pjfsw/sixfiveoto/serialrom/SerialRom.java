@@ -1,6 +1,7 @@
 package com.pjfsw.sixfiveoto.serialrom;
 
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.util.Arrays;
@@ -10,6 +11,14 @@ import com.pjfsw.sixfiveoto.addressables.Drawable;
 import com.pjfsw.sixfiveoto.spi.Spi;
 
 public class SerialRom implements Clockable, Drawable {
+    private static final int SCALE = 800;
+    public static final int W = SCALE + 2;
+    public static final int H = 12;
+    private static final Color UNUSED_IDLE = new Color(0x550000);
+    private static final Color USED_IDLE = new Color(0x004400);
+    private static final Color UNUSED_ACTIVE = new Color(0xBB0000);
+    private static final Color USED_ACTIVE = new Color(0x00BB00);
+
     private static final int CAPACITY = 0x20000;
     private final int usedSize;
 
@@ -19,6 +28,7 @@ public class SerialRom implements Clockable, Drawable {
     private final int[] contents;
     private final Spi spi;
     private int lastPosition;
+    private long lastActive;
 
     private enum Instruction {
         READ(0b00000011),
@@ -62,7 +72,12 @@ public class SerialRom implements Clockable, Drawable {
     @Override
     public void next(final int cycles) {
         spi.update();
-        if (spi.getSlaveSelect().value || spi.getPosition() < 8 || spi.getPosition() == lastPosition) {
+        if (spi.getSlaveSelect().value || spi.getPosition() < 8) {
+            instruction = Instruction.IDLE;
+            return;
+        }
+        lastActive = System.currentTimeMillis();
+        if (spi.getPosition() == lastPosition) {
             return;
         }
         if (spi.getPosition() == 8) {
@@ -94,13 +109,21 @@ public class SerialRom implements Clockable, Drawable {
     public void draw(final Graphics graphics) {
         Graphics2D g2 = (Graphics2D)graphics;
 
-        int h = 3;
-        g2.setColor(Color.RED);
-        g2.fillRect(0,0, 100, h);
-        g2.setColor(Color.GREEN);
-        g2.fillRect(0,0, usedSize * 100 / CAPACITY, h);
+        g2.setFont(new Font("Courier", Font.PLAIN, 8));
         g2.setColor(Color.WHITE);
-        g2.drawLine(address,0, address, h);
+        g2.drawString("Drive",2,0);
+
+        boolean active = (System.currentTimeMillis() - lastActive) < 250;
+
+        g2.setColor(active ? UNUSED_ACTIVE : UNUSED_IDLE);
+        g2.fillRect(2,1, SCALE, H-2);
+        g2.setColor(active ? USED_ACTIVE : USED_IDLE);
+        g2.fillRect(2,1, usedSize * SCALE / CAPACITY, H-2);
+        if (active) {
+            g2.setColor(Color.WHITE);
+            int addressOffset = address * SCALE / CAPACITY;
+            g2.drawRect(addressOffset ,0, 2, H);
+        }
 
     }
 }

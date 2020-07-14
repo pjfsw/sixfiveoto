@@ -10,6 +10,7 @@
 
 .label SS_PORT = PORTB
 .const GD_SS = 1 << 1
+.const CART_SS = 1 << 2
 
 .label SPI_PORT = PORTA
 .const CLOCK = $01
@@ -17,9 +18,10 @@
 .const MISO = 1 << 7
 
 .const A_OUTPUTS = CLOCK | MOSI
-.const B_OUTPUTS = GD_SS
+.const B_OUTPUTS = GD_SS | CART_SS
 
 .const GD_SELECT = GD_SS ^ $ff
+.const CART_SELECT = CART_SS ^ $ff
 .const IDLE = $ff
 
 .const WRITE_1 = MOSI
@@ -32,7 +34,10 @@
 
 .label relPosition = 3
 .label position = 2
-.label SPRITEIMG = 63
+.const SPRITEIMG = 63
+
+.label loadBuffer = $0300
+.label loadPosition = 3
 
 * = $F000
     lda #A_OUTPUTS
@@ -65,7 +70,7 @@
 
     spi_end()
 
-    lda IDENTIFIER
+    jsr load_data
 
     jsr init4ColorSprite
 
@@ -116,27 +121,57 @@ fetdemo:
 
     jmp fetdemo
 
+load_data:
+    stz loadPosition
+!:
+    cart_read()
+    {
+        lda #0
+        jsr spi_write_byte
 
-//loop:
-//    // Set background color
-//    spi_write_address($220e)
-//    lda COLOR
-//    and #$1f
-//    jsr spi_write_byte
-//    lda #0
-//    jsr spi_write_byte
-//    spi_end()
-//    spi_write_address($1000 + 67 * 16)
-//    lda CHAR
-//    jsr spi_write_byte
-//    spi_end()
-//
-//    inc COLOR
-//    inc CHAR
-//!:
-//    lda $8000
-//    beq !-
-//    jmp loop
+        lda loadPosition
+        jsr spi_write_byte
+
+        lda #0
+        jsr spi_write_byte
+
+        ldx #0
+    !:
+        phx
+        jsr spi_read_byte
+        plx
+
+        sta loadBuffer,x
+
+        inx
+        bne !-
+    }
+    spi_end()
+
+    gd_begin()
+    {
+        lda loadPosition
+        and #$0f
+        ora #$80
+        jsr spi_write_byte
+        spi_write($00)
+        ldx #0
+    !:
+        lda loadBuffer,x
+        phx
+        jsr spi_write_byte
+        plx
+        inx
+        bne !-
+    }
+    spi_end()
+
+    inc loadPosition
+    lda loadPosition
+    //cmp #16
+    bne !-
+
+    rts
 
 init4ColorSprite:
 
@@ -150,9 +185,10 @@ init4ColorSprite:
 
     ldx #0
 !:
-    txa
-    and #$03
+    //txa
+    //and #$03
     phx
+    lda spriteData,x
     jsr spi_write_byte
     plx
     inx
@@ -182,15 +218,6 @@ init4ColorSprite:
     sta SS_PORT
 }
 
-.macro spi_end() {
-    lda #IDLE
-    sta SS_PORT
-}
-
-.macro spi_write(value) {
-    lda #value
-    jsr spi_write_byte
-}
 .macro gd_write_address(address) {
     gd_begin()
     lda #>($8000 | address)
@@ -206,6 +233,38 @@ init4ColorSprite:
     lda #<address
     jsr spi_write_byte
 }
+
+.macro cart_begin() {
+    lda #CART_SELECT
+    sta SS_PORT
+}
+
+.macro cart_read() {
+    cart_begin()
+    lda #$03    // Read cmd
+    jsr spi_write_byte
+}
+
+.macro cart_read_address(address) {
+    cart_read()
+    lda #address >> 16
+    jsr spi_write_byte
+    lda #(address >> 8) & $ff
+    jsr spi_write_byte
+    lda #address & $ff
+    jsr spi_write_byte
+}
+
+.macro spi_end() {
+    lda #IDLE
+    sta SS_PORT
+}
+
+.macro spi_write(value) {
+    lda #value
+    jsr spi_write_byte
+}
+
 
 spi_transfer:
     ldx #WRITE_0        // +2
@@ -276,3 +335,22 @@ costable:
 
 sintable:
     .fill 256, round(127.5+127.5*sin(toRadians(i*360/128)))
+
+spriteData:
+    .byte 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0
+    .byte 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 2, 2, 1, 0, 0, 0
+    .byte 0, 0, 1, 2, 3, 3, 3, 3, 3, 3, 3, 3, 2, 1, 0, 0
+    .byte 0, 1, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 1, 0
+    .byte 1, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 1
+    .byte 1, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 1
+    .byte 1, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 1
+    .byte 1, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 1
+
+    .byte 1, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 1
+    .byte 1, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 1
+    .byte 1, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 1
+    .byte 1, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 1
+    .byte 0, 1, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 1, 0
+    .byte 0, 0, 1, 2, 3, 3, 3, 3, 3, 3, 3, 3, 2, 1, 0, 0
+    .byte 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 2, 2, 1, 0, 0, 0
+    .byte 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0

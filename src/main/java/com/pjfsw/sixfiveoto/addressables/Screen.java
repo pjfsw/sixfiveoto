@@ -46,6 +46,10 @@ public class Screen implements Poker, Peeker {
         strategy = frame.getBufferStrategy();
     }
 
+    public int getScreenHeight() {
+        return H - frame.getInsets().bottom - frame.getInsets().top;
+    }
+
     public void addDrawable(Point position, Drawable drawable) {
         drawables.add(new PositionedDrawable(position, drawable));
     }

@@ -49,7 +49,7 @@ public class SixFiveOTo {
     private final ScheduledExecutorService executorService;
     private int frameCycleCount;
 
-    private final int clockSpeedHz = 20_000_000;
+    private final int clockSpeedHz = 2_560_000;
 
     private final int screenRefreshRate = 60;
     private final int refreshMultiplier = 10;
@@ -68,7 +68,7 @@ public class SixFiveOTo {
         AddressDecoder addressDecoder = new AddressDecoder();
 
         int programBase = ((int)prg[0]&0xff) + (((int)(prg[1])&0xff) << 8);
-        System.out.println(String.format("Program base: $%04X  Length: %d bytes", programBase, prg.length-2));
+        System.out.println(String.format("- Program base: $%04X  Length: %d bytes", programBase, prg.length-2));
         RomVectors romVectors = new RomVectors(programBase);
         addressDecoder.mapPeeker(romVectors, 0xFF, 0xFF);
         MemoryModule ram = MemoryModule.create32K();
@@ -162,7 +162,7 @@ public class SixFiveOTo {
         if (runner == null || runner.isCancelled() || runner.isDone()) {
             debugger.update(cpu.createDisassembler());
         }
-        System.out.println("RESET " + Memory.format(registers.pc));
+        System.out.println("- Triggering RESET " + Memory.format(registers.pc));
     }
     private void updateFrameCycleCount(int cycles) {
         frameCycleCount += cycles;
@@ -363,6 +363,7 @@ public class SixFiveOTo {
             File symbolFile = new File(prgName.replace(".prg", ".sym"));
             Map<Integer, String> symbolMap = new HashMap<>();
             if (symbolFile.isFile()) {
+                System.out.println("- Loading detected symbol file " + symbolFile.getName());
                 List<String> symbols =
                     Files.readAllLines(symbolFile.toPath());
                 Pattern p = Pattern.compile(".label\\s*(\\w+)=\\s*(\\S+)");
@@ -371,11 +372,8 @@ public class SixFiveOTo {
                     if (m.matches()) {
 
                         String s = m.group(2).substring(1);
-                        System.out.println(s);
                         int address = Integer.parseInt(s, 16);
                         symbolMap.put(address, m.group(1));
-
-                        System.out.println(String.format("Symbol: '%s'='%s'", m.group(1), m.group(2)));
                     }
                 }
 

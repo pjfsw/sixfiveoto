@@ -109,11 +109,16 @@ public class SerialRom implements Clockable, Drawable {
     public void draw(final Graphics graphics) {
         Graphics2D g2 = (Graphics2D)graphics;
 
-        g2.setFont(new Font("Courier", Font.PLAIN, 8));
-        g2.setColor(Color.WHITE);
-        g2.drawString("Drive",2,0);
-
+        g2.setFont(new Font("Courier", Font.PLAIN, 12));
         boolean active = (System.currentTimeMillis() - lastActive) < 250;
+        if (active) {
+            g2.setColor(Color.WHITE);
+            g2.drawString(String.format("Serial ROM: %05X", address),2,0);
+        } else {
+            g2.setColor(Color.DARK_GRAY);
+            g2.drawString("Serial ROM",2,0);
+        }
+
         //boolean active=true;
 
         g2.setColor(active ? UNUSED_ACTIVE : UNUSED_IDLE);

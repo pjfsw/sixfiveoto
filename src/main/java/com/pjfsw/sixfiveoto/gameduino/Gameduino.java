@@ -26,6 +26,28 @@ public class Gameduino implements Drawable, Clockable {
     public static final int W = 800;
     public static final int H = 600;
 
+    private static final int[] spriteXTransforms = new int[] {
+        2,-2,
+        -2,2,
+        2,2,
+        -2,-2
+    };
+
+    private static final int[] spriteYTransforms = new int[] {
+        2,2,
+        2,2,
+        -2,2,
+        -2,2
+    };
+
+    private static final double R = Math.asin(1); // 90 degrees CW
+    private static final double[] spriteRotations = new double[] {
+        0,-R,
+        0,-R,
+        0,R,
+        0,R
+    };
+
     private static final int RAM_CHR = 0x1000;
     private static final int RAM_PAL = 0x2000;
     private static final int PALETTE_16A = 0x2840;
@@ -49,7 +71,6 @@ public class Gameduino implements Drawable, Clockable {
     private final Set<Integer> spriteToRebuild = ConcurrentHashMap.newKeySet();
     private final Set<Integer> sprite4c = ConcurrentHashMap.newKeySet();
     private final Set<Integer> sprite16c = ConcurrentHashMap.newKeySet();
-
 
     public Gameduino(Spi spi, int[] memoryDump) {
         this.spi = spi;
@@ -249,7 +270,9 @@ public class Gameduino implements Drawable, Clockable {
             int x = (int)(spriteData & 511);
             int y = (int)((spriteData >> 16) & 511);
             transform.translate(x*2, y*2);
-            transform.scale(2,2);
+            int rotationBits = (registers[RAM_SPR + i * 4 + 1] >> 1) & 7;
+            transform.rotate(spriteRotations[rotationBits]);
+            transform.scale(spriteXTransforms[rotationBits],spriteYTransforms[rotationBits]);
             g2.drawImage(spriteImages[i], transform, null);
         }
     }

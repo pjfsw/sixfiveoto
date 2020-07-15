@@ -254,12 +254,19 @@ public class Gameduino implements Drawable, Clockable {
         g2.clearRect(0,0, 800,600);
         g2.setColor(Color.DARK_GRAY);
         g2.drawRect(0,0,W,H);
-        for (int y = 0; y < 37; y++) {
-            for (int x = 0; x < 50; x++) {
-                int charCode = registers[y*64+x];
+        g2.clipRect(0,0,W,H);
+        int scrollX = registers[0x2804] | (registers[0x2805] << 8);
+        int scrollXPixels = (scrollX & 7) * 2;
+        int scrollY = registers[0x2806] | (registers[0x2807] << 8);
+        int scrollYPixels = (scrollY & 7) * 2;
+        for (int y = 0; y < 38; y++) {
+            for (int x = 0; x < 51; x++) {
+                int cx = (x + (scrollX >> 3)) & 0x3f;
+                int cy = (y + (scrollY >> 3)) & 0x3f;
+                int charCode = registers[cy*64+cx];
                 AffineTransform transform =
                     ramChr[charCode].createGraphics().getTransform();
-                transform.translate(x*16,y*16);
+                transform.translate(x*16 - scrollXPixels,y*16 - scrollYPixels);
                 transform.scale(2,2);
                 g2.drawImage(ramChr[charCode], transform, null);
             }
@@ -271,7 +278,7 @@ public class Gameduino implements Drawable, Clockable {
             int y = (int)((spriteData >> 16) & 511);
             transform.translate(x*2, y*2);
             int rotationBits = (registers[RAM_SPR + i * 4 + 1] >> 1) & 7;
-            transform.rotate(spriteRotations[rotationBits]);
+            transform.rotate(spriteRotations[rotationBits], 16,16);
             transform.scale(spriteXTransforms[rotationBits],spriteYTransforms[rotationBits]);
             g2.drawImage(spriteImages[i], transform, null);
         }

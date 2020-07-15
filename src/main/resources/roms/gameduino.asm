@@ -28,16 +28,30 @@
 .const WRITE_0 = $00
 
 .label TEXTPTR = $01
-.label IDENTIFIER = $0200
-.label FRAMES = $0201
-.label CHAR = $0202
 
-.label relPosition = 3
-.label position = 2
 .const SPRITEIMG = 63
 
 .label loadBuffer = $0300
 .label loadPosition = 3
+
+
+* = $0001 virtual
+.zp {
+relPosition:
+    .byte 0
+position:
+    .byte 0
+}
+
+* = $0200 virtual
+identifier:
+    .byte 0
+frames:
+    .byte 0
+scrollX:
+    .byte 0,0
+scrollY:
+    .byte 0,0
 
 * = $F000
     lda #A_OUTPUTS
@@ -47,7 +61,7 @@
 
     gd_read_address($2800)
     jsr spi_read_byte
-    sta IDENTIFIER
+    sta identifier
     spi_end()
 
     gd_write_address(0)
@@ -70,11 +84,17 @@
 
     spi_end()
 
-    //jsr load_data
+    jsr load_data
 
     jsr init4ColorSprite
 
 fetdemo:
+    inc scrollX
+    bne !+
+    inc scrollX+1
+!:
+    jsr scroll
+
     .var spritesToDraw = 49
     .var y = 100
 
@@ -91,7 +111,8 @@ fetdemo:
     tax
     lda costable,x
     jsr spi_write_byte
-    spi_write($80 | (5<<1))
+.var rotation = 3
+    spi_write($80 | (rotation<<1))
     ldx relPosition
     lda sintable,x
     jsr spi_write_byte
@@ -107,19 +128,36 @@ fetdemo:
     lda $8000
     beq !-
 
-    sta FRAMES
+    sta frames
     clc
     adc position
     sta position
     // Set background color
     gd_write_address($280e)
-    ldx FRAMES
+    ldx frames
     lda framerateColors,x
     and #$1f
     jsr spi_write_byte
     spi_end()
 
     jmp fetdemo
+
+scroll:
+    gd_write_address($2804)
+    {
+        lda scrollX
+        jsr spi_write_byte
+        lda scrollX+1
+        jsr spi_write_byte
+        ldx scrollX
+        lda scrollSinLo,x
+        jsr spi_write_byte
+        ldx scrollX
+        lda scrollSinHi,x
+        jsr spi_write_byte
+    }
+    spi_end()
+    rts
 
 load_data:
     stz loadPosition
@@ -204,8 +242,8 @@ init4ColorSprite:
     spi_write($FF)
     spi_write($7F)
 
+    spi_write($FF)
     spi_write($1F)
-    spi_write($00)
 
     spi_write($0f)
     spi_write($7f)
@@ -335,6 +373,11 @@ costable:
 
 sintable:
     .fill 256, round(127.5+127.5*sin(toRadians(i*360/128)))
+
+scrollSinLo:
+    .fill 256, <(round(149.5+149.5*sin(toRadians(i*360/256))))
+scrollSinHi:
+    .fill 256, >(round(149.5+149.5*sin(toRadians(i*360/256))))
 
 spriteData:
       .byte 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0

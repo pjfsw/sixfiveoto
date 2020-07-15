@@ -101,7 +101,7 @@ public class SixFiveOTo {
 
             via.connectPortB(1, spi.getSlaveSelect());
 
-            Gameduino gameduino = new Gameduino(spi, dump);
+            Gameduino gameduino = new Gameduino(clockSpeedHz, spi, dump);
             clockables.add(gameduino);
             screen.addDrawable(new Point((Screen.W - Gameduino.W)/2,1), gameduino);
         } catch (IOException e) {

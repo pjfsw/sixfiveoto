@@ -59,6 +59,15 @@ public class RegistersTest {
         assertFalse(registers.c);
     }
 
+
+    @Test
+    public void testSbcWraparound() {
+        Registers registers = new Registers();
+        registers.c = true;
+        assertEquals(0x02, registers.sbc(0x01, 0xFF));
+        assertFalse(registers.v);
+    }
+
     private static boolean overflowAdc(Registers registers, int a, int b) {
         registers.c = false;
         registers.adc(a, b);

@@ -48,6 +48,8 @@ public class Gameduino implements Drawable, Clockable {
         0,R
     };
 
+    private static final int FRAME = 0x2802;
+    private static final int VBLANK = 0x2803;
     private static final int RAM_CHR = 0x1000;
     private static final int RAM_PAL = 0x2000;
     private static final int PALETTE_16A = 0x2840;
@@ -57,6 +59,8 @@ public class Gameduino implements Drawable, Clockable {
     private static final int RAM_SPRIMG = 0x4000;
 
     private final Spi spi;
+    private final int cyclesPerFrame;
+    private final int verticalBlankCycles;
     private boolean readMode;
     private int address;
     private final int[] registers = new int[32768];
@@ -71,8 +75,13 @@ public class Gameduino implements Drawable, Clockable {
     private final Set<Integer> spriteToRebuild = ConcurrentHashMap.newKeySet();
     private final Set<Integer> sprite4c = ConcurrentHashMap.newKeySet();
     private final Set<Integer> sprite16c = ConcurrentHashMap.newKeySet();
+    private int cycles;
+    private int framesSinceLastRead;
 
-    public Gameduino(Spi spi, int[] memoryDump) {
+    public Gameduino(int systemSpeed, Spi spi, int[] memoryDump) {
+        this.cyclesPerFrame = systemSpeed/72;
+        // Vertical blank period for 72 Hz is 1.3728 ms = 1372800 nanos
+        this.verticalBlankCycles = (int)(((long)systemSpeed/1000L) * 1372800L/1000000L);
         this.spi = spi;
 
         System.arraycopy(memoryDump, 0, registers, 0, memoryDump.length);
@@ -193,6 +202,17 @@ public class Gameduino implements Drawable, Clockable {
 
     @Override
     public void next(final int cycles) {
+        this.cycles = (this.cycles + cycles) % cyclesPerFrame;
+        if (this.cycles > verticalBlankCycles) {
+            if (registers[VBLANK] == 1) {
+                framesSinceLastRead++;
+                registers[FRAME] = (registers[FRAME] + 1) & 0xFF;
+            }
+            registers[VBLANK] = 0;
+        } else {
+            registers[VBLANK] = 1;
+        }
+
         spi.update();
         if (spi.getSlaveSelect().value || spi.getPosition() < 8 || spi.getPosition() == lastPosition) {
             return;
@@ -203,6 +223,9 @@ public class Gameduino implements Drawable, Clockable {
         } else if (spi.getPosition() == 16) {
             address |= spi.getToDeviceData();
             if (readMode) {
+                if (address == FRAME) {
+                    framesSinceLastRead = 0;
+                }
                 spi.setFromDeviceData(registers[address]);
                 address++;
             }
@@ -210,7 +233,10 @@ public class Gameduino implements Drawable, Clockable {
             if (readMode) {
                 spi.setFromDeviceData(registers[address]);
             } else {
-                registers[address] = spi.getToDeviceData();
+                if (address < 0x2800 || address > 0x2803) {
+                    registers[address] = spi.getToDeviceData();
+                }
+
 
                 // TODO Only rebuild after SPI command is finished. Cache in another set?
                 if (address >= RAM_PAL && (address < RAM_PAL + 0x0800)) {

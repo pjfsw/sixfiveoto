@@ -27,12 +27,8 @@
 .const WRITE_1 = MOSI
 .const WRITE_0 = $00
 
-.label TEXTPTR = $01
-
 .const SPRITEIMG = 63
 
-.label loadBuffer = $0300
-.label loadPosition = 3
 
 
 * = $0001 virtual
@@ -41,17 +37,26 @@ relPosition:
     .byte 0
 position:
     .byte 0
+vb:
+    .byte 0
 }
 
 * = $0200 virtual
+loadPosition:
+    .byte 0
 identifier:
     .byte 0
 frames:
+    .byte 0
+lastFrame:
     .byte 0
 scrollX:
     .byte 0,0
 scrollY:
     .byte 0,0
+* = $0300 virtual
+loadBuffer:
+    .fill 256,0
 
 * = $F000
     lda #A_OUTPUTS
@@ -59,44 +64,14 @@ scrollY:
     lda #B_OUTPUTS
     sta DDRB
 
-    gd_read_address($2800)
-    jsr spi_read_byte
-    sta identifier
-    spi_end()
-
-    gd_write_address(0)
-
-    lda #<text
-    sta TEXTPTR
-    lda #>text
-    sta TEXTPTR+1
-    lda (TEXTPTR)
-!:
-    {
-        jsr spi_transfer
-        inc TEXTPTR
-        bne !+
-        inc TEXTPTR+1
-    !:
-    }
-    lda (TEXTPTR)
-    bne !-
-
-    spi_end()
-
     jsr load_data
 
     jsr init4ColorSprite
 
 fetdemo:
-    inc scrollX
-    bne !+
-    inc scrollX+1
-!:
     jsr scroll
 
-    .var spritesToDraw = 49
-    .var y = 100
+    .var spritesToDraw = 42
 
     gd_write_address($3000 + (255-spritesToDraw) * 4)
 
@@ -116,7 +91,7 @@ fetdemo:
     ldx relPosition
     lda sintable,x
     jsr spi_write_byte
-    spi_write((y >> 8) | (SPRITEIMG << 1))
+    spi_write(SPRITEIMG << 1)
 
     plx
     dex
@@ -124,14 +99,38 @@ fetdemo:
 
     spi_end()
 
+    // Wait for VBL
+    //jsr wait_vertical_blank
+    // End VBL
+
 !:
-    lda $8000
+    gd_read_address($2802)
+    {
+        jsr spi_read_byte
+        tax
+        sec
+        sbc lastFrame
+        sta frames
+        stx lastFrame
+
+    }
+    spi_end()
+
+    lda frames
     beq !-
 
-    sta frames
     clc
     adc position
     sta position
+
+    clc
+    lda frames
+    adc scrollX
+    sta scrollX
+    bcc !+
+    inc scrollX+1
+!:
+
     // Set background color
     gd_write_address($280e)
     ldx frames
@@ -360,12 +359,8 @@ spi_read_byte:
 //    rts
 //
 
-text:
-    .text "GAMEDUINO ASCII TEST FROM 6502!"
-    .byte 0
-
 framerateColors:
-    .byte 0, 0, 15, 23, 31
+    .byte 0, 0, $0f, $1f, $ff
 
 .align $100
 costable:

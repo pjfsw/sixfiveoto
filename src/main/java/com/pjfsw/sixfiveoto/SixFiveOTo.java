@@ -10,7 +10,9 @@ import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -19,10 +21,14 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
 
+import com.google.common.io.ByteStreams;
 import com.pjfsw.sixfiveoto.addressables.Clockable;
 import com.pjfsw.sixfiveoto.addressables.MemoryModule;
 import com.pjfsw.sixfiveoto.addressables.Resettable;
@@ -61,22 +67,22 @@ public class SixFiveOTo {
     private int runUntilPc = -1;
 
 
-    private SixFiveOTo(byte[] prg, Map<Integer, String> symbols) {
+    private SixFiveOTo(byte[] prgBytes, int[] serialRomBytes, Map<Integer, String> symbols) {
         executorService =
             Executors.newScheduledThreadPool(2);
 
         AddressDecoder addressDecoder = new AddressDecoder();
 
-        int programBase = ((int)prg[0]&0xff) + (((int)(prg[1])&0xff) << 8);
-        System.out.println(String.format("- Program base: $%04X  Length: %d bytes", programBase, prg.length-2));
+        int programBase = ((int)prgBytes[0]&0xff) + (((int)(prgBytes[1])&0xff) << 8);
+        System.out.println(String.format("- Program base: $%04X  Length: %d bytes", programBase, prgBytes.length-2));
         RomVectors romVectors = new RomVectors(programBase);
         addressDecoder.mapPeeker(romVectors, 0xFF, 0xFF);
         MemoryModule ram = MemoryModule.create32K();
         addressDecoder.mapPeeker(ram, 0x00, 0x7F);
         addressDecoder.mapPoker(ram, 0x00, 0x7F);
         MemoryModule rom = MemoryModule.create8K();
-        for (int i = 0; i < prg.length-2; i++) {
-            rom.poke(programBase+i, prg[i+2]);
+        for (int i = 0; i < prgBytes.length-2; i++) {
+            rom.poke(programBase+i, prgBytes[i+2]);
         }
         addressDecoder.mapPeeker(rom, 0xF0, 0xFE);
 
@@ -114,13 +120,7 @@ public class SixFiveOTo {
         via.connectPortA(7, spi.getSlaveOut());
         via.connectPortB(2, spi.getSlaveSelect());
 
-        String text = "WE ARE READING THIS FOR THE %d TIME! ";
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < 131072/text.length(); i++) {
-            sb.append(String.format(text, i));
-        }
-
-        SerialRom cartridge = new SerialRom(spi,  sb.chars().toArray());
+        SerialRom cartridge = new SerialRom(spi,  serialRomBytes);
         clockables.add(cartridge);
         screen.addDrawable(new Point((Screen.W - SerialRom.W)/2, screen.getScreenHeight()-SerialRom.H-1), cartridge);
 
@@ -309,7 +309,15 @@ public class SixFiveOTo {
         screen.loop();
     }
 
-    private static String compileSource(String assembler, String source) throws InterruptedException, IOException {
+    private static String compileSource(String source) throws InterruptedException, IOException {
+        String assembler = System.getProperty("assembler");
+        if (assembler == null) {
+            System.out.println("Cannot assemble on the fly as 'assembler' property is not defined!");
+            System.out.println("Use Java property -D\"java -jar /path/to/KickAssembler/KickAss.jar\"");
+            System.out.println("Send a .PRG file as argument to launch emulator directly");
+            System.exit(1);
+        }
+
         Process ps = Runtime.getRuntime().exec(ArrayUtils.addAll(assembler.split(" "), source));
         int result = ps.waitFor();
         InputStream is = ps.getInputStream();
@@ -326,40 +334,49 @@ public class SixFiveOTo {
         String prgName = "";
         boolean runFullSpeed = true;
 
-        for (String arg : args) {
-            if (arg.equals("-step")) {
-                runFullSpeed = false;
-            }
-            if (arg.toLowerCase().endsWith(".asm")) {
-                try {
-                    String assembler = System.getProperty("assembler");
-                    if (assembler == null) {
-                        System.out.println("Cannot assemble on the fly as 'assembler' property is not defined!");
-                        System.out.println("Use Java property -D\"java -jar /path/to/KickAssembler/KickAss.jar\"");
-                        System.out.println("Send a .PRG file as argument to launch emulator directly");
-                        System.exit(1);
+        int[] serialRomBytes = {};
+
+        try {
+            for (Iterator<String> it = Arrays.asList(args).iterator(); it.hasNext(); ) {
+                String arg = it.next();
+
+                if (arg.equals("-step")) {
+                    runFullSpeed = false;
+                } else if (arg.equals("-romimage")) {
+                    String romName = it.next();
+                    if (romName.toLowerCase().endsWith(".asm")) {
+                        romName = compileSource(romName);
                     }
-                    prgName = compileSource(assembler, arg);
+                    if (romName.toLowerCase().endsWith(".prg")) {
+                        byte[] bytes = Files.readAllBytes(new File(romName).toPath());
+                        serialRomBytes = new int[bytes.length-2];
+                        for (int i = 0; i < serialRomBytes.length; i++) {
+                            serialRomBytes[i] = bytes[i+2];
+                        }
+                    }
+                    System.out.println("- Attach ROM Image " + romName);
+                } else if (arg.toLowerCase().endsWith(".asm")) {
+                    prgName = compileSource(arg);
                     if (prgName == null) {
                         System.err.println("Terminating because of compilation failure");
                         System.exit(1);
                     }
-                } catch (InterruptedException | IOException e) {
-                    e.printStackTrace();
-                    System.exit(1);
+                } else if (arg.toLowerCase().endsWith(".prg")) {
+                    prgName = arg;
                 }
-            } else if (arg.toLowerCase().endsWith(".prg")) {
-                prgName = arg;
             }
+        } catch (InterruptedException | IOException e) {
+            e.printStackTrace();
+            System.exit(1);
         }
-
         if (prgName.isEmpty()) {
             System.err.println("Specify .prg or .asm file to load");
             System.exit(1);
         }
 
         try {
-            byte[] bytes = Files.readAllBytes(new File(prgName).toPath());
+            System.out.println("- Loading PRG file " + prgName);
+            byte[] prgBytes = Files.readAllBytes(new File(prgName).toPath());
             File symbolFile = new File(prgName.replace(".prg", ".sym"));
             Map<Integer, String> symbolMap = new HashMap<>();
             if (symbolFile.isFile()) {
@@ -377,7 +394,7 @@ public class SixFiveOTo {
                     }
                 }
 
-                new SixFiveOTo(bytes, symbolMap).start(runFullSpeed);
+                new SixFiveOTo(prgBytes, serialRomBytes, symbolMap).start(runFullSpeed);
             }
         } catch (IOException e) {
             e.printStackTrace();

@@ -1,84 +1,28 @@
 .cpu _65c02
 .encoding "ascii"
 
-.label VIA = $D000
-.label PORTB = VIA
-.label PORTA = VIA+1
-.label DDRB = VIA+2
-.label DDRA = VIA+3
-.label SR = VIA+10
-
-.label SS_PORT = PORTB
-.const GD_SS = 1 << 1
-.const CART_SS = 1 << 2
-
-.label SPI_PORT = PORTA
-.const CLOCK = $01
-.const MOSI = 1 << 6
-.const MISO = 1 << 7
-
-.const A_OUTPUTS = CLOCK | MOSI
-.const B_OUTPUTS = GD_SS | CART_SS
-
-.const GD_SELECT = GD_SS ^ $ff
-.const CART_SELECT = CART_SS ^ $ff
-.const IDLE = $ff
-
-.const WRITE_1 = MOSI
-.const WRITE_0 = $00
+#import "../system/load_address.asm"
+#import "../system/pins.asm"
 
 .const SPRITEIMG = 63
 
-
-
-* = $0001 virtual
-.zp {
-relPosition:
-    .byte 0
-position:
-    .byte 0
-vb:
-    .byte 0
-}
-
-* = $0200 virtual
-loadPosition:
-    .byte 0
-identifier:
-    .byte 0
-frames:
-    .byte 0
-lastFrame:
-    .byte 0
-scrollX:
-    .byte 0,0
-scrollY:
-    .byte 0,0
-* = $0300 virtual
-loadBuffer:
-    .fill 256,0
-
-* = $F000
-    lda #A_OUTPUTS
-    sta DDRA
-    lda #B_OUTPUTS
-    sta DDRB
-
-    jsr load_data
+.pseudopc LOAD_ADDRESS {
+    .print >(prgEnd-*)
+    .byte >(prgEnd-*)
 
     jsr init4ColorSprite
+    jsr drawlotsOfText
 
 fetdemo:
     jsr scroll
 
-    .var spritesToDraw = 42
+    .var spritesToDraw = 41
 
     gd_write_address($3000 + (255-spritesToDraw) * 4)
 
-    ldx #spritesToDraw // Draw 34 sprites
+    ldy #spritesToDraw // Draw 34 sprites
 !:
-    phx
-    txa
+    tya
     asl
     clc
     adc position
@@ -93,8 +37,7 @@ fetdemo:
     jsr spi_write_byte
     spi_write(SPRITEIMG << 1)
 
-    plx
-    dex
+    dey
     bne !-
 
     spi_end()
@@ -141,6 +84,26 @@ fetdemo:
 
     jmp fetdemo
 
+drawlotsOfText:
+    gd_write_address(0)
+    {
+        lda #16
+        sta text_counter
+    !:
+        {
+            ldy #0
+        !:
+            lda message,y
+            jsr spi_write_byte
+            iny
+            bne !-
+        }
+        dec text_counter
+        bne !-
+    }
+    spi_end()
+    rts
+
 scroll:
     gd_write_address($2804)
     {
@@ -148,66 +111,13 @@ scroll:
         jsr spi_write_byte
         lda scrollX+1
         jsr spi_write_byte
-        ldx scrollX
-        lda scrollSinLo,x
+        ldy scrollX
+        lda scrollSinLo,y
         jsr spi_write_byte
-        ldx scrollX
-        lda scrollSinHi,x
+        lda scrollSinHi,y
         jsr spi_write_byte
     }
     spi_end()
-    rts
-
-load_data:
-    stz loadPosition
-!:
-    cart_read()
-    {
-        lda #0
-        jsr spi_write_byte
-
-        lda loadPosition
-        jsr spi_write_byte
-
-        lda #0
-        jsr spi_write_byte
-
-        ldx #0
-    !:
-        phx
-        jsr spi_read_byte
-        plx
-
-        sta loadBuffer,x
-
-        inx
-        bne !-
-    }
-    spi_end()
-
-    gd_begin()
-    {
-        lda loadPosition
-        and #$0f
-        ora #$80
-        jsr spi_write_byte
-        spi_write($00)
-        ldx #0
-    !:
-        lda loadBuffer,x
-        phx
-        jsr spi_write_byte
-        plx
-        inx
-        bne !-
-    }
-    spi_end()
-
-    inc loadPosition
-    lda loadPosition
-    cmp #16
-    bne !-
-
     rts
 
 init4ColorSprite:
@@ -220,15 +130,13 @@ init4ColorSprite:
 //  spi_end();
     gd_write_address($4000 + 256*SPRITEIMG)
 
-    ldx #0
+    ldy #0
 !:
     //txa
     //and #$03
-    phx
-    lda spriteData,x
+    lda spriteData,y
     jsr spi_write_byte
-    plx
-    inx
+    iny
     bne !-
 
     spi_end()
@@ -250,11 +158,14 @@ init4ColorSprite:
 
     rts
 
-#import "spi.asm"
-
-
 framerateColors:
     .byte 0, 0, $0f, $1f, $ff
+
+message:
+    .text "THIS IS A SHORT TEST OF THE FUNCTIONALITY OF GAMEDUINO."
+    .text "I NEED TO WRITE SOMETHING CLEVER HERE TO FILL THE MEMORY"
+    .text "WITH DATA. IT IS GETTING LATE AND I THINK I SHOULD REALLY"
+    .text "GO TO SLEEP. END OF MESSAGE. I PROMISE. HERP. DERP. FOR NOW."
 
 .align $100
 costable:
@@ -304,3 +215,34 @@ spriteData:
 //    .byte 3, 3, 1, 2, 3, 3, 3, 3, 3, 3, 3, 3, 2, 1, 0, 0
 //    .byte 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 1, 0, 0, 0
 //    .byte 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0
+
+#import "../system/spi.asm"
+
+    .align $100
+prgEnd:
+}
+
+* = $0001 virtual
+.zp {
+relPosition:
+    .byte 0
+position:
+    .byte 0
+vb:
+    .byte 0
+text_counter:
+    .byte 0
+}
+
+* = $0200 virtual
+identifier:
+    .byte 0
+frames:
+    .byte 0
+lastFrame:
+    .byte 0
+scrollX:
+    .byte 0,0
+scrollY:
+    .byte 0,0
+

@@ -346,12 +346,16 @@ public class SixFiveOTo {
                     String romName = it.next();
                     if (romName.toLowerCase().endsWith(".asm")) {
                         romName = compileSource(romName);
+                        if (romName == null) {
+                            System.err.println("Terminating because of compilation failure");
+                            System.exit(1);
+                        }
                     }
                     if (romName.toLowerCase().endsWith(".prg")) {
                         byte[] bytes = Files.readAllBytes(new File(romName).toPath());
                         serialRomBytes = new int[bytes.length-2];
                         for (int i = 0; i < serialRomBytes.length; i++) {
-                            serialRomBytes[i] = bytes[i+2];
+                            serialRomBytes[i] = ((int)bytes[i+2]) & 0xFF;
                         }
                     }
                     System.out.println("- Attach ROM Image " + romName);

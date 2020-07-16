@@ -3,6 +3,14 @@
 .cpu _65c02
 .encoding "ascii"
 
+#import "pins.asm"
+
+//
+// NOTE!!
+//
+// A and X registers are affected.
+// Y register is guaranteed to be left alone.
+//
 .macro gd_begin() {
     lda #GD_SELECT
     sta SS_PORT
@@ -57,13 +65,12 @@
 
 
 spi_transfer:
-    ldx #WRITE_0        // +2
-    ldy #WRITE_1        // +2
+    ldx #WRITE_1        // +2
     .for (var i = 0; i < 8; i++) { // $00/$00: 27  $FF/$FF: 31 cycles
-        stx SPI_PORT    // +4   default MOSI = 0
+        stz SPI_PORT    // +4   default MOSI = 0
         asl             // +2   shift MSB into carry, shift 0 into LSB
         bcc !+          // +2/3 if carry clear we are done (is 0)
-        sty SPI_PORT    // +4   carry set, MOSI = 1
+        stx SPI_PORT    // +4   carry set, MOSI = 1
     !:
         inc SPI_PORT    // +6   raise clock
         dec SPI_PORT    // +6   clear clock
@@ -75,13 +82,12 @@ spi_transfer:
     rts
 
 spi_write_byte:
-    ldx #WRITE_0        // +2
-    ldy #WRITE_1        // +2
+    ldx #WRITE_1        // +2
     .for (var i = 0; i < 8; i++) { // $00: 21  $FF: 24 cycles
-        stx SPI_PORT    // +4   default MOSI = 0
+        stz SPI_PORT    // +4   default MOSI = 0
         asl             // +2   shift MSB into carry, shift 0 into LSB
         bcc !+          // +2/3 if carry clear we are done (is 0)
-        sty SPI_PORT    // +4   carry set, MOSI = 1
+        stx SPI_PORT    // +4   carry set, MOSI = 1
     !:
         inc SPI_PORT    // +6   raise clock
         dec SPI_PORT    // +6   clear clock

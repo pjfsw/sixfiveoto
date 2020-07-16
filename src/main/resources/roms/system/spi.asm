@@ -94,6 +94,14 @@ spi_write_byte:
     }                   // Min: 27*8+4=172 cycles  Max: 31*8+4=196 cycles
     rts
 
+spi_write_zero:
+    ldx #1              // +2
+    .for (var i = 0; i < 8; i++) { // 64 cycles
+        stx SPI_PORT    // +4
+        stz SPI_PORT    // +4
+    }                   // 66 cycles
+    rts
+
 spi_read_byte:
     ldx #$7F            // +2
     .for (var i = 0;i < 8; i++) { // 18 cycles

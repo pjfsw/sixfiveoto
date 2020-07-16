@@ -37,8 +37,7 @@ clear_screen:
         ldy #0
     !:
         .for (var i = 0; i < 16; i++) {
-            lda #0
-            jsr spi_write_byte
+            jsr spi_write_zero
         }
         dey
         bne !-
@@ -50,8 +49,8 @@ welcome:
     // Set background color to black
     gd_write_address($280e)
     {
-        spi_write(0)
-        spi_write(0)
+        jsr spi_write_zero
+        jsr spi_write_zero
     }
     spi_end()
 
@@ -120,14 +119,9 @@ load_program:
 
     cart_read()
     {
-        lda #0
-        jsr spi_write_byte
-
-        lda #0
-        jsr spi_write_byte
-
-        lda #0
-        jsr spi_write_byte
+        jsr spi_write_zero
+        jsr spi_write_zero
+        jsr spi_write_zero
 
     !:
         {

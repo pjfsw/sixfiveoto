@@ -143,7 +143,7 @@ init4ColorSprite:
 
     // 4 color palette
     gd_write_address($2880)
-    spi_write(0)
+    jsr spi_write_zero
     spi_write($80)
 
     spi_write($FF)

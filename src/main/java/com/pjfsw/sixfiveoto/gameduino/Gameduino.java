@@ -253,6 +253,9 @@ public class Gameduino implements Drawable, Clockable, Resettable {
                 if (address >= RAM_SPRIMG && (address < RAM_SPRIMG + 0x4000)) {
                     spriteToRebuild.add(((address-RAM_SPRIMG)/256) % 256); // TODO sprite pages
                 }
+                if (address >= RAM_SPRPAL && (address < RAM_SPRPAL + 0x0400)) {
+                    spriteToRebuild.add(((address-RAM_SPRPAL)/512) % 512);
+                }
                 if (address >= PALETTE_16A && (address < PALETTE_16A + 0x40)) {
                     spriteToRebuild.addAll(sprite16c);
                 }

@@ -10,6 +10,7 @@
     .print >(prgEnd-*)
     .byte >(prgEnd-*)
 
+    jsr reset_sprites
     jsr init4ColorSprite
     jsr drawlotsOfText
 
@@ -158,6 +159,24 @@ init4ColorSprite:
 
     rts
 
+reset_sprites:
+    gd_write_address($3000)
+    {
+        ldy #0
+    !:
+        lda #255
+        jsr spi_write_byte
+        lda #1
+        jsr spi_write_byte
+        lda #255
+        jsr spi_write_byte
+        lda #1
+        jsr spi_write_byte
+        iny
+        bne !-
+    }
+    spi_end()
+    rts
 framerateColors:
     .byte 0, 0, $0f, $1f, $ff
 

@@ -7,9 +7,7 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 import com.pjfsw.sixfiveoto.addressables.Clockable;
 import com.pjfsw.sixfiveoto.addressables.Drawable;
@@ -76,7 +74,7 @@ public class Via6522 implements Peeker, Poker, Drawable, Resettable, Clockable {
         pins[(port & 1) * 8 + (pinNumber % 8)] = pin;
     }*/
 
-    public void reset() {
+    public void reset(boolean hardReset) {
         registers[DDRA] = 0;
         registers[DDRB] = 0;
         registers[PORTA] = 0;

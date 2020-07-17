@@ -17,6 +17,7 @@ waitCount:
 }
 
 * = $F000
+    spi_end()
     lda #A_OUTPUTS
     sta DDRA
     lda #B_OUTPUTS

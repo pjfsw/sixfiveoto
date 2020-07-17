@@ -6,6 +6,8 @@ package com.pjfsw.sixfiveoto.addressables;
 public interface Resettable {
     /**
      * Reset the unit
+     *
+     * @param hardReset Turn off and on the system, restoring all defaults
      */
-    void reset();
+    void reset(boolean hardReset);
 }

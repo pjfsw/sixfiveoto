@@ -21,14 +21,10 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
 
-import com.google.common.io.ByteStreams;
 import com.pjfsw.sixfiveoto.addressables.Clockable;
 import com.pjfsw.sixfiveoto.addressables.MemoryModule;
 import com.pjfsw.sixfiveoto.addressables.Resettable;
@@ -109,6 +105,7 @@ public class SixFiveOTo {
 
             Gameduino gameduino = new Gameduino(clockSpeedHz, spi, dump);
             clockables.add(gameduino);
+            resettables.add(gameduino);
             screen.addDrawable(new Point((Screen.W - Gameduino.W)/2,1), gameduino);
         } catch (IOException e) {
             e.printStackTrace();
@@ -154,15 +151,41 @@ public class SixFiveOTo {
 
     }
 
-    private void reset() {
+    private void stop() {
+        if (runner != null) {
+            runner.cancel(false);
+        }
+    }
+
+    private boolean isRunning() {
+        return runner != null && !runner.isCancelled() && !runner.isDone();
+    }
+
+    private static void wait(int ms) {
+        try {
+            Thread.sleep(ms);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+    private void reset(boolean hardReset) {
+        boolean runAgain = isRunning();
+        System.out.println("- Triggering RESET " + Memory.format(registers.pc));
+        if (runAgain) {
+            stop();
+            wait(50);
+        }
         cpu.reset();
         for (Resettable resettable : resettables) {
-            resettable.reset();
+            resettable.reset(hardReset);
         }
-        if (runner == null || runner.isCancelled() || runner.isDone()) {
+        if (!runAgain) {
             debugger.update(cpu.createDisassembler());
         }
-        System.out.println("- Triggering RESET " + Memory.format(registers.pc));
+        if (runAgain) {
+            runFullSpeed();
+        }
+
     }
     private void updateFrameCycleCount(int cycles) {
         frameCycleCount += cycles;
@@ -189,9 +212,7 @@ public class SixFiveOTo {
     }
 
     private void stepMode() {
-        if (runner != null) {
-            runner.cancel(false);
-        }
+        stop();
         debugger.update(cpu.createDisassembler());
         debugger.setEnabled(true);
     }
@@ -199,7 +220,10 @@ public class SixFiveOTo {
     private void runFullSpeed() {
         debugger.setEnabled(false);
 
+        frameCycleCount = 0;
         runCount = 0;
+        cycleCount = 0;
+        totalCycles = 0;
         nanos = System.nanoTime();
         int refreshPeriod = 1000000 / refreshRate;
         runner = executorService.scheduleAtFixedRate(() -> {
@@ -216,7 +240,7 @@ public class SixFiveOTo {
             do {
                 int cycles = next();
                 if (cycles == 0) {
-                    reset();
+                    reset(false);
                     return;
                 }
                 cycleCount += cycles;
@@ -234,14 +258,14 @@ public class SixFiveOTo {
         int cycles = next();
         if (cycles == 0) {
             System.out.println("CPU Crash");
-            reset();
+            reset(false);
         }
         debugger.update(cpu.createDisassembler());
         updateFrameCycleCount(cycles);
     }
 
     private void start(boolean fullSpeed) {
-        reset();
+        reset(true);
 
         KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher((event) -> {
             if (event.getID() == KeyEvent.KEY_RELEASED) {
@@ -256,11 +280,11 @@ public class SixFiveOTo {
             }
             switch (event.getKeyCode()) {
                 case KeyEvent.VK_END:
-                    reset();
+                    reset(event.isShiftDown());
                     break;
 
                 case KeyEvent.VK_F8:
-                    if (runner == null || runner.isCancelled() || runner.isDone()) {
+                    if (!isRunning()) {
                         runUntilPc = -1;
                         runFullSpeed();
                     } else {
@@ -268,12 +292,12 @@ public class SixFiveOTo {
                     }
                     break;
                 case KeyEvent.VK_F5:
-                    if (runner == null || runner.isDone()) {
+                    if (!isRunning()) {
                         stepOne();
                     }
                     break;
                 case KeyEvent.VK_F6:
-                    if (runner == null || runner.isDone()) {
+                    if (!isRunning()) {
                         if (cpu.getNextOpcode() == Jsr.OPCODE) {
                             Disassembler disassembler = cpu.createDisassembler();
                             disassembler.disassemble();
@@ -285,10 +309,7 @@ public class SixFiveOTo {
                     }
                     break;
                 case KeyEvent.VK_ESCAPE:
-                    if (runner != null) {
-                        runner.cancel(true);
-                    }
-                    screen.interrupt();
+                    stop();
                     break;
                 default:
                     Switch aSwitch = buttons.get(event.getKeyCode());

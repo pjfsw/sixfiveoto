@@ -99,7 +99,7 @@ public class Gti implements Clockable, Resettable {
     }
 
     @Override
-    public void reset() {
+    public void reset(boolean hardReset) {
         resetState();
         toWorld.clear();
     }

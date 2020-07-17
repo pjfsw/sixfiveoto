@@ -20,7 +20,7 @@ import javax.swing.WindowConstants;
 
 public class Screen implements Poker, Peeker {
     private static final int WAIT_PERIOD = 1_000_000_000 / 60;
-    public static final int W = 816;
+    public static final int W = 808;
     public static final int H = 768;
     //private final PixelFrame pixelComponent;
     private final JFrame frame;

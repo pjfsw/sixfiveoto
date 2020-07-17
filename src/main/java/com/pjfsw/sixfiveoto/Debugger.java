@@ -65,7 +65,7 @@ public class Debugger implements Drawable {
                 g2.drawString(row.instruction, 96,ROWS_OFFSET+i);
                 i+=ROWSIZE;
             }
-            g2.drawString(registerValues, 0,112);
+            g2.drawString(registerValues, 0,108);
         }
     }
 

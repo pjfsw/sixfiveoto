@@ -3,6 +3,7 @@ package com.pjfsw.sixfiveoto.gameduino;
 import static java.awt.image.BufferedImage.TYPE_INT_ARGB;
 
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
@@ -13,6 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.pjfsw.sixfiveoto.addressables.Clockable;
 import com.pjfsw.sixfiveoto.addressables.Drawable;
+import com.pjfsw.sixfiveoto.addressables.Resettable;
 import com.pjfsw.sixfiveoto.spi.Spi;
 
 /**
@@ -22,9 +24,11 @@ import com.pjfsw.sixfiveoto.spi.Spi;
  * 0x2000-0x27FF RAM_PAL
  *
  */
-public class Gameduino implements Drawable, Clockable {
-    public static final int W = 800;
-    public static final int H = 600;
+public class Gameduino implements Drawable, Clockable, Resettable {
+    private static final int CANVAS_W = 800;
+    private static final int CANVAS_H = 600;
+    public static final int W = 802;
+    public static final int H = 608;
 
     private static final int[] spriteXTransforms = new int[] {
         2,-2,
@@ -61,6 +65,7 @@ public class Gameduino implements Drawable, Clockable {
     private final Spi spi;
     private final int cyclesPerFrame;
     private final int verticalBlankCycles;
+    private final int[] memoryDump;
     private boolean readMode;
     private int address;
     private final int[] registers = new int[32768];
@@ -77,22 +82,18 @@ public class Gameduino implements Drawable, Clockable {
     private final Set<Integer> sprite16c = ConcurrentHashMap.newKeySet();
     private int cycles;
     private int framesSinceLastRead;
+    private int lastAddress;
 
     public Gameduino(int systemSpeed, Spi spi, int[] memoryDump) {
         this.cyclesPerFrame = systemSpeed/72;
         // Vertical blank period for 72 Hz is 1.3728 ms = 1372800 nanos
         this.verticalBlankCycles = (int)(((long)systemSpeed/1000L) * 1372800L/1000000L);
         this.spi = spi;
-
-        System.arraycopy(memoryDump, 0, registers, 0, memoryDump.length);
+        this.memoryDump = memoryDump;
         for (int i = 0; i < 32; i++) {
             fiveBitColors[i] = 255 * i / 31;
         }
-        // RAMCHR
-        for (int i = 0; i < 256; i++) {
-            createRamChr(i);
-            createSprite(i);
-        }
+        reset(true);
     }
 
     private void createRamChr(int i) {
@@ -227,6 +228,7 @@ public class Gameduino implements Drawable, Clockable {
                     framesSinceLastRead = 0;
                 }
                 spi.setFromDeviceData(registers[address]);
+                lastAddress = address;
                 address++;
             }
         } else if (spi.getPosition() % 8 == 0) {
@@ -258,9 +260,28 @@ public class Gameduino implements Drawable, Clockable {
                     spriteToRebuild.addAll(sprite4c);
                 }
             }
+            lastAddress = address;
             address++;
         }
         lastPosition = spi.getPosition();
+    }
+
+    @Override
+    public void reset(final boolean hardReset) {
+        if (hardReset) {
+            readMode = false;
+            lastPosition = 0;
+            address = 0;
+            cycles = 0;
+            framesSinceLastRead = 0;
+            System.arraycopy(memoryDump, 0, registers, 0, memoryDump.length);
+            // RAMCHR
+            for (int i = 0; i < 256; i++) {
+                createRamChr(i);
+                createSprite(i);
+            }
+            //spi.resetState();
+        }
     }
 
     @Override
@@ -276,11 +297,17 @@ public class Gameduino implements Drawable, Clockable {
             createSprite(id);
             spriteToRebuild.remove(id);
         }
-        g2.setBackground(new Color(getBackgroundColor()));
-        g2.clearRect(0,0, 800,600);
+        g2.setFont(new Font("Courier", Font.PLAIN, 12));
+        g2.setColor(Color.WHITE);
+        g2.drawString(String.format("Frame: %02X - %04X: %02X", registers[0x2802],lastAddress, registers[lastAddress]),
+            0, CANVAS_H+g2.getFontMetrics().getHeight());
+
         g2.setColor(Color.DARK_GRAY);
-        g2.drawRect(0,0,W,H);
-        g2.clipRect(0,0,W,H);
+        g2.drawRect(0,0,CANVAS_W+2,CANVAS_H+2);
+        g2.translate(1,1);
+        g2.clipRect(0,0,CANVAS_W,CANVAS_H);
+        g2.setBackground(new Color(getBackgroundColor()));
+        g2.clearRect(0,0, CANVAS_W,CANVAS_H);
         int scrollX = registers[0x2804] | (registers[0x2805] << 8);
         int scrollXPixels = (scrollX & 7) * 2;
         int scrollY = registers[0x2806] | (registers[0x2807] << 8);
@@ -309,4 +336,5 @@ public class Gameduino implements Drawable, Clockable {
             g2.drawImage(spriteImages[i], transform, null);
         }
     }
+
 }

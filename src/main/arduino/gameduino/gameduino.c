@@ -141,36 +141,49 @@ void writeVia(int reg, int value) {
 }
 
 void init_via() {
-    digitalWrite(RESET,0)
+    digitalWrite(RESET,0);
     pinMode(RESET, OUTPUT);
-    digitalWrite(CLOCK,0)
+    digitalWrite(CLOCK,0);
     pinMode(CLOCK, OUTPUT);
-    digitalWrite(RWB,0)
+    digitalWrite(RWB,1);
     pinMode(RWB, OUTPUT);
 
-    DATADDR = 0;
-    RS_DDR = 0xf;
-
-    digitalWrite(RESET,1)
-    writeVia(VIA_DDRA, 1)
+    DATA_DDR = 0;
+    RS_DDR = 0xff;
+    for (int i = 0; i < 20; i++) {
+      digitalWrite(CLOCK,1);
+      digitalWrite(CLOCK,0);
+    }
+    digitalWrite(RESET,1);
+    writeVia(VIA_DDRA, 255);
+    writeVia(VIA_DDRB, 255);
+    writeVia(VIA_ACR, 0x1c); // SR using CB1 input
+    writeVia(VIA_PORTB, 1);
 }
 
-void loop() {
-    writeVia(VIA_PORTA,1)
-    delay(500);
-    writeVia(VIA_PORTA,0)
-    delay(500);
+void oldloop() {
+    writeVia(VIA_SR, 0x95);  // 10010101
+    
+    delay(1000);
+    for (int i = 0; i < 8; i++) {
+      writeVia(VIA_PORTB, 1);
+      delay(1000);
+      writeVia(VIA_PORTB, 0);
+      delay(1000);
+    }
+
+    delay(3000);
 }
 
 
 
 void setup() {
-  delay(2000);
+  delay(1000);
   init_gd();
-  init_via()
+  //init_via();
 }
 
-void old_loop() {
+void loop() {
     //sprite(0,i);
     //delay(16);
     gd_read(0x2802);

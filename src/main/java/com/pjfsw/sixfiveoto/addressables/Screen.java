@@ -1,24 +1,20 @@
 package com.pjfsw.sixfiveoto.addressables;
 
-import static java.awt.image.BufferedImage.TYPE_INT_RGB;
-
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.Point;
 import java.awt.image.BufferStrategy;
-import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JFrame;
 import javax.swing.WindowConstants;
 
-public class Screen implements Poker, Peeker {
+public class Screen implements Peeker {
     private static final int WAIT_PERIOD = 1_000_000_000 / 60;
     public static final int W = 808;
     public static final int H = 768;
@@ -37,9 +33,6 @@ public class Screen implements Poker, Peeker {
 
         frame = new JFrame(gc);
         frame.setPreferredSize(new Dimension(W,H));
-        int pixelSize = 256;
-        /*pixelComponent = new PixelFrame(pixelSize,pixelSize);
-        addDrawable(new Point(0,0), pixelComponent);*/
         frame.pack();
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.setVisible(true);
@@ -97,11 +90,6 @@ public class Screen implements Poker, Peeker {
 
     }
 
-    @Override
-    public void poke(final int address, final int data) {
-//        pixelComponent.poke(address,data);
-    }
-
     public void draw(Graphics graphics) {
         for (PositionedDrawable pd : drawables) {
             Graphics g = graphics.create();
@@ -115,43 +103,6 @@ public class Screen implements Poker, Peeker {
         int oldFrameCounter = frameCounter;
         frameCounter = 0;
         return oldFrameCounter;
-    }
-
-
-    private static class PixelFrame implements Drawable {
-        private final int w = 32;
-        private final int h = 32;
-        private final BufferedImage img;
-        private static final int[] redgreen = {0,36,73,109,146,182,219,255};
-        private static final int[] blue = {0,85,170,255};
-        private final int targetWidth;
-        private final int targetHeight;
-
-        private PixelFrame(int targetWidth, int targetHeight) {
-            this.img = new BufferedImage(w,h, TYPE_INT_RGB);
-            this.targetWidth = targetWidth;
-            this.targetHeight = targetHeight;
-            for (int x = 0; x < w; x++) {
-                for (int y = 0; y < h; y++) {
-                    this.img.setRGB(x,y,0);
-                }
-            }
-        }
-        public void poke(final int address, final int data) {
-            int pos = address % (w * h);
-            int x = pos % w;
-            int y = pos / w;
-            int r = data >> 5;
-            int g = (data >> 2) & 7;
-            int b = data & 3;
-            img.setRGB(x,y, (redgreen[r] << 16) | (redgreen[g] << 8) | blue[b] );
-        }
-
-        public void draw(Graphics g) {
-            Graphics2D g2 = ((Graphics2D)g);
-            g2.translate(1, 1);
-            g2.drawImage(img, 0,0, targetWidth, targetHeight, null);
-        }
     }
 
     private static class PositionedDrawable {

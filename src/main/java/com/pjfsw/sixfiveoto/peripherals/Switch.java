@@ -1,19 +1,16 @@
 package com.pjfsw.sixfiveoto.peripherals;
 
-import java.util.function.Consumer;
-import java.util.function.Supplier;
+import com.pjfsw.sixfiveoto.addressables.via.Pin;
 
-public class Switch implements Supplier<Boolean>, Consumer<Boolean> {
-    private Boolean enabled = false;
+public class Switch {
+    private final Pin button = Pin.input();
 
-    @Override
-    public Boolean get() {
-        return enabled;
+    public Pin getPin() {
+        return button;
     }
 
-    @Override
-    public void accept(final Boolean enabled) {
-        this.enabled = enabled;
+    public void setState(boolean enabled) {
+        this.button.value = enabled;
 
     }
 }

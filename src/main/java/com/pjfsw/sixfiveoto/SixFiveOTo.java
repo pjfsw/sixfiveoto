@@ -1,5 +1,17 @@
 package com.pjfsw.sixfiveoto;
 
+import static java.awt.event.KeyEvent.VK_A;
+import static java.awt.event.KeyEvent.VK_D;
+import static java.awt.event.KeyEvent.VK_DOWN;
+import static java.awt.event.KeyEvent.VK_LEFT;
+import static java.awt.event.KeyEvent.VK_M;
+import static java.awt.event.KeyEvent.VK_N;
+import static java.awt.event.KeyEvent.VK_RIGHT;
+import static java.awt.event.KeyEvent.VK_S;
+import static java.awt.event.KeyEvent.VK_SPACE;
+import static java.awt.event.KeyEvent.VK_UP;
+import static java.awt.event.KeyEvent.VK_W;
+
 import java.awt.KeyboardFocusManager;
 import java.awt.Point;
 import java.awt.event.KeyEvent;
@@ -62,6 +74,18 @@ public class SixFiveOTo {
     private final Map<Integer, Switch> buttons = new HashMap<>();
     private int runUntilPc = -1;
 
+    private static final int SPI_CLOCK = 0;
+    private static final int SPI_MOSI = 6;
+    private static final int SPI_MISO = 7;
+
+    private static final int GD_SELECT = 1;
+    private static final int CART_SELECT = 2;
+
+    private static final int JOY_UP = 3;
+    private static final int JOY_DOWN = 4;
+    private static final int JOY_LEFT = 5;
+    private static final int JOY_RIGHT = 6;
+    private static final int JOY_A = 7;
 
     private SixFiveOTo(byte[] prgBytes, int[] serialRomBytes, Map<Integer, String> symbols) {
         executorService =
@@ -89,21 +113,20 @@ public class SixFiveOTo {
         addressDecoder.mapPeeker(via, 0xD0, 0xD0);
         screen = new Screen();
         screen.addDrawable(new Point(Screen.W - Via6522.W ,Gameduino.H+1), via);
-        addressDecoder.mapPoker(screen, 0x80, 0x83);
         addressDecoder.mapPeeker(screen, 0x80, 0x83);
+
+        // BEGIN VIA CONFIGURATION
+        addButton(via, JOY_UP, VK_W, VK_UP);
+        addButton(via, JOY_DOWN, VK_S, VK_DOWN);
+        addButton(via, JOY_LEFT, VK_A, VK_LEFT);
+        addButton(via, JOY_RIGHT, VK_D, VK_RIGHT);
+        addButton(via, JOY_A, VK_SPACE, null);
 
         try {
 
             int[] dump = readDump("src/main/resources/dumps/gddump.txt");
 
-            Spi spi = new Spi();
-            via.connectPortA(0, spi.getClock());
-            via.connectPortA(6, spi.getSlaveIn());
-            via.connectPortA(7, spi.getSlaveOut());
-
-            via.connectPortB(1, spi.getSlaveSelect());
-
-            Gameduino gameduino = new Gameduino(clockSpeedHz, spi, dump);
+            Gameduino gameduino = new Gameduino(clockSpeedHz, connectSpi(via, GD_SELECT), dump);
             clockables.add(gameduino);
             resettables.add(gameduino);
             screen.addDrawable(new Point((Screen.W - Gameduino.W)/2,1), gameduino);
@@ -111,16 +134,11 @@ public class SixFiveOTo {
             e.printStackTrace();
         }
 
-        Spi spi = new Spi();
-        via.connectPortA(0, spi.getClock());
-        via.connectPortA(6, spi.getSlaveIn());
-        via.connectPortA(7, spi.getSlaveOut());
-        via.connectPortB(2, spi.getSlaveSelect());
-
-        SerialRom cartridge = new SerialRom(spi,  serialRomBytes);
+        SerialRom cartridge = new SerialRom(connectSpi(via, CART_SELECT),  serialRomBytes);
         clockables.add(cartridge);
         screen.addDrawable(new Point((Screen.W - SerialRom.W)/2, screen.getScreenHeight()-SerialRom.H-1), cartridge);
 
+        // END OF VIA CONFIGURATION
         clockables.add(via); // TODO ugly fix because we need to sample the output of devices before next instruction
 
         /**
@@ -134,6 +152,24 @@ public class SixFiveOTo {
         debugger = new Debugger(registers, symbols);
         screen.addDrawable(new Point((Screen.W - Gameduino.W)/2, Gameduino.H+1), debugger);
 
+    }
+
+    private void addButton(Via6522 via, int pin, Integer keyCode, Integer alternateKeyCode) {
+        Switch button = new Switch();
+        via.connectPortB(pin, button.getPin());
+        buttons.put(keyCode, button);
+        if (alternateKeyCode != null) {
+            buttons.put(alternateKeyCode, button);
+        }
+    }
+
+    private Spi connectSpi(Via6522 via, int slaveSelect) {
+        Spi spi = new Spi();
+        via.connectPortA(SPI_CLOCK, spi.getClock());
+        via.connectPortA(SPI_MOSI, spi.getSlaveIn());
+        via.connectPortA(SPI_MISO, spi.getSlaveOut());
+        via.connectPortB(slaveSelect, spi.getSlaveSelect());
+        return spi;
     }
 
     private static int[] readDump(String fileName) throws IOException {
@@ -271,7 +307,7 @@ public class SixFiveOTo {
             if (event.getID() == KeyEvent.KEY_RELEASED) {
                 Switch aSwitch = buttons.get(event.getKeyCode());
                 if (aSwitch != null) {
-                    aSwitch.accept(false);
+                    aSwitch.getPin().value = false;
                     return true;
                 }
             }
@@ -314,7 +350,7 @@ public class SixFiveOTo {
                 default:
                     Switch aSwitch = buttons.get(event.getKeyCode());
                     if (aSwitch != null) {
-                        aSwitch.accept(true);
+                        aSwitch.getPin().value = true;
                         return true;
                     } else {
                         return false;

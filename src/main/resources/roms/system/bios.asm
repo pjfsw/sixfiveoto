@@ -268,9 +268,9 @@ welcome_msg:
     }
 }
 
-.var logoFile = LoadPicture("girl.jpg")
-.var xofs = 24
-.var yofs = 24
+.var logoFile = LoadPicture("dystopia.jpg")
+.var xofs = 20
+.var yofs = 96
 
 palette_lo:
     .for (var y = 0; y < 2; y++) {

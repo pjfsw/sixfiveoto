@@ -19,7 +19,8 @@ import javax.swing.JFrame;
 import javax.swing.WindowConstants;
 
 public class Screen implements Poker, Peeker {
-    public static final int W = 816;
+    private static final int WAIT_PERIOD = 1_000_000_000 / 60;
+    public static final int W = 808;
     public static final int H = 768;
     //private final PixelFrame pixelComponent;
     private final JFrame frame;
@@ -86,7 +87,7 @@ public class Screen implements Poker, Peeker {
                     graphics.dispose();
                 } while (strategy.contentsRestored());
                 strategy.show();
-                long wait = 16_000_000 - (int)(System.nanoTime() - ticks);
+                long wait = WAIT_PERIOD - (int)(System.nanoTime() - ticks);
                 ticks = System.nanoTime();
                 waitNs(wait);
             } while (strategy.contentsLost());

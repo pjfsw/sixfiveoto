@@ -7,6 +7,22 @@
 int img = 63;
 int spriteNo = 255;
 
+#define DATA_OUT PORTL   // D0=49..42=D7
+#define DATA_IN PINL     // D0=49..42=D7
+#define DATA_DDR DDRL
+#define RS PORTA        // RS0=22, RS1=23, RS2=24, RS3=25
+#define RS_DDR DDRA
+#define CLOCK 39
+#define RWB 37
+#define RESET 35
+
+#define VIA_PORTB 0
+#define VIA_PORTA 1
+#define VIA_DDRB 2
+#define VIA_DDRA 3
+#define VIA_SR 10
+#define VIA_ACR 11
+
 void gd_write(unsigned int addr) {
   digitalWrite(GDSEL, LOW);
   SPI.transfer(0x80 | (addr >> 8));
@@ -24,7 +40,7 @@ void gd_end() {
 }
 
 void init_gd() {
-  delay(250);
+  delay(2000);
   pinMode(GDSEL, OUTPUT);
   SPI.begin();
   SPI.setClockDivider(SPI_CLOCK_DIV2);
@@ -113,24 +129,48 @@ void scroll() {
   gd_end();
 }
 
-void setup() {
-  delay(2000);
-  init_gd();
-  gd_write(0);
-  char *s = "GAMEDUINO ASCII TEST FROM 6502!";
-  do {
-    SPI.transfer(*s);
-    s++;
-  } while (*s != 0);
-  gd_end();
-  gd_write(0x280B);
-  SPI.transfer(0);
-  gd_end();
-  drawSprite();
-  scroll();
+void writeVia(int reg, int value) {
+    RS = reg;
+    DATA_OUT = value;
+    DATA_DDR = 0xff;
+    digitalWrite(RWB,0);
+    digitalWrite(CLOCK, 1);
+    digitalWrite(CLOCK, 0);
+    DATA_DDR = 0;
+    digitalWrite(RWB,1);
+}
+
+void init_via() {
+    digitalWrite(RESET,0)
+    pinMode(RESET, OUTPUT);
+    digitalWrite(CLOCK,0)
+    pinMode(CLOCK, OUTPUT);
+    digitalWrite(RWB,0)
+    pinMode(RWB, OUTPUT);
+
+    DATADDR = 0;
+    RS_DDR = 0xf;
+
+    digitalWrite(RESET,1)
+    writeVia(VIA_DDRA, 1)
 }
 
 void loop() {
+    writeVia(VIA_PORTA,1)
+    delay(500);
+    writeVia(VIA_PORTA,0)
+    delay(500);
+}
+
+
+
+void setup() {
+  delay(2000);
+  init_gd();
+  init_via()
+}
+
+void old_loop() {
     //sprite(0,i);
     //delay(16);
     gd_read(0x2802);
@@ -144,14 +184,6 @@ void loop() {
     gd_end();
     sprite(frame,frame);
 
-  //delay(2000);
-  //gd_write(0x280A);
-  //SPI.transfer(1);
-  //gd_end();
-  //delay(2000);
-  //gd_write(0x280A);
-  //SPI.transfer(0);
-  //gd_end();
 }
 
 int main(int argc, char **argv) {

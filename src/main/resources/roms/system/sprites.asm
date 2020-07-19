@@ -36,6 +36,11 @@
 
 .macro store_palette_hi(color_list) {
     .for (var i = 0; i < 256; i++) {
-        .byte >color_list.get(i)
+        .var c = color_list.get(i)
+        .if (c == 0) {
+            .byte $80
+        } else {
+            .byte >color_list.get(i)
+        }
     }
 }

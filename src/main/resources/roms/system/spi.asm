@@ -65,7 +65,7 @@
 
 
 spi_transfer:
-    ldx #WRITE_1        // +2
+    ldx #MOSI           // +2
     .for (var i = 0; i < 8; i++) { // $00/$00: 27  $FF/$FF: 31 cycles
         stz SPI_PORT    // +4   default MOSI = 0
         asl             // +2   shift MSB into carry, shift 0 into LSB
@@ -82,7 +82,7 @@ spi_transfer:
     rts
 
 spi_write_byte:
-    ldx #WRITE_1        // +2
+    ldx #MOSI           // +2
     .for (var i = 0; i < 8; i++) { // $00: 21  $FF: 24 cycles
         stz SPI_PORT    // +4   default MOSI = 0
         asl             // +2   shift MSB into carry, shift 0 into LSB

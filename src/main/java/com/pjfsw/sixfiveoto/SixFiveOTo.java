@@ -4,8 +4,6 @@ import static java.awt.event.KeyEvent.VK_A;
 import static java.awt.event.KeyEvent.VK_D;
 import static java.awt.event.KeyEvent.VK_DOWN;
 import static java.awt.event.KeyEvent.VK_LEFT;
-import static java.awt.event.KeyEvent.VK_M;
-import static java.awt.event.KeyEvent.VK_N;
 import static java.awt.event.KeyEvent.VK_RIGHT;
 import static java.awt.event.KeyEvent.VK_S;
 import static java.awt.event.KeyEvent.VK_SPACE;
@@ -155,7 +153,7 @@ public class SixFiveOTo {
     }
 
     private void addButton(Via6522 via, int pin, Integer keyCode, Integer alternateKeyCode) {
-        Switch button = new Switch();
+        Switch button = Switch.inverted();
         via.connectPortB(pin, button.getPin());
         buttons.put(keyCode, button);
         if (alternateKeyCode != null) {
@@ -307,7 +305,7 @@ public class SixFiveOTo {
             if (event.getID() == KeyEvent.KEY_RELEASED) {
                 Switch aSwitch = buttons.get(event.getKeyCode());
                 if (aSwitch != null) {
-                    aSwitch.getPin().value = false;
+                    aSwitch.setState(false);
                     return true;
                 }
             }
@@ -350,7 +348,7 @@ public class SixFiveOTo {
                 default:
                     Switch aSwitch = buttons.get(event.getKeyCode());
                     if (aSwitch != null) {
-                        aSwitch.getPin().value = true;
+                        aSwitch.setState(true);
                         return true;
                     } else {
                         return false;

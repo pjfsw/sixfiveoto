@@ -44,4 +44,12 @@ public class SpiTest {
         assertEquals(expectedToDevice, spi.getToDeviceData());
     }
 
+    @Test
+    public void derpesTest() {
+        for (int i = 0; i < 36; i++) {
+            double f = 440 * Math.pow(2, ((double)i/(double)12));
+            System.out.println((int)f + ", ");
+        }
+    }
+
 }

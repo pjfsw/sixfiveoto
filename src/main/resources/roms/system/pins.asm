@@ -23,4 +23,9 @@
 .const CART_SELECT = CART_SS ^ $ff
 .const IDLE = $ff
 
-.const WRITE_1 = MOSI
+.const JOY_PORT = PORTB
+.const PIN_JOY_UP = 3
+.const PIN_JOY_DOWN = 4
+.const PIN_JOY_LEFT = 5
+.const PIN_JOY_RIGHT = 6
+.const PIN_JOY_A = 7

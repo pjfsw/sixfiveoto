@@ -285,10 +285,11 @@ star_palette_dark:
     .word %0010000100001000 // grayish
 
 .var player_image = LoadPicture("spaceship.png")
+.var color_list = get_color_list(player_image)
 player_palette_lo:
-    store_palette_lo(get_color_list(player_image,0,0))
+    store_palette_lo(color_list)
 
 player_palette_hi:
-    store_palette_hi(get_color_list(player_image,0,0))
+    store_palette_hi(color_list)
 
 

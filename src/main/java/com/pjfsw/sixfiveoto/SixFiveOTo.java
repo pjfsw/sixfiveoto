@@ -1,19 +1,12 @@
 package com.pjfsw.sixfiveoto;
 
-import static java.awt.event.KeyEvent.VK_A;
-import static java.awt.event.KeyEvent.VK_D;
-import static java.awt.event.KeyEvent.VK_DOWN;
-import static java.awt.event.KeyEvent.VK_LEFT;
-import static java.awt.event.KeyEvent.VK_RIGHT;
-import static java.awt.event.KeyEvent.VK_S;
-import static java.awt.event.KeyEvent.VK_SPACE;
-import static java.awt.event.KeyEvent.VK_UP;
-import static java.awt.event.KeyEvent.VK_W;
+import static java.util.stream.Collectors.toList;
 
 import java.awt.KeyboardFocusManager;
 import java.awt.Point;
 import java.awt.event.KeyEvent;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
@@ -21,24 +14,28 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Properties;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
 
 import com.pjfsw.sixfiveoto.addressables.Clockable;
-import com.pjfsw.sixfiveoto.addressables.MemoryModule;
 import com.pjfsw.sixfiveoto.addressables.Resettable;
-import com.pjfsw.sixfiveoto.addressables.RomVectors;
 import com.pjfsw.sixfiveoto.addressables.Screen;
 import com.pjfsw.sixfiveoto.addressables.via.Via6522;
 import com.pjfsw.sixfiveoto.gameduino.Gameduino;
@@ -61,12 +58,12 @@ public class SixFiveOTo {
     private final ScheduledExecutorService executorService;
     private int frameCycleCount;
 
-    private final int clockSpeedHz = 2_560_000;
+    //private final int clockSpeedHz = 2_560_000;
+    private final int clockSpeedHz;
 
     private final int screenRefreshRate = 60;
     private final int refreshMultiplier = 10;
     private final int refreshRate = refreshMultiplier * screenRefreshRate;
-    private final int cyclesPerPeriod = clockSpeedHz/refreshRate;
     private final List<Resettable> resettables = new ArrayList<>();
     private final List<Clockable> clockables = new ArrayList<>();
     private final Map<Integer, Switch> buttons = new HashMap<>();
@@ -85,7 +82,88 @@ public class SixFiveOTo {
     private static final int JOY_RIGHT = 6;
     private static final int JOY_A = 7;
 
-    private SixFiveOTo(byte[] prgBytes, int[] serialRomBytes, Map<Integer, String> symbols) {
+    private SixFiveOTo(Properties properties) throws IOException, InterruptedException {
+        executorService =
+            Executors.newScheduledThreadPool(2);
+
+        AddressDecoder addressDecoder = new AddressDecoder();
+
+        clockSpeedHz = ClockspeedGetter.getClockSpeed(properties);
+
+        List<String> parts = properties.stringPropertyNames().stream()
+            .filter(p -> !p.contains("."))
+            .filter(p -> !p.equals(ClockspeedGetter.CLOCKSPEED_PROPERTY))
+            .collect(toList());
+
+        Map<String, Part> collectedParts = new LinkedHashMap<>();
+        for (String partName : parts) {
+            System.out.println("Trying to add part " + partName);
+            Part part = PartCreator.createPart(
+                properties,
+                partName,
+                collectedParts
+            );
+            PageRange range = PageRange.createFromProperty(properties, partName);
+            if (range != null) {
+                if (part.getPeeker() != null) {
+                    addressDecoder.mapPeeker(part.getPeeker(), range.getStart(), range.getEnd());
+                }
+                if (part.getPoker() != null) {
+                    addressDecoder.mapPoker(part.getPoker(), range.getStart(), range.getEnd());
+                }
+            }
+            collectedParts.put(partName, part);
+        }
+
+        registers = new Registers();
+        cpu = new Cpu(addressDecoder, registers, Collections.emptyMap() /*symbols*/);
+
+        debugger = new Debugger(registers, Collections.emptyMap() /*symbols*/);
+        screen = new Screen();
+
+        // Enforce VIAs to execute directly after CPU
+        for (Part part : collectedParts.values()) {
+            if (part.getClockable() instanceof Via6522) {
+                clockables.add(part.getClockable());
+            }
+        }
+
+        // Add  the reset normally
+        for (Entry<String, Part> entry : collectedParts.entrySet()) {
+            String name = entry.getKey();
+            Part part = entry.getValue();
+            if (part.getDrawable() != null) {
+                int x = Integer.parseInt(properties.getProperty(name + ".x", "0"));
+                int y = Integer.parseInt(properties.getProperty(name + ".y", "0"));
+                screen.addDrawable(new Point(x,y), part.getDrawable());
+            }
+            if (part.getResettable() != null) {
+                resettables.add(part.getResettable());
+            }
+            // Don't add VIAs randomly in the middle
+            if (part.getClockable() != null && !(part.getClockable() instanceof Via6522)) {
+                clockables.add(part.getClockable());
+            }
+            if (part.getSwitch() != null) {
+                int keycode = Integer.parseInt(properties.getProperty(name + ".keycode", "FF"), 16);
+                buttons.put(keycode, part.getSwitch());
+            }
+        }
+
+        // Enforce VIAs to execute once again last
+        for (Part part : collectedParts.values()) {
+            if (part.getClockable() instanceof Via6522) {
+                clockables.add(part.getClockable());
+            }
+        }
+
+        screen.addDrawable(new Point((Screen.W - Gameduino.W)/2, Gameduino.H+1), debugger);
+
+
+        // Map keys
+    }
+
+    /*private SixFiveOTo(byte[] prgBytes, int[] serialRomBytes, Map<Integer, String> symbols) {
         executorService =
             Executors.newScheduledThreadPool(2);
 
@@ -134,25 +212,21 @@ public class SixFiveOTo {
 
         SerialRom cartridge = new SerialRom(connectSpi(via, CART_SELECT),  serialRomBytes);
         clockables.add(cartridge);
+            screen.addDrawable(new Point((Screen.W - Gameduino.W)/2,1), gameduino);
         screen.addDrawable(new Point((Screen.W - SerialRom.W)/2, screen.getScreenHeight()-SerialRom.H-1), cartridge);
 
         // END OF VIA CONFIGURATION
         clockables.add(via); // TODO ugly fix because we need to sample the output of devices before next instruction
 
-        /**
-         * RAM 0x0000 - 0x7FFF
-         * Gfx 0x8000 - 0x83FF
-         * ROM 0xF000 - 0xFFFF
-         */
         registers = new Registers();
         cpu = new Cpu(addressDecoder, registers, symbols);
 
         debugger = new Debugger(registers, symbols);
         screen.addDrawable(new Point((Screen.W - Gameduino.W)/2, Gameduino.H+1), debugger);
 
-    }
+    }*/
 
-    private void addButton(Via6522 via, int pin, Integer keyCode, Integer alternateKeyCode) {
+/*    private void addButton(Via6522 via, int pin, Integer keyCode, Integer alternateKeyCode) {
         Switch button = Switch.inverted();
         via.connectPortB(pin, button.getPin());
         buttons.put(keyCode, button);
@@ -168,22 +242,8 @@ public class SixFiveOTo {
         via.connectPortA(SPI_MISO, spi.getSlaveOut());
         via.connectPortB(slaveSelect, spi.getSlaveSelect());
         return spi;
-    }
+    }*/
 
-    private static int[] readDump(String fileName) throws IOException {
-        List<Integer> dump = new ArrayList<Integer>();
-        List<String> lines = Files.readAllLines(
-            new File(fileName).toPath());
-        for (String line : lines) {
-            for (String number : line.split(",")) {
-                dump.add(Integer.parseInt(number.trim(), 16));
-            }
-        }
-
-        return dump.stream().mapToInt(i->i).toArray();
-
-
-    }
 
     private void stop() {
         if (runner != null) {
@@ -260,6 +320,7 @@ public class SixFiveOTo {
         totalCycles = 0;
         nanos = System.nanoTime();
         int refreshPeriod = 1000000 / refreshRate;
+        int cyclesPerPeriod = clockSpeedHz/refreshRate;
         runner = executorService.scheduleAtFixedRate(() -> {
             runCount++;
             if (runCount % refreshRate == 0) {
@@ -364,26 +425,6 @@ public class SixFiveOTo {
         screen.loop();
     }
 
-    private static String compileSource(String source) throws InterruptedException, IOException {
-        String assembler = System.getProperty("assembler");
-        if (assembler == null) {
-            System.out.println("Cannot assemble on the fly as 'assembler' property is not defined!");
-            System.out.println("Use Java property -D\"java -jar /path/to/KickAssembler/KickAss.jar\"");
-            System.out.println("Send a .PRG file as argument to launch emulator directly");
-            System.exit(1);
-        }
-
-        Process ps = Runtime.getRuntime().exec(ArrayUtils.addAll(assembler.split(" "), source));
-        int result = ps.waitFor();
-        InputStream is = ps.getInputStream();
-        StringWriter writer = new StringWriter();
-        String output = IOUtils.toString(is, StandardCharsets.UTF_8);
-        System.out.println(output);
-        if (result == 0) {
-            return source.replace(".asm", ".prg");
-        }
-        return null;
-    }
 
     public static void main(String[] args) {
         String prgName = "";
@@ -391,6 +432,17 @@ public class SixFiveOTo {
 
         int[] serialRomBytes = {};
 
+        Properties properties = new Properties();
+
+        try (FileReader reader = new FileReader(args[0])) {
+            properties.load(reader);
+            new SixFiveOTo(properties).start(true);
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+
+/*
         try {
             for (Iterator<String> it = Arrays.asList(args).iterator(); it.hasNext(); ) {
                 String arg = it.next();
@@ -457,6 +509,6 @@ public class SixFiveOTo {
             }
         } catch (IOException e) {
             e.printStackTrace();
-        }
+        }*/
     }
 }

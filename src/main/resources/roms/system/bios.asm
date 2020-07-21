@@ -18,6 +18,7 @@ wait_count:
 }
 
 * = $F000
+start:
     spi_end()
     lda #A_OUTPUTS
     sta DDRA
@@ -252,4 +253,5 @@ palette_hi:
 
 #import "spi.asm"
 
-
+* = $FFFC
+    .word start

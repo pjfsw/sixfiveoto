@@ -17,7 +17,7 @@
 fetdemo:
     jsr scroll
 
-    .var spritesToDraw = 41
+    .var spritesToDraw = 61
 
     gd_write_address($3000 + (255-spritesToDraw) * 4)
 

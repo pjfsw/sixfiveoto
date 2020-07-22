@@ -13,7 +13,7 @@ public class JmpIndirect implements Instruction {
     public int execute(final Registers registers, final Peeker peeker, final Poker poker) {
         int pointer = Memory.readWord(peeker, registers.pc);
         registers.pc = Memory.readWord(peeker, pointer);
-        return 5;
+        return 6;
     }
 
     @Override

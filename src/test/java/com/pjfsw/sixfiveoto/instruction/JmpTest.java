@@ -25,7 +25,7 @@ public class JmpTest {
         wb.poke(pointer+1, Word.hi(address));
         wb.run(1);
         assertEquals(address, wb.registers().pc);
-        assertEquals(5, wb.cycles());
+        assertEquals(6, wb.cycles());
     }
 
     @Test

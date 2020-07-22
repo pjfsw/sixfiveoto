@@ -138,10 +138,6 @@ public class Cpu {
     }
 
     public int next() {
-        if (totalCycles == 0) {
-            totalCycles += 7;
-            return 7; // Reset
-        }
         Instruction instruction = instructions.get(addressDecoder.peek(registers.pc));
         registers.incrementPc(1);
         if (instruction != null) {

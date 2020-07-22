@@ -6,8 +6,6 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
 
 import com.pjfsw.sixfiveoto.addressables.MemoryModule;
 import com.pjfsw.sixfiveoto.addressables.via.Pin;
@@ -22,7 +20,7 @@ public final class PartCreator {
         // only static method
     }
 
-    public static Part createPart(Properties properties, String name, Map<String, Part> parts)
+    public static Part createPart(Config properties, String name, Map<String, Part> parts)
         throws IOException, InterruptedException {
         String type = properties.getProperty(name, "");
         if (type.equalsIgnoreCase("rom")) {
@@ -44,7 +42,7 @@ public final class PartCreator {
         }
     }
 
-    private static Part createRom(Properties properties, String name)
+    private static Part createRom(Config properties, String name)
         throws IOException, InterruptedException {
         String prg = properties.getProperty(name+".source", "");
         if (prg.toLowerCase().endsWith(".asm")) {
@@ -88,8 +86,8 @@ public final class PartCreator {
         return dump.stream().mapToInt(i->i).toArray();
     }
 
-    private static Spi findSpi(Properties properties, String name, Map<String, Part> parts) {
-        String spiName = properties.getProperty(name+".spi");
+    private static Spi findSpi(Config properties, String name, Map<String, Part> parts) {
+        String spiName = properties.getProperty(name+".spi", null);
         if (spiName == null) {
             throw new IllegalArgumentException(String.format("Must specify SPI part for %s", name));
         }
@@ -100,7 +98,7 @@ public final class PartCreator {
         return part.getSpi();
     }
 
-    private static Part createGameduino(Properties properties, String name, Map<String, Part> parts)
+    private static Part createGameduino(Config properties, String name, Map<String, Part> parts)
         throws IOException {
         int[] dump = readDump();
         Spi spi = findSpi(properties, name, parts);
@@ -108,7 +106,7 @@ public final class PartCreator {
         return Part.create(null, null, gameduino, gameduino, gameduino);
     }
 
-    private static Part createSerialRom(Properties properties, String name, Map<String, Part> parts)
+    private static Part createSerialRom(Config properties, String name, Map<String, Part> parts)
         throws IOException, InterruptedException {
         Spi spi = findSpi(properties, name, parts);
 
@@ -134,7 +132,7 @@ public final class PartCreator {
         return Part.create(null, null, cartridge, null, cartridge);
     }
 
-    private static Part createSwitch(Properties properties, String name) {
+    private static Part createSwitch(Config properties, String name) {
         boolean invert = Boolean.parseBoolean(properties.getProperty(name + ".invert", "false"));
         Switch aSwitch = invert ? Switch.inverted() : Switch.normal();
         return Part.createSwitch(aSwitch);
@@ -177,7 +175,7 @@ public final class PartCreator {
         return pins;
     }
 
-    private static Part createVia(Properties properties, String name, Map<String, Part> parts) {
+    private static Part createVia(Config properties, String name, Map<String, Part> parts) {
         Via6522 via = new Via6522();
 
         for (int i = 0; i < 8; i++) {

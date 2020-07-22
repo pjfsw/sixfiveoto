@@ -5,34 +5,18 @@ import static java.util.stream.Collectors.toList;
 import java.awt.KeyboardFocusManager;
 import java.awt.Point;
 import java.awt.event.KeyEvent;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringWriter;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Properties;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.ArrayUtils;
 
 import com.pjfsw.sixfiveoto.addressables.Clockable;
 import com.pjfsw.sixfiveoto.addressables.Resettable;
@@ -42,8 +26,6 @@ import com.pjfsw.sixfiveoto.gameduino.Gameduino;
 import com.pjfsw.sixfiveoto.instruction.Jsr;
 import com.pjfsw.sixfiveoto.peripherals.Switch;
 import com.pjfsw.sixfiveoto.registers.Registers;
-import com.pjfsw.sixfiveoto.serialrom.SerialRom;
-import com.pjfsw.sixfiveoto.spi.Spi;
 
 public class SixFiveOTo {
     private final Cpu cpu;
@@ -82,7 +64,7 @@ public class SixFiveOTo {
     private static final int JOY_RIGHT = 6;
     private static final int JOY_A = 7;
 
-    private SixFiveOTo(Properties properties) throws IOException, InterruptedException {
+    private SixFiveOTo(Config properties) throws IOException, InterruptedException {
         executorService =
             Executors.newScheduledThreadPool(2);
 
@@ -432,10 +414,8 @@ public class SixFiveOTo {
 
         int[] serialRomBytes = {};
 
-        Properties properties = new Properties();
-
-        try (FileReader reader = new FileReader(args[0])) {
-            properties.load(reader);
+        try {
+            Config properties = Config.createFromFile(args[0]);
             new SixFiveOTo(properties).start(true);
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();

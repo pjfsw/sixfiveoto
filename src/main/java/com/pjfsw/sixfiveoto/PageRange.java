@@ -3,7 +3,6 @@ package com.pjfsw.sixfiveoto;
 import static java.util.stream.Collectors.toList;
 
 import java.util.List;
-import java.util.Properties;
 import java.util.stream.Stream;
 
 public final class PageRange {
@@ -18,7 +17,7 @@ public final class PageRange {
         this.end = end;
     }
 
-    public static PageRange createFromProperty(Properties properties, String partName) {
+    public static PageRange createFromProperty(Config properties, String partName) {
         String map = properties.getProperty(partName+".map");
 
         if (map == null) {

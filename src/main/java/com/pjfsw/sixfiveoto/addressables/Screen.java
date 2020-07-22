@@ -20,7 +20,6 @@ public class Screen implements Peeker {
     public static final int H = 768;
     //private final PixelFrame pixelComponent;
     private final JFrame frame;
-    private final BufferStrategy strategy;
     private int frameCounter;
     private volatile boolean running = true;
     private final List<PositionedDrawable> drawables = new ArrayList<>();
@@ -33,24 +32,11 @@ public class Screen implements Peeker {
 
         frame = new JFrame(gc);
         frame.setPreferredSize(new Dimension(W,H));
-        frame.pack();
+        frame.setTitle("SivFiveOTo");
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        frame.pack();
         frame.setVisible(true);
-        frame.setResizable(false);
-        frame.setFocusable(true);
         frame.createBufferStrategy(2);
-        strategy = frame.getBufferStrategy();
-
-    }
-
-    public void show() {
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                frame.toFront();
-                frame.repaint();
-            }
-        });
     }
 
     public int getScreenHeight() {
@@ -80,6 +66,7 @@ public class Screen implements Peeker {
     }
 
     public void loop() {
+        BufferStrategy strategy = frame.getBufferStrategy();
         long ticks = System.nanoTime();
         while (running) {
             do {

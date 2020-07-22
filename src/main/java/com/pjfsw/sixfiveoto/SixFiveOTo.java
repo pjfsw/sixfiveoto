@@ -143,7 +143,6 @@ public class SixFiveOTo {
         }
 
         screen.addDrawable(new Point((Screen.W - Gameduino.W)/2, Gameduino.H+1), debugger);
-        screen.show();
         // Map keys
     }
 

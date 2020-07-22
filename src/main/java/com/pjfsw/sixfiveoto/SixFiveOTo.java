@@ -79,7 +79,6 @@ public class SixFiveOTo {
 
         Map<String, Part> collectedParts = new LinkedHashMap<>();
         for (String partName : parts) {
-            System.out.println("Trying to add part " + partName);
             Part part = PartCreator.createPart(
                 properties,
                 partName,
@@ -101,7 +100,6 @@ public class SixFiveOTo {
         cpu = new Cpu(addressDecoder, registers, Collections.emptyMap() /*symbols*/);
 
         debugger = new Debugger(registers, Collections.emptyMap() /*symbols*/);
-        screen = new Screen();
 
         // Enforce VIAs to execute directly after CPU
         for (Part part : collectedParts.values()) {
@@ -110,6 +108,8 @@ public class SixFiveOTo {
             }
         }
 
+        screen = new Screen();
+
         // Add  the reset normally
         for (Entry<String, Part> entry : collectedParts.entrySet()) {
             String name = entry.getKey();
@@ -117,6 +117,9 @@ public class SixFiveOTo {
             if (part.getDrawable() != null) {
                 int x = Integer.parseInt(properties.getProperty(name + ".x", "0"));
                 int y = Integer.parseInt(properties.getProperty(name + ".y", "0"));
+                if (y < 0) {
+                    y = screen.getScreenHeight() - Math.abs(y);
+                }
                 screen.addDrawable(new Point(x,y), part.getDrawable());
             }
             if (part.getResettable() != null) {
@@ -140,8 +143,7 @@ public class SixFiveOTo {
         }
 
         screen.addDrawable(new Point((Screen.W - Gameduino.W)/2, Gameduino.H+1), debugger);
-
-
+        screen.show();
         // Map keys
     }
 

@@ -14,7 +14,7 @@ public final class Config {
 
     public static Config createFromFile(String filename) throws IOException {
         List<String> lines = Files.readAllLines(Paths.get(filename)).stream()
-            .map(line -> (line.indexOf('#') > - 1) ? line.substring(line.indexOf('#') + 1) : line)
+            .map(line -> (line.indexOf('#') > - 1) ? line.substring(0, line.indexOf('#')) : line)
             .filter(line -> !line.trim().isEmpty())
             .collect(Collectors.toList());
 

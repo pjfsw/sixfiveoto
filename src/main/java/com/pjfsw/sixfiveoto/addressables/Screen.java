@@ -36,8 +36,21 @@ public class Screen implements Peeker {
         frame.pack();
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.setVisible(true);
+        frame.setResizable(false);
+        frame.setFocusable(true);
         frame.createBufferStrategy(2);
         strategy = frame.getBufferStrategy();
+
+    }
+
+    public void show() {
+        java.awt.EventQueue.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                frame.toFront();
+                frame.repaint();
+            }
+        });
     }
 
     public int getScreenHeight() {

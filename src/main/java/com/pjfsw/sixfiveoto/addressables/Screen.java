@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JFrame;
-import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 
 public class Screen implements Peeker {

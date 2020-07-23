@@ -82,8 +82,6 @@ public class SixFiveOTo {
                     addressDecoder.mapPoker(part.getPoker(), range.getStart(), range.getEnd());
                 }
             }
-            if (part.getType() == PartType.ROM) {
-            }
             collectedParts.put(partName, part);
         }
 

@@ -11,6 +11,7 @@ import com.pjfsw.sixfiveoto.addressables.MemoryModule;
 import com.pjfsw.sixfiveoto.addressables.via.Pin;
 import com.pjfsw.sixfiveoto.addressables.via.Via6522;
 import com.pjfsw.sixfiveoto.gameduino.Gameduino;
+import com.pjfsw.sixfiveoto.lcd.Lcd;
 import com.pjfsw.sixfiveoto.peripherals.Switch;
 import com.pjfsw.sixfiveoto.serialrom.SerialRom;
 import com.pjfsw.sixfiveoto.spi.Spi;
@@ -38,6 +39,8 @@ public final class PartCreator {
             return createSwitch(properties, name);
         } else if (type.equalsIgnoreCase("via")) {
             return createVia(properties, name, parts);
+        } else if (type.equalsIgnoreCase("lcd")) {
+            return createLcd(properties, name);
         } else {
             throw new IllegalArgumentException(String.format("Unknown part type %s for %s", type, name));
         }
@@ -67,12 +70,12 @@ public final class PartCreator {
             symbols.putAll(SymbolMap.getSymbolsFromPrg(prg));
         }
 
-        return Part.create(PartType.ROM, rom, null, null, null, null);
+        return Part.create(PartType.ROM, rom, null, null, null, null, null);
     }
 
     private static Part createRam() {
         MemoryModule ram = MemoryModule.create32K();
-        return Part.create(PartType.RAM, ram, ram, null, null, null);
+        return Part.create(PartType.RAM, ram, ram, null, null, null, null);
     }
 
     private static Part createSpi() {
@@ -109,7 +112,7 @@ public final class PartCreator {
         int[] dump = readDump();
         Spi spi = findSpi(properties, name, parts);
         Gameduino gameduino = new Gameduino(ClockspeedGetter.getClockSpeed(properties), spi, dump);
-        return Part.create(PartType.GAMEDUINO, null, null, gameduino, gameduino, gameduino);
+        return Part.create(PartType.GAMEDUINO, null, null, gameduino, gameduino, gameduino, null);
     }
 
     private static Part createSerialRom(Config properties, String name, Map<String, Part> parts)
@@ -135,7 +138,7 @@ public final class PartCreator {
         }
 
         SerialRom cartridge = new SerialRom(spi,  serialRomBytes);
-        return Part.create(PartType.SERIALROM, null, null, cartridge, null, cartridge);
+        return Part.create(PartType.SERIALROM, null, null, cartridge, null, cartridge, null);
     }
 
     private static Part createSwitch(Config properties, String name) {
@@ -153,29 +156,18 @@ public final class PartCreator {
         for (String connection : connections) {
             String[] pin = connection.split(":");
             Part part = parts.get(pin[0]);
-            if (part == null) {
+            if (part == null || part.getConnectable() == null) {
                 throw new IllegalArgumentException(
                     String.format("Illegal part %s specified in pin connection %s", pin[0], connection));
             }
-            if (part.getSwitch() != null) {
-                pins.add(part.getSwitch().getPin());
-            } else if (part.getSpi() != null && pin.length == 2) {
-                if (pin[1].equalsIgnoreCase("clock")) {
-                    pins.add(part.getSpi().getClock());
-                } else if (pin[1].equalsIgnoreCase("slaveout")) {
-                    pins.add(part.getSpi().getSlaveOut());
-                } else if (pin[1].equalsIgnoreCase("slavein")) {
-                    pins.add(part.getSpi().getSlaveIn());
-                } else if (pin[1].equalsIgnoreCase("slaveselect")) {
-                    pins.add(part.getSpi().getSlaveSelect());
-                } else {
-                    throw new IllegalArgumentException(String.format(
-                        "Unknown SPI pin %s in connection %s",
-                        pin[1], connection));
-                }
+
+            Pin partPin = part.getConnectable().getPin(pin[pin.length-1 ]);
+            if (partPin != null) {
+                pins.add(partPin);
             } else {
                 throw new IllegalArgumentException(String.format(
-                    "Need to specify SPI pin for %s i.e. %s:clock", pin[0], pin[0]));
+                    "Unknown pin '%s' in connection '%s'",
+                    pin[1], connection));
             }
         }
         return pins;
@@ -201,7 +193,15 @@ public final class PartCreator {
             }
         }
 
-        return Part.create(PartType.VIA, via, via, via, via, via);
+        return Part.create(PartType.VIA, via, via, via, via, via, null);
+    }
+
+    private static Part createLcd(final Config properties, final String name) {
+        int w = Integer.parseInt(properties.getProperty(name+".w", "16"));
+        int h = Integer.parseInt(properties.getProperty(name+".h", "2"));
+
+        Lcd lcd = new Lcd(ClockspeedGetter.getClockSpeed(properties), w, h);
+        return Part.create(PartType.LCD, null, null, lcd, lcd, lcd, lcd);
     }
 }
 

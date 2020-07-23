@@ -1,8 +1,9 @@
 package com.pjfsw.sixfiveoto.spi;
 
+import com.pjfsw.sixfiveoto.addressables.Connectable;
 import com.pjfsw.sixfiveoto.addressables.via.Pin;
 
-public class Spi {
+public class Spi implements Connectable {
     private final Pin slaveOut;
     private final Pin slaveIn;
     private final Pin clock;
@@ -72,5 +73,19 @@ public class Spi {
 
     public Pin getSlaveSelect() {
         return slaveNotSelected;
+    }
+
+    @Override
+    public Pin getPin(final String pinName) {
+        if (pinName.equalsIgnoreCase("clock")) {
+            return clock;
+        } else if (pinName.equalsIgnoreCase("slaveselect")) {
+            return slaveNotSelected;
+        } else if (pinName.equalsIgnoreCase("slavein")) {
+            return getSlaveIn();
+        } else if (pinName.equalsIgnoreCase("slaveout")) {
+            return getSlaveOut();
+        }
+        return null;
     }
 }

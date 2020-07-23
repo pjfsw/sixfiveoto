@@ -1,6 +1,7 @@
 package com.pjfsw.sixfiveoto;
 
 import com.pjfsw.sixfiveoto.addressables.Clockable;
+import com.pjfsw.sixfiveoto.addressables.Connectable;
 import com.pjfsw.sixfiveoto.addressables.Drawable;
 import com.pjfsw.sixfiveoto.addressables.Peeker;
 import com.pjfsw.sixfiveoto.addressables.Poker;
@@ -24,6 +25,9 @@ public interface Part {
     PartType getType();
 
     Switch getSwitch();
+
+    Connectable getConnectable();
+
     static Part createSwitch(Switch aSwitch) {
         return new Part() {
             @Override
@@ -65,6 +69,12 @@ public interface Part {
             public Switch getSwitch() {
                 return aSwitch;
             }
+
+            @Override
+            public Connectable getConnectable() {
+                return aSwitch;
+            }
+
         };
     }
 
@@ -74,7 +84,8 @@ public interface Part {
         Poker poker,
         Clockable clockable,
         Resettable resettable,
-        Drawable drawable
+        Drawable drawable,
+        Connectable connectable
     ) {
         return new Part() {
             @Override
@@ -115,6 +126,11 @@ public interface Part {
             @Override
             public Switch getSwitch() {
                 return null;
+            }
+
+            @Override
+            public Connectable getConnectable() {
+                return connectable;
             }
         };
     }
@@ -159,6 +175,11 @@ public interface Part {
             @Override
             public Switch getSwitch() {
                 return null;
+            }
+
+            @Override
+            public Connectable getConnectable() {
+                return spi;
             }
         };
     }

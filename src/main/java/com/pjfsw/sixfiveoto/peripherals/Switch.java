@@ -1,8 +1,9 @@
 package com.pjfsw.sixfiveoto.peripherals;
 
+import com.pjfsw.sixfiveoto.addressables.Connectable;
 import com.pjfsw.sixfiveoto.addressables.via.Pin;
 
-public class Switch {
+public class Switch implements Connectable {
     private final Pin button = Pin.input();
     private final boolean inverted;
 
@@ -31,5 +32,10 @@ public class Switch {
     public void setState(boolean enabled) {
         this.button.value = inverted ^ enabled;
 
+    }
+
+    @Override
+    public Pin getPin(final String pinName) {
+        return button;
     }
 }

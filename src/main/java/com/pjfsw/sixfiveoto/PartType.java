@@ -7,5 +7,6 @@ public enum PartType {
     GAMEDUINO,
     SWITCH,
     SERIALROM,
-    VIA
+    VIA,
+    LCD
 }

@@ -20,11 +20,12 @@ public final class PartCreator {
         // only static method
     }
 
-    public static Part createPart(Config properties, String name, Map<String, Part> parts)
+    public static Part createPart(Config properties, String name, Map<String, Part> parts,
+        Map<Integer, String> symbols)
         throws IOException, InterruptedException {
         String type = properties.getProperty(name, "");
         if (type.equalsIgnoreCase("rom")) {
-            return createRom(properties,name);
+            return createRom(properties,name, symbols);
         } else if (type.equalsIgnoreCase("ram")) {
             return createRam();
         } else if (type.equalsIgnoreCase("spi")) {
@@ -42,7 +43,10 @@ public final class PartCreator {
         }
     }
 
-    private static Part createRom(Config properties, String name)
+    private static Part createRom(
+        Config properties, String name,
+        final Map<Integer, String> symbols
+    )
         throws IOException, InterruptedException {
         String prg = properties.getProperty(name+".source", "");
         if (prg.toLowerCase().endsWith(".asm")) {
@@ -60,13 +64,15 @@ public final class PartCreator {
             for (int i = 0; i < bytes.length-2; i++) {
                 rom.poke(programBase+i, ((int)bytes[i+2]) & 0xFF);
             }
+            symbols.putAll(SymbolMap.getSymbolsFromPrg(prg));
         }
-        return Part.create(rom, null, null, null, null);
+
+        return Part.create(PartType.ROM, rom, null, null, null, null);
     }
 
     private static Part createRam() {
         MemoryModule ram = MemoryModule.create32K();
-        return Part.create(ram, ram, null, null, null);
+        return Part.create(PartType.RAM, ram, ram, null, null, null);
     }
 
     private static Part createSpi() {
@@ -103,7 +109,7 @@ public final class PartCreator {
         int[] dump = readDump();
         Spi spi = findSpi(properties, name, parts);
         Gameduino gameduino = new Gameduino(ClockspeedGetter.getClockSpeed(properties), spi, dump);
-        return Part.create(null, null, gameduino, gameduino, gameduino);
+        return Part.create(PartType.GAMEDUINO, null, null, gameduino, gameduino, gameduino);
     }
 
     private static Part createSerialRom(Config properties, String name, Map<String, Part> parts)
@@ -129,7 +135,7 @@ public final class PartCreator {
         }
 
         SerialRom cartridge = new SerialRom(spi,  serialRomBytes);
-        return Part.create(null, null, cartridge, null, cartridge);
+        return Part.create(PartType.SERIALROM, null, null, cartridge, null, cartridge);
     }
 
     private static Part createSwitch(Config properties, String name) {
@@ -195,7 +201,7 @@ public final class PartCreator {
             }
         }
 
-        return Part.create(via, via, via, via, via);
+        return Part.create(PartType.VIA, via, via, via, via, via);
     }
 }
 

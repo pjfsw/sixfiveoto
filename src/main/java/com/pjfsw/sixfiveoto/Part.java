@@ -21,6 +21,8 @@ public interface Part {
 
     Spi getSpi();
 
+    PartType getType();
+
     Switch getSwitch();
     static Part createSwitch(Switch aSwitch) {
         return new Part() {
@@ -55,6 +57,11 @@ public interface Part {
             }
 
             @Override
+            public PartType getType() {
+                return PartType.SWITCH;
+            }
+
+            @Override
             public Switch getSwitch() {
                 return aSwitch;
             }
@@ -62,6 +69,7 @@ public interface Part {
     }
 
     static Part create(
+        PartType type,
         Peeker peeker,
         Poker poker,
         Clockable clockable,
@@ -97,6 +105,11 @@ public interface Part {
             @Override
             public Spi getSpi() {
                 return null;
+            }
+
+            @Override
+            public PartType getType() {
+                return type;
             }
 
             @Override
@@ -136,6 +149,11 @@ public interface Part {
             @Override
             public Spi getSpi() {
                 return spi;
+            }
+
+            @Override
+            public PartType getType() {
+                return PartType.SPI;
             }
 
             @Override

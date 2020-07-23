@@ -51,19 +51,6 @@ public class SixFiveOTo {
     private final Map<Integer, Switch> buttons = new HashMap<>();
     private int runUntilPc = -1;
 
-    private static final int SPI_CLOCK = 0;
-    private static final int SPI_MOSI = 6;
-    private static final int SPI_MISO = 7;
-
-    private static final int GD_SELECT = 1;
-    private static final int CART_SELECT = 2;
-
-    private static final int JOY_UP = 3;
-    private static final int JOY_DOWN = 4;
-    private static final int JOY_LEFT = 5;
-    private static final int JOY_RIGHT = 6;
-    private static final int JOY_A = 7;
-
     private SixFiveOTo(Config properties) throws IOException, InterruptedException {
         executorService =
             Executors.newScheduledThreadPool(2);
@@ -77,12 +64,14 @@ public class SixFiveOTo {
             .filter(p -> !p.equals(ClockspeedGetter.CLOCKSPEED_PROPERTY))
             .collect(toList());
 
+        Map<Integer, String> symbols = new HashMap<>();
         Map<String, Part> collectedParts = new LinkedHashMap<>();
         for (String partName : parts) {
             Part part = PartCreator.createPart(
                 properties,
                 partName,
-                collectedParts
+                collectedParts,
+                symbols
             );
             PageRange range = PageRange.createFromProperty(properties, partName);
             if (range != null) {
@@ -93,13 +82,15 @@ public class SixFiveOTo {
                     addressDecoder.mapPoker(part.getPoker(), range.getStart(), range.getEnd());
                 }
             }
+            if (part.getType() == PartType.ROM) {
+            }
             collectedParts.put(partName, part);
         }
 
         registers = new Registers();
-        cpu = new Cpu(addressDecoder, registers, Collections.emptyMap() /*symbols*/);
+        cpu = new Cpu(addressDecoder, registers, symbols);
 
-        debugger = new Debugger(registers, Collections.emptyMap() /*symbols*/);
+        debugger = new Debugger(registers, symbols);
 
         // Enforce VIAs to execute directly after CPU
         for (Part part : collectedParts.values()) {
@@ -109,6 +100,7 @@ public class SixFiveOTo {
         }
 
         screen = new Screen();
+        addressDecoder.mapPeeker(screen, 0x80, 0x83);
 
         // Add  the reset normally
         for (Entry<String, Part> entry : collectedParts.entrySet()) {

@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 
 public class Screen implements Peeker {
@@ -30,13 +31,14 @@ public class Screen implements Peeker {
         GraphicsDevice[] gs = ge.getScreenDevices();
         GraphicsConfiguration gc = gs[0].getConfigurations()[0];
 
-        frame = new JFrame(gc);
+        frame = new JFrame("A Fine Emulator of 65C02", gc);
         frame.setPreferredSize(new Dimension(W,H));
-        frame.setTitle("SivFiveOTo");
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.pack();
         frame.setVisible(true);
         frame.createBufferStrategy(2);
+        frame.setAlwaysOnTop(true);
+        frame.setAlwaysOnTop(false);
     }
 
     public int getScreenHeight() {

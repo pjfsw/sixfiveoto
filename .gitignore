@@ -5,4 +5,5 @@ target/
 *.elf
 *.ihex
 *.swp
+*.DS_Store
 __pycache__

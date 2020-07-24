@@ -14,10 +14,10 @@ import com.pjfsw.sixfiveoto.addressables.Resettable;
 import com.pjfsw.sixfiveoto.addressables.via.Pin;
 
 public class Lcd implements Resettable, Clockable, Drawable, Connectable {
-    private static final int PIXEL_SIZE = 3;
+    private static final int PIXEL_SIZE = 2;
     private static final int PIXEL_DISTANCE = PIXEL_SIZE;
     private static final int DISPLAY_OFFSET = 8;
-    private static final int DISPLAY_PADDING = 2;
+    private static final int DISPLAY_PADDING = 4;
     private static final int CHARACTER_OFFSET = DISPLAY_OFFSET + DISPLAY_PADDING;
     private static final int CHARACTER_X_SPACING = 6 * PIXEL_DISTANCE;
     private static final int CHARACTER_Y_SPACING = 9 * PIXEL_DISTANCE;
@@ -108,7 +108,10 @@ public class Lcd implements Resettable, Clockable, Drawable, Connectable {
 
         g2.fillRect(0,0, 2*CHARACTER_OFFSET+cols*CHARACTER_X_SPACING, 2*CHARACTER_OFFSET+rows*CHARACTER_Y_SPACING);
         g2.setColor(new Color(0x99bb55));
-        g2.fillRect(DISPLAY_OFFSET,DISPLAY_OFFSET, cols*CHARACTER_X_SPACING, rows*CHARACTER_Y_SPACING);
+        g2.fillRect(
+            DISPLAY_OFFSET,DISPLAY_OFFSET,
+            DISPLAY_PADDING*2+cols*CHARACTER_X_SPACING, DISPLAY_PADDING*2+rows*CHARACTER_Y_SPACING
+        );
         for (int y = 0; y < rows; y++) {
             for (int x = 0; x < cols; x++) {
                 g2.drawImage(font[(y*cols+x)%128], CHARACTER_OFFSET+x*CHARACTER_X_SPACING, CHARACTER_OFFSET+y*CHARACTER_Y_SPACING, null);

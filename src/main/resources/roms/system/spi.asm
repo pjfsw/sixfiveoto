@@ -73,11 +73,11 @@ spi_transfer:
         stx SPI_PORT    // +4   carry set, MOSI = 1
     !:
         inc SPI_PORT    // +6   raise clock
-        dec SPI_PORT    // +6   clear clock
         bit SPI_PORT    // +3
         bpl !+          // +2/3 input=0, skip
         ora #$01        // +2   set LSB=1
     !:
+        dec SPI_PORT    // +6   clear clock
     }                   // 27*8+4=220   31*8+4=252
     rts
 
@@ -105,9 +105,9 @@ spi_write_zero:
 spi_read_byte:
     ldx #$7F            // +2
     .for (var i = 0;i < 8; i++) { // 18 cycles
+        inc SPI_PORT    // +6
         cpx SPI_PORT    // +4
         rol             // +2
-        inc SPI_PORT    // +6
         dec SPI_PORT    // +6
     }
     eor #$ff            // 2  = 148 cycles

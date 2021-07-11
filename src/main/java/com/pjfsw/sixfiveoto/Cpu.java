@@ -24,6 +24,7 @@ import com.pjfsw.sixfiveoto.instruction.LdMemory;
 import com.pjfsw.sixfiveoto.instruction.ModifyFlags;
 import com.pjfsw.sixfiveoto.instruction.Nop;
 import com.pjfsw.sixfiveoto.instruction.RotateShift;
+import com.pjfsw.sixfiveoto.instruction.Sei;
 import com.pjfsw.sixfiveoto.instruction.StackPush;
 import com.pjfsw.sixfiveoto.instruction.StackPull;
 import com.pjfsw.sixfiveoto.instruction.Rts;
@@ -94,6 +95,7 @@ public class Cpu {
                     ModifyFlags::opcode,
                     Function.identity())))
             .put(Nop.OPCODE, new Nop())
+            .put(Sei.OPCODE, new Sei())
             .putAll(Arrays.stream(StackPush.values())
                 .collect(toMap(
                     StackPush::opcode,

@@ -15,13 +15,14 @@ import javax.swing.JFrame;
 import javax.swing.WindowConstants;
 
 public class Screen implements Peeker {
-    private static final int WAIT_PERIOD = 1_000_000_000 / 60;
+    private static final int WAIT_PERIOD = 1_000 / 60;
     public static final int W = 808;
     public static final int H = 768;
     //private final PixelFrame pixelComponent;
     private final JFrame frame;
     private int frameCounter;
     private volatile boolean running = true;
+    private int fps = 0;
     private final List<PositionedDrawable> drawables = new ArrayList<>();
 
     public Screen() {
@@ -56,10 +57,10 @@ public class Screen implements Peeker {
         frameCounter++;
     }
 
-    private static void waitNs(long ns) {
-        if (ns > 0) {
+    private static void waitMs(long millis) {
+        if (millis > 0) {
             try {
-                Thread.sleep(ns / 1000000, (int)(ns % 1000000));
+                Thread.sleep(millis);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -68,23 +69,31 @@ public class Screen implements Peeker {
 
     public void loop() {
         BufferStrategy strategy = frame.getBufferStrategy();
-        long ticks = System.nanoTime();
+        long lastTime = System.currentTimeMillis();
+        long frameTime = 0;
+        long frames = 0;
         while (running) {
-            do {
-                // preparation for rendering ?
-                do {
-                    Graphics graphics = strategy.getDrawGraphics();
-                    graphics.setColor(Color.BLACK);
-                    graphics.fillRect(0,0,W,H);
-                    graphics.translate(0, frame.getInsets().top);
-                    draw(graphics);
-                    graphics.dispose();
-                } while (strategy.contentsRestored());
-                strategy.show();
-                long wait = WAIT_PERIOD - (int)(System.nanoTime() - ticks);
-                ticks = System.nanoTime();
-                waitNs(wait);
-            } while (strategy.contentsLost());
+            long now = System.currentTimeMillis();
+            long deltaTime = now - lastTime;
+            lastTime = now;
+            frameTime += deltaTime;
+            if (frameTime > 1000) {
+                fps = (int)(1000 * frames/frameTime);
+                frames = 0;
+                frameTime -= 1000;
+            }
+            Graphics graphics = strategy.getDrawGraphics();
+            graphics.setColor(Color.BLACK);
+            graphics.fillRect(0,0,W,H);
+            graphics.translate(0, frame.getInsets().top);
+            draw(graphics);
+            graphics.dispose();
+            frames++;
+            strategy.show();
+            long wait = WAIT_PERIOD - (int)(System.currentTimeMillis() - lastTime);
+            if (wait > 1) {
+                waitMs(wait);
+            }
         }
         frame.setVisible(false);
         frame.dispose();
@@ -97,6 +106,8 @@ public class Screen implements Peeker {
             g.translate(pd.position.x, pd.position.y);
             pd.drawable.draw(g);
         }
+        graphics.setColor(Color.GRAY);
+        graphics.drawString(String.format("%d", fps), 0 ,610);
     }
 
     @Override

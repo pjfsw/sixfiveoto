@@ -13,6 +13,7 @@ import com.pjfsw.sixfiveoto.addressables.via.Via6522;
 import com.pjfsw.sixfiveoto.gameduino.Gameduino;
 import com.pjfsw.sixfiveoto.lcd.Lcd;
 import com.pjfsw.sixfiveoto.peripherals.Switch;
+import com.pjfsw.sixfiveoto.picogfx.PicoGfx;
 import com.pjfsw.sixfiveoto.serialrom.SerialRom;
 import com.pjfsw.sixfiveoto.spi.Spi;
 
@@ -41,6 +42,9 @@ public final class PartCreator {
             return createVia(properties, name, parts);
         } else if (type.equalsIgnoreCase("lcd")) {
             return createLcd(properties, name);
+        } else if (type.equalsIgnoreCase("picogfx")) {
+            return createPicoGfx(properties);
+
         } else {
             throw new IllegalArgumentException(String.format("Unknown part type %s for %s", type, name));
         }
@@ -82,10 +86,10 @@ public final class PartCreator {
         return Part.spiPart(new Spi());
     }
 
-    private static int[] readDump() throws IOException {
+    private static int[] readDump(String filename) throws IOException {
         List<Integer> dump = new ArrayList<>();
         List<String> lines = Files.readAllLines(
-            new File("src/main/resources/dumps/gddump.txt").toPath());
+            new File(filename).toPath());
         for (String line : lines) {
             for (String number : line.split(",")) {
                 dump.add(Integer.parseInt(number.trim(), 16));
@@ -107,9 +111,15 @@ public final class PartCreator {
         return part.getSpi();
     }
 
+    private static Part createPicoGfx(Config properties) throws IOException {
+        int [] font = readDump("src/main/resources/dumps/font.txt");
+        PicoGfx picoGfx = new PicoGfx(ClockspeedGetter.getClockSpeed(properties), font);
+        return Part.create(PartType.PICOGFX, null, picoGfx, picoGfx, picoGfx, picoGfx, null);
+    }
+
     private static Part createGameduino(Config properties, String name, Map<String, Part> parts)
         throws IOException {
-        int[] dump = readDump();
+        int[] dump = readDump("src/main/resources/dumps/gddump.txt");
         Spi spi = findSpi(properties, name, parts);
         Gameduino gameduino = new Gameduino(ClockspeedGetter.getClockSpeed(properties), spi, dump);
         return Part.create(PartType.GAMEDUINO, null, null, gameduino, gameduino, gameduino, null);

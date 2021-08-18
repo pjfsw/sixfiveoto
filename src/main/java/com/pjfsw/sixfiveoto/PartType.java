@@ -8,5 +8,6 @@ public enum PartType {
     SWITCH,
     SERIALROM,
     VIA,
-    LCD
+    LCD,
+    PICOGFX
 }

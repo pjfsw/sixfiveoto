@@ -7,7 +7,6 @@ import java.awt.Point;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -136,88 +135,6 @@ public class SixFiveOTo {
         // Map keys
     }
 
-    /*private SixFiveOTo(byte[] prgBytes, int[] serialRomBytes, Map<Integer, String> symbols) {
-        executorService =
-            Executors.newScheduledThreadPool(2);
-
-        AddressDecoder addressDecoder = new AddressDecoder();
-
-        int programBase = ((int)prgBytes[0]&0xff) + (((int)(prgBytes[1])&0xff) << 8);
-        System.out.println(String.format("- Program base: $%04X  Length: %d bytes", programBase, prgBytes.length-2));
-        RomVectors romVectors = new RomVectors(programBase);
-        addressDecoder.mapPeeker(romVectors, 0xFF, 0xFF);
-        MemoryModule ram = MemoryModule.create32K();
-        addressDecoder.mapPeeker(ram, 0x00, 0x7F);
-        addressDecoder.mapPoker(ram, 0x00, 0x7F);
-        MemoryModule rom = MemoryModule.create8K();
-        for (int i = 0; i < prgBytes.length-2; i++) {
-            rom.poke(programBase+i, prgBytes[i+2]);
-        }
-        addressDecoder.mapPeeker(rom, 0xF0, 0xFE);
-
-        Via6522 via = new Via6522();
-        resettables.add(via);
-        clockables.add(via);
-        addressDecoder.mapPoker(via, 0xD0, 0xD0);
-        addressDecoder.mapPeeker(via, 0xD0, 0xD0);
-        screen = new Screen();
-        screen.addDrawable(new Point(Screen.W - Via6522.W ,Gameduino.H+1), via);
-        addressDecoder.mapPeeker(screen, 0x80, 0x83);
-
-        // BEGIN VIA CONFIGURATION
-        addButton(via, JOY_UP, VK_W, VK_UP);
-        addButton(via, JOY_DOWN, VK_S, VK_DOWN);
-        addButton(via, JOY_LEFT, VK_A, VK_LEFT);
-        addButton(via, JOY_RIGHT, VK_D, VK_RIGHT);
-        addButton(via, JOY_A, VK_SPACE, null);
-
-        try {
-
-            int[] dump = readDump("src/main/resources/dumps/gddump.txt");
-
-            Gameduino gameduino = new Gameduino(clockSpeedHz, connectSpi(via, GD_SELECT), dump);
-            clockables.add(gameduino);
-            resettables.add(gameduino);
-            screen.addDrawable(new Point((Screen.W - Gameduino.W)/2,1), gameduino);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        SerialRom cartridge = new SerialRom(connectSpi(via, CART_SELECT),  serialRomBytes);
-        clockables.add(cartridge);
-            screen.addDrawable(new Point((Screen.W - Gameduino.W)/2,1), gameduino);
-        screen.addDrawable(new Point((Screen.W - SerialRom.W)/2, screen.getScreenHeight()-SerialRom.H-1), cartridge);
-
-        // END OF VIA CONFIGURATION
-        clockables.add(via); // TODO ugly fix because we need to sample the output of devices before next instruction
-
-        registers = new Registers();
-        cpu = new Cpu(addressDecoder, registers, symbols);
-
-        debugger = new Debugger(registers, symbols);
-        screen.addDrawable(new Point((Screen.W - Gameduino.W)/2, Gameduino.H+1), debugger);
-
-    }*/
-
-/*    private void addButton(Via6522 via, int pin, Integer keyCode, Integer alternateKeyCode) {
-        Switch button = Switch.inverted();
-        via.connectPortB(pin, button.getPin());
-        buttons.put(keyCode, button);
-        if (alternateKeyCode != null) {
-            buttons.put(alternateKeyCode, button);
-        }
-    }
-
-    private Spi connectSpi(Via6522 via, int slaveSelect) {
-        Spi spi = new Spi();
-        via.connectPortA(SPI_CLOCK, spi.getClock());
-        via.connectPortA(SPI_MOSI, spi.getSlaveIn());
-        via.connectPortA(SPI_MISO, spi.getSlaveOut());
-        via.connectPortB(slaveSelect, spi.getSlaveSelect());
-        return spi;
-    }*/
-
-
     private void stop() {
         if (runner != null) {
             runner.cancel(false);
@@ -298,8 +215,8 @@ public class SixFiveOTo {
             runCount++;
             if (runCount % refreshRate == 0) {
                 double micros = (System.nanoTime() - nanos)/1000.0;
-                System.out.println(String.format("Measured speed: %.3f MHz",
-                    (double)totalCycles/(double)micros));
+                System.out.printf("Measured speed: %.3f MHz%n",
+                    (double)totalCycles/micros);
                 nanos = System.nanoTime();
 
                 totalCycles = 0;
@@ -400,86 +317,12 @@ public class SixFiveOTo {
 
 
     public static void main(String[] args) {
-        String prgName = "";
-        boolean runFullSpeed = true;
-
-        int[] serialRomBytes = {};
-
-        try {
+         try {
             Config properties = Config.createFromFile(args[0]);
             new SixFiveOTo(properties).start(true);
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
             System.exit(1);
         }
-
-/*
-        try {
-            for (Iterator<String> it = Arrays.asList(args).iterator(); it.hasNext(); ) {
-                String arg = it.next();
-
-                if (arg.equals("-step")) {
-                    runFullSpeed = false;
-                } else if (arg.equals("-romimage")) {
-                    String romName = it.next();
-                    if (romName.toLowerCase().endsWith(".asm")) {
-                        romName = compileSource(romName);
-                        if (romName == null) {
-                            System.err.println("Terminating because of compilation failure");
-                            System.exit(1);
-                        }
-                    }
-                    if (romName.toLowerCase().endsWith(".prg")) {
-                        byte[] bytes = Files.readAllBytes(new File(romName).toPath());
-                        serialRomBytes = new int[bytes.length-2];
-                        for (int i = 0; i < serialRomBytes.length; i++) {
-                            serialRomBytes[i] = ((int)bytes[i+2]) & 0xFF;
-                        }
-                    }
-                    System.out.println("- Attach ROM Image " + romName);
-                } else if (arg.toLowerCase().endsWith(".asm")) {
-                    prgName = compileSource(arg);
-                    if (prgName == null) {
-                        System.err.println("Terminating because of compilation failure");
-                        System.exit(1);
-                    }
-                } else if (arg.toLowerCase().endsWith(".prg")) {
-                    prgName = arg;
-                }
-            }
-        } catch (InterruptedException | IOException e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
-        if (prgName.isEmpty()) {
-            System.err.println("Specify .prg or .asm file to load");
-            System.exit(1);
-        }
-
-        try {
-            System.out.println("- Loading PRG file " + prgName);
-            byte[] prgBytes = Files.readAllBytes(new File(prgName).toPath());
-            File symbolFile = new File(prgName.replace(".prg", ".sym"));
-            Map<Integer, String> symbolMap = new HashMap<>();
-            if (symbolFile.isFile()) {
-                System.out.println("- Loading detected symbol file " + symbolFile.getName());
-                List<String> symbols =
-                    Files.readAllLines(symbolFile.toPath());
-                Pattern p = Pattern.compile(".label\\s*(\\w+)=\\s*(\\S+)");
-                for (String symbol: symbols) {
-                    Matcher m = p.matcher(symbol);
-                    if (m.matches()) {
-
-                        String s = m.group(2).substring(1);
-                        int address = Integer.parseInt(s, 16);
-                        symbolMap.put(address, m.group(1));
-                    }
-                }
-
-                new SixFiveOTo(prgBytes, serialRomBytes, symbolMap).start(runFullSpeed);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }*/
     }
 }

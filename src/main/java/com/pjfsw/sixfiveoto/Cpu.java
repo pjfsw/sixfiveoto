@@ -43,18 +43,18 @@ public class Cpu {
     private final Map<Integer, Instruction> instructions;
     private final AddressDecoder addressDecoder;
     private final Registers registers;
+    private final CpuStatistics statistics;
     private long totalCycles = 0;
 
     private final Map<Integer, String> symbols;
+    private boolean isIrq;
 
-    public Cpu(AddressDecoder addressDecoder, Registers registers) {
-        this(addressDecoder, registers, emptyMap());
-    }
-
-    public Cpu(AddressDecoder addressDecoder, Registers registers, Map<Integer, String> symbols) {
+    public Cpu(AddressDecoder addressDecoder, Registers registers,
+        Map<Integer, String> symbols, CpuStatistics statistics) {
         this.symbols = symbols;
         this.addressDecoder = addressDecoder;
         this.registers = registers;
+        this.statistics = statistics;
         instructions = ImmutableMap.<Integer, Instruction>builder()
             .putAll(Arrays.stream(Adc.values())
                 .collect(toMap(
@@ -143,12 +143,25 @@ public class Cpu {
         return addressDecoder.peek(registers.pc);
     }
 
+    private void countCycles(int cycles) {
+        totalCycles += cycles;
+        if (isIrq) {
+            statistics.irqCycles += cycles;
+        } else {
+            statistics.normalCycles += cycles;
+        }
+    }
+
     public int next() {
-        Instruction instruction = instructions.get(addressDecoder.peek(registers.pc));
+        int opcode = addressDecoder.peek(registers.pc);
+        Instruction instruction = instructions.get(opcode);
         registers.incrementPc(1);
         if (instruction != null) {
             int cycles = instruction.execute(registers, addressDecoder, addressDecoder);
-            totalCycles += cycles;
+            countCycles(cycles);
+            if (opcode == Rti.OPCODE) {
+                isIrq = false;
+            }
             return cycles;
         } else {
             return 0;
@@ -165,6 +178,8 @@ public class Cpu {
         registers.pc = Memory.readWord(addressDecoder, IRQ_VECTOR);
         registers.i(true);
 
+        isIrq = true;
+        countCycles(7);
         return 7;
     }
 

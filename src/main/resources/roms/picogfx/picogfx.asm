@@ -46,19 +46,6 @@ start:
     cli
     jmp *
 
-delay:
-    ldy #32
-!:
-    {
-        ldx #0
-    !:
-        dex
-        bne !-
-    }
-    dey
-    bne !-
-    rts
-
 fill:
     stz AX
     stz AY
@@ -96,19 +83,51 @@ irq:
     }
     inc scrollPtr
     ldx scrollPtr
-    lda cosTableLo,x
-    sta scrollX
-    lda cosTableHi,x
-    sta scrollX+1
+//    lda cosTableLo,x
+//    sta scrollX
+//    lda cosTableHi,x
+//    sta scrollX+1
     lda sinTableLo,x
     sta scrollY
     lda sinTableHi,x
     sta scrollY+1
 
+    jsr checkInput
     ldx x
     ldy y
     lda a
     rti
+
+checkInput:
+    lda $d000
+    rol
+    rol
+    bcs !+
+    {
+        clc
+        lda scrollX
+        adc #2
+        bcc !+
+        inc scrollX+1
+    !:
+        sta scrollX
+        rts
+    }
+!:
+    rol
+    bcs !+
+    {
+        sec
+        lda scrollX
+        sbc #2
+        bcs !+
+        dec scrollX+1
+    !:
+        sta scrollX
+        rts
+    }
+!:
+    rts
 
 #import "../system/pins.asm"
 
@@ -118,9 +137,9 @@ cosTableHi:
     .fill 256,>(256+255*cos(i*PI/128))
 
 sinTableLo:
-    .fill 256,<(256+255*sin(i*PI/64))
+    .fill 256,<(256+255*sin(i*PI/128))
 sinTableHi:
-    .fill 256,>(256+255*sin(i*PI/64))
+    .fill 256,>(256+255*sin(i*PI/128))
 
 * = $FFFC
     .word start
@@ -128,6 +147,8 @@ sinTableHi:
 
 .label CODE=*
 *=$7000 "hej" virtual
+bg:
+    .byte 0
 a:
     .byte 0
 x:

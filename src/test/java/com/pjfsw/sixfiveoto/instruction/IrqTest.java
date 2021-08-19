@@ -1,7 +1,6 @@
 package com.pjfsw.sixfiveoto.instruction;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +16,7 @@ public class IrqTest {
         wb.run(1);
         assertEquals(7, wb.cpu().irq());
         assertEquals(12, wb.run(4));
+        assertEquals(21, wb.cycles());
         assertEquals(42, wb.registers().x());
     }
 }

@@ -204,7 +204,7 @@ public final class PartCreator {
     }
 
     private static Part createVia(Config properties, String name, Map<String, Part> parts) {
-        Via6522 via = new Via6522();
+        Via6522 via = new Via6522(name);
 
         for (int i = 0; i < 8; i++) {
             String portA = properties.getProperty(name+".a"+i, null);

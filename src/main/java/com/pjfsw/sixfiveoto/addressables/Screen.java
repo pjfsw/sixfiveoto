@@ -2,6 +2,7 @@ package com.pjfsw.sixfiveoto.addressables;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
@@ -14,22 +15,27 @@ import java.util.List;
 import javax.swing.JFrame;
 import javax.swing.WindowConstants;
 
-public class Screen implements Peeker {
+import com.pjfsw.sixfiveoto.CpuStatistics;
+
+public class Screen {
     private static final int WAIT_PERIOD = 1_000 / 60;
     public static final int W = 808;
     public static final int H = 768;
     //private final PixelFrame pixelComponent;
     private final JFrame frame;
-    private int frameCounter;
+    private final CpuStatistics cpuStatistics;
+    private final Font font;
     private volatile boolean running = true;
     private int fps = 0;
     private final List<PositionedDrawable> drawables = new ArrayList<>();
 
-    public Screen() {
+    public Screen(CpuStatistics cpuStatistics) {
+        this.cpuStatistics = cpuStatistics;
 
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
         GraphicsDevice[] gs = ge.getScreenDevices();
         GraphicsConfiguration gc = gs[0].getConfigurations()[0];
+        this.font = new Font("Courier", Font.PLAIN, 14);
 
         frame = new JFrame("A Fine Emulator of 65C02", gc);
         frame.setPreferredSize(new Dimension(W,H));
@@ -47,14 +53,6 @@ public class Screen implements Peeker {
 
     public void addDrawable(Point position, Drawable drawable) {
         drawables.add(new PositionedDrawable(position, drawable));
-    }
-
-    public void interrupt() {
-        this.running = false;
-    }
-
-    public void increaseFrameCounter() {
-        frameCounter++;
     }
 
     private static void waitMs(long millis) {
@@ -106,16 +104,26 @@ public class Screen implements Peeker {
             g.translate(pd.position.x, pd.position.y);
             pd.drawable.draw(g);
         }
-        graphics.setColor(Color.GRAY);
-        graphics.drawString(String.format("%d", fps), 0 ,610);
+        Color normalColor = Color.GRAY;
+        Color angryColor = Color.RED;
+        graphics.setFont(font);
+        graphics.setColor(normalColor);
+        graphics.drawString(String.format("CPU: %.2f MHz", cpuStatistics.getSpeed()), 2, 610);
+        long irqUsage = cpuStatistics.irqUsage();
+        if (irqUsage > 95) {
+            graphics.setColor(angryColor);
+        }
+        graphics.drawString(String.format("IRQ: %d%%", irqUsage), 140, 610);
+        graphics.setColor(normalColor);
+        graphics.drawString(String.format("FPS: %d", fps), 220 ,610);
     }
-
+/*
     @Override
     public int peek(final int address) {
         int oldFrameCounter = frameCounter;
         frameCounter = 0;
         return oldFrameCounter;
-    }
+    }*/
 
     private static class PositionedDrawable {
         private final Point position;

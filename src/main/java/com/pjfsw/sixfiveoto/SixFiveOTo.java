@@ -32,6 +32,7 @@ public class SixFiveOTo {
     private final Registers registers;
     private final Screen screen;
     private final Debugger debugger;
+    private final CpuStatistics cpuStatistics;
     private ScheduledFuture<?> runner;
     private long runCount;
     private long nanos;
@@ -52,10 +53,13 @@ public class SixFiveOTo {
     private final Map<Integer, Switch> buttons = new HashMap<>();
     private int runUntilPc = -1;
 
-    private SixFiveOTo(Config properties) throws IOException, InterruptedException {
+    private SixFiveOTo(Config properties)
+        throws IOException, InterruptedException
+    {
         executorService =
             Executors.newScheduledThreadPool(2);
 
+        this.cpuStatistics = new CpuStatistics();
         AddressDecoder addressDecoder = new AddressDecoder();
 
         clockSpeedHz = ClockspeedGetter.getClockSpeed(properties);
@@ -87,7 +91,7 @@ public class SixFiveOTo {
         }
 
         registers = new Registers();
-        cpu = new Cpu(addressDecoder, registers, symbols);
+        cpu = new Cpu(addressDecoder, registers, symbols, cpuStatistics);
 
         debugger = new Debugger(registers, symbols);
 
@@ -98,8 +102,7 @@ public class SixFiveOTo {
             }
         }
 
-        screen = new Screen();
-        addressDecoder.mapPeeker(screen, 0x80, 0x83);
+        screen = new Screen(cpuStatistics);
 
         // Add  the reset normally
         for (Entry<String, Part> entry : collectedParts.entrySet()) {
@@ -180,7 +183,6 @@ public class SixFiveOTo {
         frameCycleCount += cycles;
         int cyclesPerFrame = clockSpeedHz / screenRefreshRate;
         if (frameCycleCount >= cyclesPerFrame) {
-            screen.increaseFrameCounter();
             frameCycleCount -= cyclesPerFrame;
         }
     }
@@ -236,8 +238,7 @@ public class SixFiveOTo {
             runCount++;
             if (runCount % refreshRate == 0) {
                 double micros = (System.nanoTime() - nanos)/1000.0;
-                System.out.printf("Measured speed: %.3f MHz%n",
-                    (double)totalCycles/micros);
+                cpuStatistics.setSpeed((double)totalCycles/micros);
                 nanos = System.nanoTime();
 
                 totalCycles = 0;

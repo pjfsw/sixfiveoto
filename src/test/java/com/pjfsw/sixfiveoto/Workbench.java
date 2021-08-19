@@ -1,6 +1,7 @@
 package com.pjfsw.sixfiveoto;
 
 import static java.util.Collections.emptyList;
+import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
 
 import java.util.ArrayList;
@@ -39,7 +40,7 @@ public class Workbench implements Peeker, Poker {
         addressDecoder.mapPeeker(ram, 0,3);
         addressDecoder.mapPoker(ram, 0,3);
 
-        cpu = new Cpu(addressDecoder, registers);
+        cpu = new Cpu(addressDecoder, registers, emptyMap(), new CpuStatistics());
     }
 
     public Workbench(Integer... bytes) {

@@ -14,9 +14,11 @@ public class Registers {
     public boolean v;
     public boolean z;
     public boolean n;
+    private boolean i;
 
     private static final int N_MASK = 0x80;
     private static final int V_MASK = 0x40;
+    private static final int I_MASK = 0x04;
     private static final int Z_MASK = 0x02;
     private static final int C_MASK = 0x01;
 
@@ -108,12 +110,17 @@ public class Registers {
     public void sr(final int regs) {
         n = (regs & N_MASK) != 0;
         v = (regs & V_MASK) != 0;
+        i = (regs & I_MASK) != 0;
         z = (regs & Z_MASK) != 0;
         c = (regs & C_MASK) != 0;
     }
 
     public int sr() {
-        return (n ? N_MASK : 0) | (v ? V_MASK : 0) | (z ? Z_MASK : 0) | (c ? C_MASK : 0);
+        return (n ? N_MASK : 0)
+            | (v ? V_MASK : 0)
+            | (i ? I_MASK : 0)
+            | (z ? Z_MASK : 0)
+            | (c ? C_MASK : 0);
     }
 
     public void a(final int a) {
@@ -160,5 +167,13 @@ public class Registers {
     public void push(Poker poker, int value) {
         poker.poke(0x100 + sp, value);
         sp = (sp - 1) & 0xFF;
+    }
+
+    public void i(boolean i) {
+        this.i = i;
+    }
+
+    public boolean i() {
+        return i;
     }
 }

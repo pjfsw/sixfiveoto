@@ -3,6 +3,7 @@ package com.pjfsw.sixfiveoto;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.google.common.collect.ImmutableList;
@@ -25,12 +26,15 @@ public class Workbench implements Peeker, Poker {
     private final Registers registers;
     private final AddressDecoder addressDecoder;
 
-
     public Workbench(List<Integer> byteCode) {
+        this(byteCode, 0);
+    }
+
+    public Workbench(List<Integer> byteCode, int irqBase) {
         this.registers = new Registers();
         addressDecoder = new AddressDecoder();
         addressDecoder.mapPeeker(new Memory1K(byteCode), CODEPAGE, CODEPAGE+3);
-        addressDecoder.mapPeeker(new RomVectors(CODEBASE), 0xFF, 0xFF);
+        addressDecoder.mapPeeker(new RomVectors(CODEBASE, irqBase), 0xFF, 0xFF);
         Memory1K ram = new Memory1K(emptyList());
         addressDecoder.mapPeeker(ram, 0,3);
         addressDecoder.mapPoker(ram, 0,3);
@@ -39,7 +43,11 @@ public class Workbench implements Peeker, Poker {
     }
 
     public Workbench(Integer... bytes) {
-        this(ImmutableList.copyOf(bytes));
+        this(ImmutableList.copyOf(bytes), 0xf000);
+    }
+
+    public static Builder builder() {
+        return new Builder();
     }
 
     public Cpu cpu() {
@@ -91,6 +99,26 @@ public class Workbench implements Peeker, Poker {
         @Override
         public void poke(final int address, final int data) {
             byteCode[address & 0x03FF] = Word.lo(data);
+        }
+    }
+
+    public static class Builder {
+        private int irq = 0;
+        List<Integer> code = new ArrayList<>();
+
+        public Builder withCode(Integer... bytes) {
+            code.addAll(ImmutableList.copyOf(bytes));
+            return this;
+        }
+
+        public Builder withIrq(Integer... bytes) {
+            irq = code.size();
+            code.addAll(ImmutableList.copyOf(bytes));
+            return this;
+        }
+
+        public Workbench build() {
+            return new Workbench(code, CODEBASE + irq);
         }
     }
 

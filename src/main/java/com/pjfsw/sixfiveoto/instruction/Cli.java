@@ -5,18 +5,18 @@ import com.pjfsw.sixfiveoto.addressables.Poker;
 import com.pjfsw.sixfiveoto.mnemonicformatter.MnemonicFormatter;
 import com.pjfsw.sixfiveoto.registers.Registers;
 
-public class Sei implements Instruction {
-    public static final int OPCODE = 0x78;
+public class Cli implements Instruction {
+    public static final int OPCODE = 0x58;
 
     @Override
     public int execute(final Registers registers, Peeker peek, Poker poke) {
-        registers.i(true);
+        registers.i(false);
         return 2;
     }
 
     @Override
     public String getMnemonic() {
-        return "SEI";
+        return "CLI";
     }
 
     @Override

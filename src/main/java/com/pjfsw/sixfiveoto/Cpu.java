@@ -11,6 +11,7 @@ import com.google.common.collect.ImmutableMap;
 import com.pjfsw.sixfiveoto.instruction.Adc;
 import com.pjfsw.sixfiveoto.instruction.Bit;
 import com.pjfsw.sixfiveoto.instruction.Branch;
+import com.pjfsw.sixfiveoto.instruction.Cli;
 import com.pjfsw.sixfiveoto.instruction.Cmp;
 import com.pjfsw.sixfiveoto.instruction.IncDec;
 import com.pjfsw.sixfiveoto.instruction.Instruction;
@@ -24,6 +25,7 @@ import com.pjfsw.sixfiveoto.instruction.LdMemory;
 import com.pjfsw.sixfiveoto.instruction.ModifyFlags;
 import com.pjfsw.sixfiveoto.instruction.Nop;
 import com.pjfsw.sixfiveoto.instruction.RotateShift;
+import com.pjfsw.sixfiveoto.instruction.Rti;
 import com.pjfsw.sixfiveoto.instruction.Sei;
 import com.pjfsw.sixfiveoto.instruction.StackPush;
 import com.pjfsw.sixfiveoto.instruction.StackPull;
@@ -96,6 +98,8 @@ public class Cpu {
                     Function.identity())))
             .put(Nop.OPCODE, new Nop())
             .put(Sei.OPCODE, new Sei())
+            .put(Cli.OPCODE, new Cli())
+            .put(Rti.OPCODE, new Rti())
             .putAll(Arrays.stream(StackPush.values())
                 .collect(toMap(
                     StackPush::opcode,
@@ -122,7 +126,7 @@ public class Cpu {
                     Txb::opcode,
                     Function.identity())))
             .build();
-        System.out.println(String.format("%d opcodes supported", instructions.size()));
+        System.out.printf("%d opcodes supported%n", instructions.size());
         reset();
     }
 
@@ -149,6 +153,19 @@ public class Cpu {
         } else {
             return 0;
         }
+    }
+
+    public int irq() {
+        if (registers.i()) {
+            return 0;
+        }
+        registers.push(addressDecoder, registers.pc >> 8);
+        registers.push(addressDecoder, registers.pc & 0xFF);
+        registers.push(addressDecoder, registers.sr());
+        registers.pc = Memory.readWord(addressDecoder, IRQ_VECTOR);
+        registers.i(true);
+
+        return 7;
     }
 
     public Disassembler createDisassembler() {

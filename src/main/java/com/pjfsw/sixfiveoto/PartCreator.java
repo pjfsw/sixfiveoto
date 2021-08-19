@@ -74,12 +74,17 @@ public final class PartCreator {
             symbols.putAll(SymbolMap.getSymbolsFromPrg(prg));
         }
 
-        return Part.create(PartType.ROM, rom, null, null, null, null, null);
+        return Part.builder(PartType.ROM)
+            .withPeeker(rom)
+            .build();
     }
 
     private static Part createRam() {
         MemoryModule ram = MemoryModule.create32K();
-        return Part.create(PartType.RAM, ram, ram, null, null, null, null);
+        return Part.builder(PartType.RAM)
+            .withPeeker(ram)
+            .withPoker(ram)
+            .build();
     }
 
     private static Part createSpi() {
@@ -114,7 +119,13 @@ public final class PartCreator {
     private static Part createPicoGfx(Config properties) throws IOException {
         int [] font = readDump("src/main/resources/dumps/font.txt");
         PicoGfx picoGfx = new PicoGfx(ClockspeedGetter.getClockSpeed(properties), font);
-        return Part.create(PartType.PICOGFX, null, picoGfx, picoGfx, picoGfx, picoGfx, null);
+        return Part.builder(PartType.PICOGFX)
+            .withPoker(picoGfx)
+            .withClockable(picoGfx)
+            .withResettable(picoGfx)
+            .withDrawable(picoGfx)
+            .withInterrupt(picoGfx)
+            .build();
     }
 
     private static Part createGameduino(Config properties, String name, Map<String, Part> parts)
@@ -122,7 +133,12 @@ public final class PartCreator {
         int[] dump = readDump("src/main/resources/dumps/gddump.txt");
         Spi spi = findSpi(properties, name, parts);
         Gameduino gameduino = new Gameduino(ClockspeedGetter.getClockSpeed(properties), spi, dump);
-        return Part.create(PartType.GAMEDUINO, null, null, gameduino, gameduino, gameduino, null);
+
+        return Part.builder(PartType.GAMEDUINO)
+            .withClockable(gameduino)
+            .withResettable(gameduino)
+            .withDrawable(gameduino)
+            .build();
     }
 
     private static Part createSerialRom(Config properties, String name, Map<String, Part> parts)
@@ -148,7 +164,11 @@ public final class PartCreator {
         }
 
         SerialRom cartridge = new SerialRom(spi,  serialRomBytes);
-        return Part.create(PartType.SERIALROM, null, null, cartridge, null, cartridge, null);
+
+        return Part.builder(PartType.SERIALROM)
+            .withClockable(cartridge)
+            .withDrawable(cartridge)
+            .build();
     }
 
     private static Part createSwitch(Config properties, String name) {
@@ -203,7 +223,13 @@ public final class PartCreator {
             }
         }
 
-        return Part.create(PartType.VIA, via, via, via, via, via, null);
+        return Part.builder(PartType.VIA)
+            .withPeeker(via)
+            .withPoker(via)
+            .withClockable(via)
+            .withResettable(via)
+            .withDrawable(via)
+            .build();
     }
 
     private static Part createLcd(final Config properties, final String name) {
@@ -211,7 +237,13 @@ public final class PartCreator {
         int h = Integer.parseInt(properties.getProperty(name+".h", "2"));
 
         Lcd lcd = new Lcd(ClockspeedGetter.getClockSpeed(properties), w, h);
-        return Part.create(PartType.LCD, null, null, lcd, lcd, lcd, lcd);
+
+        return Part.builder(PartType.LCD)
+            .withClockable(lcd)
+            .withResettable(lcd)
+            .withDrawable(lcd)
+            .withConnectable(lcd)
+            .build();
     }
 }
 

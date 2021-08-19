@@ -18,6 +18,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import com.pjfsw.sixfiveoto.addressables.Clockable;
+import com.pjfsw.sixfiveoto.addressables.Interrupt;
 import com.pjfsw.sixfiveoto.addressables.Resettable;
 import com.pjfsw.sixfiveoto.addressables.Screen;
 import com.pjfsw.sixfiveoto.addressables.via.Via6522;
@@ -47,6 +48,7 @@ public class SixFiveOTo {
     private final int refreshRate = refreshMultiplier * screenRefreshRate;
     private final List<Resettable> resettables = new ArrayList<>();
     private final List<Clockable> clockables = new ArrayList<>();
+    private final List<Interrupt> interrupts = new ArrayList<>();
     private final Map<Integer, Switch> buttons = new HashMap<>();
     private int runUntilPc = -1;
 
@@ -122,6 +124,9 @@ public class SixFiveOTo {
                 int keycode = Integer.parseInt(properties.getProperty(name + ".keycode", "FF"), 16);
                 buttons.put(keycode, part.getSwitch());
             }
+            if (part.getInterrupt() != null) {
+                interrupts.add(part.getInterrupt());
+            }
         }
 
         // Enforce VIAs to execute once again last
@@ -186,15 +191,31 @@ public class SixFiveOTo {
      * @return the number of cycles executed
      */
     private int next() {
-        int cycles = cpu.next();
-        if (cycles > 0) {
-            for (Clockable clockable : clockables) {
-                clockable.next(cycles);
+        boolean irq = false;
+        for (Interrupt interrupt : interrupts) {
+            irq |= interrupt.hasIrq();
+        }
+        int cycles = 0;
+        if (irq) {
+            int irqCycles = cpu.irq();
+            if (irqCycles > 0) {
+                clock(irqCycles);
+                cycles += irqCycles;
             }
+        }
+        int cpuCycles = cpu.next();
+        if (cpuCycles > 0) {
+            clock(cpuCycles);
+            cycles += cpuCycles;
         }
         return cycles;
     }
 
+    private void clock(int cycles) {
+        for (Clockable clockable : clockables) {
+            clockable.next(cycles);
+        }
+    }
     private void stepMode() {
         stop();
         debugger.update(cpu.createDisassembler());

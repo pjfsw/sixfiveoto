@@ -24,6 +24,7 @@ import com.pjfsw.sixfiveoto.addressables.Screen;
 import com.pjfsw.sixfiveoto.addressables.via.Via6522;
 import com.pjfsw.sixfiveoto.gameduino.Gameduino;
 import com.pjfsw.sixfiveoto.instruction.Jsr;
+import com.pjfsw.sixfiveoto.keyboard.Keyboard;
 import com.pjfsw.sixfiveoto.peripherals.Switch;
 import com.pjfsw.sixfiveoto.registers.Registers;
 
@@ -51,6 +52,7 @@ public class SixFiveOTo {
     private final List<Clockable> clockables = new ArrayList<>();
     private final List<Interrupt> interrupts = new ArrayList<>();
     private final Map<Integer, Switch> buttons = new HashMap<>();
+    private final List<Keyboard> keyboards = new ArrayList<>();
     private int runUntilPc = -1;
 
     private SixFiveOTo(Config properties)
@@ -129,6 +131,9 @@ public class SixFiveOTo {
             }
             if (part.getInterrupt() != null) {
                 interrupts.add(part.getInterrupt());
+            }
+            if (part.getKeyboard() != null) {
+                keyboards.add(part.getKeyboard());
             }
         }
 
@@ -271,6 +276,15 @@ public class SixFiveOTo {
         updateFrameCycleCount(cycles);
     }
 
+    private boolean keyboardConsume(int keyCode, boolean pressed) {
+        for (Keyboard keyboard : keyboards) {
+            if (keyboard.consumeKeyCode(keyCode, pressed)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void start(boolean fullSpeed) {
         reset(true);
 
@@ -281,12 +295,14 @@ public class SixFiveOTo {
                     aSwitch.setState(false);
                     return true;
                 }
+                return keyboardConsume(event.getKeyCode(), false);
+
             }
             if (event.getID() != KeyEvent.KEY_PRESSED) {
                 return false;
             }
             switch (event.getKeyCode()) {
-                case KeyEvent.VK_END:
+                case KeyEvent.VK_F12:
                     reset(event.isShiftDown());
                     break;
 
@@ -324,7 +340,7 @@ public class SixFiveOTo {
                         aSwitch.setState(true);
                         return true;
                     } else {
-                        return false;
+                        return keyboardConsume(event.getKeyCode(), true);
                     }
             }
             return true;

@@ -9,5 +9,6 @@ public enum PartType {
     SERIALROM,
     VIA,
     LCD,
-    PICOGFX
+    PICOGFX,
+    KEYBOARD
 }

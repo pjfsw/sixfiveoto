@@ -89,7 +89,7 @@ public class Screen {
             frames++;
             strategy.show();
             long wait = WAIT_PERIOD - (int)(System.currentTimeMillis() - lastTime);
-            if (wait > 1) {
+            if (wait > 0) {
                 waitMs(wait);
             }
         }

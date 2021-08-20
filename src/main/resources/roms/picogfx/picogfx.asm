@@ -18,10 +18,21 @@
 .const COLS=40
 .const MEMCOLS=64
 
+.const BGCOLOR = %000110
+.const TEXTCOLOR = %111111
+
+.const SPI_VIA = $c800
+.const SS_PORT = SPI_VIA
+.const SPI_PORT = SPI_VIA+1
+.const SS_DDR = SPI_VIA+2
+.const SPI_DDR = SPI_VIA+3
+
 * = $E000
 start:
     sei
-    lda #%010001
+    jsr setupPorts
+
+    lda #BGCOLOR
     sta SCR_BG
 
     lda #39
@@ -31,25 +42,60 @@ start:
 
     lda #SCREEN_PAGE
     sta PAGE
+    stz startValue
     jsr fill
 
+    stz AX
+    stz AY
+    ldx 0
+!:
+    lda message,x
+    beq !+
+    sta D
+    inx
+    jmp !-
+!:
     lda #COLOR_PAGE
     sta PAGE
+    lda #255-75
+    sta startValue
+
     jsr fill
+
+    stz AX
+    stz AY
+    ldx 0
+    ldy #TEXTCOLOR
+!:
+    lda message,x
+    beq !+
+    sty D
+    inx
+    jmp !-
+!:
 
     stz LENGTH
     stz SKIP
 
-    lda #CTRL_PAGE
-    sta PAGE
+!:
+    jsr readKeyboard
+    cmp #0
+    beq !-
+    sta input
+    stz AX
+    stz AY
+    stz PAGE
+    lda input
+    sta D
 
-    cli
-    jmp *
+    jmp !-
+
 
 fill:
     stz AX
-    stz AY
-    ldy #0
+    ldy #2
+    sty AY
+    ldy startValue
     lda #0
 !:  {
         ldx #255
@@ -61,15 +107,17 @@ fill:
     }
     clc
     adc #1
-    cmp #5
+    cmp #8
     bcc !-
     rts
 
 irq:
-    stx x
-    sty y
-    sta a
+    stx irqX
+    sty irqY
+    sta irqA
 
+    lda #CTRL_PAGE
+    sta PAGE
     stz AX
     stz AY
     ldx #0
@@ -81,21 +129,23 @@ irq:
         cpx #4
         bcc !-
     }
-    inc scrollPtr
+    /*inc scrollPtr
     ldx scrollPtr
-//    lda cosTableLo,x
-//    sta scrollX
-//    lda cosTableHi,x
-//    sta scrollX+1
     lda sinTableLo,x
     sta scrollY
     lda sinTableHi,x
-    sta scrollY+1
+    sta scrollY+1*/
 
-    jsr checkInput
-    ldx x
-    ldy y
-    lda a
+    stz AX
+    stz AY
+    stz PAGE
+    lda input
+    sta D
+
+    //jsr checkInput
+    ldx irqX
+    ldy irqY
+    lda irqA
     rti
 
 checkInput:
@@ -129,24 +179,41 @@ checkInput:
 !:
     rts
 
-#import "../system/pins.asm"
+setupPorts:
+    stz SPI_PORT
+    lda #%01000001
+    sta SPI_DDR
+    lda #$FF
+    sta SS_PORT
+    lda #%00001111
+    sta SS_DDR
+    rts
 
-cosTableLo:
-    .fill 256,<(256+255*cos(i*PI/128))
-cosTableHi:
-    .fill 256,>(256+255*cos(i*PI/128))
+#import "keyboard.asm"
 
 sinTableLo:
-    .fill 256,<(256+255*sin(i*PI/128))
+    .fill 256,<(256+128*sin(i*PI/128))
 sinTableHi:
-    .fill 256,>(256+255*sin(i*PI/128))
-
+    .fill 256,>(256+128*sin(i*PI/128))
+message:
+    .text "Hello world!"
+    .byte 0
 * = $FFFC
     .word start
     .word irq
 
 .label CODE=*
 *=$7000 "hej" virtual
+irqX:
+    .byte 0
+irqY:
+    .byte 0
+irqA:
+    .byte 0
+input:
+    .byte 0
+startValue:
+    .byte 0
 bg:
     .byte 0
 a:

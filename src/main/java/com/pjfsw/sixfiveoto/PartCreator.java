@@ -11,6 +11,7 @@ import com.pjfsw.sixfiveoto.addressables.MemoryModule;
 import com.pjfsw.sixfiveoto.addressables.via.Pin;
 import com.pjfsw.sixfiveoto.addressables.via.Via6522;
 import com.pjfsw.sixfiveoto.gameduino.Gameduino;
+import com.pjfsw.sixfiveoto.keyboard.Keyboard;
 import com.pjfsw.sixfiveoto.lcd.Lcd;
 import com.pjfsw.sixfiveoto.peripherals.Switch;
 import com.pjfsw.sixfiveoto.picogfx.PicoGfx;
@@ -44,7 +45,8 @@ public final class PartCreator {
             return createLcd(properties, name);
         } else if (type.equalsIgnoreCase("picogfx")) {
             return createPicoGfx(properties);
-
+        } else if (type.equalsIgnoreCase("keyboard")) {
+            return createKeyboard(properties, name, parts);
         } else {
             throw new IllegalArgumentException(String.format("Unknown part type %s for %s", type, name));
         }
@@ -125,6 +127,15 @@ public final class PartCreator {
             .withResettable(picoGfx)
             .withDrawable(picoGfx)
             .withInterrupt(picoGfx)
+            .build();
+    }
+
+    private static Part createKeyboard(Config properties, String name, Map<String, Part> parts) {
+        Spi spi = findSpi(properties, name, parts);
+        Keyboard keyboard = new Keyboard(spi);
+        return Part.builder(PartType.KEYBOARD)
+            .withClockable(keyboard)
+            .withKeyboard(keyboard)
             .build();
     }
 

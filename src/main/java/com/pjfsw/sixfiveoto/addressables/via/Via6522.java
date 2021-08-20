@@ -36,6 +36,7 @@ public class Via6522 implements Peeker, Poker, Drawable, Resettable, Clockable {
     private static final int DDRB = 0x02;
     private static final int DDRA = 0x03;
     private final Object name;
+    private final Font font;
     private int porta;
     private int portb;
     private final int[] registers = new int[16];
@@ -57,6 +58,7 @@ public class Via6522 implements Peeker, Poker, Drawable, Resettable, Clockable {
     public Via6522(String name) {
         this.name = name;
         img = new BufferedImage(36,6, TYPE_INT_ARGB);
+        font = new Font("Courier", Font.PLAIN, 12);
     }
 
 
@@ -168,12 +170,12 @@ public class Via6522 implements Peeker, Poker, Drawable, Resettable, Clockable {
         }
 
         Graphics2D g2 = ((Graphics2D)graphics);
-        g2.drawImage(img, 0,24, W, 36, null);
-        g2.setFont(new Font("Courier", Font.PLAIN, 16));
+        g2.drawImage(img, 0,24, W, 24, null);
+        g2.setFont(font);
         g2.setColor(Color.WHITE);
         g2.drawString(String.format("VIA %s", name), 0,16);
-        g2.drawString("A", 64, 72);
-        g2.drawString("B", 224, 72);
+        g2.drawString("A", 64, 60);
+        g2.drawString("B", 224, 60);
 
     }
 }

@@ -7,6 +7,7 @@ import com.pjfsw.sixfiveoto.addressables.Interrupt;
 import com.pjfsw.sixfiveoto.addressables.Peeker;
 import com.pjfsw.sixfiveoto.addressables.Poker;
 import com.pjfsw.sixfiveoto.addressables.Resettable;
+import com.pjfsw.sixfiveoto.keyboard.Keyboard;
 import com.pjfsw.sixfiveoto.peripherals.Switch;
 import com.pjfsw.sixfiveoto.spi.Spi;
 
@@ -20,6 +21,8 @@ public interface Part {
     Peeker getPeeker();
 
     Interrupt getInterrupt();
+
+    Keyboard getKeyboard();
 
     Poker getPoker();
 
@@ -60,6 +63,7 @@ public interface Part {
         private Interrupt interrupt;
         private Spi spi;
         private Switch aSwitch;
+        private Keyboard keyboard;
 
         Builder(PartType type) {
             this.type = type;
@@ -110,6 +114,12 @@ public interface Part {
             return this;
         }
 
+        Builder withKeyboard(Keyboard keyboard) {
+            this.keyboard = keyboard;
+            return this;
+        }
+
+
         Part build() {
             return new Part() {
                 @Override
@@ -135,6 +145,11 @@ public interface Part {
                 @Override
                 public Interrupt getInterrupt() {
                     return interrupt;
+                }
+
+                @Override
+                public Keyboard getKeyboard() {
+                    return keyboard;
                 }
 
                 @Override

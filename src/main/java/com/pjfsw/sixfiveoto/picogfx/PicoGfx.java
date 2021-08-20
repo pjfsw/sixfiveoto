@@ -1,8 +1,9 @@
 package com.pjfsw.sixfiveoto.picogfx;
 
-import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
+import java.awt.image.WritableRaster;
 import java.util.Arrays;
 
 import com.pjfsw.sixfiveoto.addressables.Clockable;
@@ -10,7 +11,6 @@ import com.pjfsw.sixfiveoto.addressables.Drawable;
 import com.pjfsw.sixfiveoto.addressables.Interrupt;
 import com.pjfsw.sixfiveoto.addressables.Poker;
 import com.pjfsw.sixfiveoto.addressables.Resettable;
-import com.pjfsw.sixfiveoto.addressables.via.Pin;
 
 public class PicoGfx implements Drawable, Clockable, Resettable, Poker, Interrupt {
     private static final int VISIBLE_WIDTH=400;
@@ -19,8 +19,6 @@ public class PicoGfx implements Drawable, Clockable, Resettable, Poker, Interrup
     private static final int LINE_MASK = CHARS_PER_LINE-1;
 
     private static final int VISIBLE_HEIGHT=296;
-    private static final int MEMORY_HEIGHT=512;
-    private static final int CHARS_PER_COL = MEMORY_HEIGHT/8;
     private static final int WRITE_PAGE_SIZE = 0x1000;
     private static final int MEM_MASK = WRITE_PAGE_SIZE - 1;
 
@@ -31,7 +29,6 @@ public class PicoGfx implements Drawable, Clockable, Resettable, Poker, Interrup
     private static final int REG_LENGTH = 4;
     private static final int REG_SKIP = 5;
     private static final int REG_BG = 6;
-    private static final int REG_DUMMY = 7; // Used for IRQ acknowledge
 
     private final int cyclesPerFrame;
     private final Tile[] tiles = new Tile[256];
@@ -43,18 +40,25 @@ public class PicoGfx implements Drawable, Clockable, Resettable, Poker, Interrup
     private static final int CTRL_SCRY = CTRL_OFFSET+2;
 
     private final int[] font;
+    private final BufferedImage img;
     private int writePtr = 0;
     private int bgColor;
     private int writePage = 0;
     private int writeLength = 1;
     private int writeSkip = 0;
     private int writeCounter = 0;
-    private final Color[] colorDac = new Color[64];
-    private static final int[] COLOR_VALUES = {0,85,170,255};
     private int cycles;
+    private static final int COLORS = 64;
+    private static final int COLOR_MASK = COLORS-1;
+    private final Rgba[] colorDac = new Rgba[COLORS];
+    private static final int[] COLOR_VALUES_2BIT = {0,85,170,255};
+    //private static final int[] COLOR_VALUES_2BIT = {0,109,182,255};
+    //private static final int[] COLOR_VALUES_3BIT = {0,36,73,109,146,182,219,255};
     private boolean irq;
 
     public PicoGfx(int systemSpeed, int[] font) {
+        img = new BufferedImage(VISIBLE_WIDTH, VISIBLE_HEIGHT, BufferedImage.TYPE_INT_ARGB);
+
         this.cyclesPerFrame = systemSpeed/60;
         this.font = font;
         init();
@@ -68,11 +72,11 @@ public class PicoGfx implements Drawable, Clockable, Resettable, Poker, Interrup
         for (int i = 0; i < 256; i++) {
             createTile(i);
         }
-        for (int i = 0; i < 64; i++) {
+        for (int i = 0; i < COLORS; i++) {
             int r = (i>>4) & 3;
             int g = (i>>2) & 3;
             int b = i & 3;
-            colorDac[i] = new Color(COLOR_VALUES[r], COLOR_VALUES[g], COLOR_VALUES[b]);
+            colorDac[i] = new Rgba(COLOR_VALUES_2BIT[r], COLOR_VALUES_2BIT[g], COLOR_VALUES_2BIT[b],255);
         }
     }
 
@@ -113,8 +117,7 @@ public class PicoGfx implements Drawable, Clockable, Resettable, Poker, Interrup
     @Override
     public void draw(Graphics graphics) {
         Graphics2D g2 = (Graphics2D)graphics;
-        g2.setBackground(colorDac[bgColor & 63]);
-        g2.clearRect(0, 0, VISIBLE_WIDTH*2, VISIBLE_HEIGHT*2);
+        WritableRaster raster = img.getRaster();
 
         int scrollX = registers[CTRL_SCRX] + ((registers[CTRL_SCRX+1] & 1) << 8);
         int scrollY = registers[CTRL_SCRY] + ((registers[CTRL_SCRY+1] & 1) << 8);
@@ -126,12 +129,19 @@ public class PicoGfx implements Drawable, Clockable, Resettable, Poker, Interrup
                 int tileIndex = registers[screenPos];
                 Tile tile = tiles[tileIndex & 0xFF];
                 int colorIndex = registers[TILE_COLOR_OFFSET+screenPos];
-                if (tile.get(sx&7,sy&7) > 0) {
-                    g2.setColor(colorDac[colorIndex&63]);
-                    g2.fillRect(x*2,y*2,2,2);
+                int bit = tile.get(sx&7,sy&7);
+                if (colorIndex > 127) {
+                    bit = 1-bit;
+                }
+                if (bit > 0) {
+                    raster.setPixel(x,y, colorDac[colorIndex & COLOR_MASK].rgba);
+                } else {
+                    raster.setPixel(x,y, colorDac[bgColor & COLOR_MASK].rgba);
                 }
             }
         }
+
+        g2.drawImage(img, 0,0, VISIBLE_WIDTH*2, VISIBLE_HEIGHT*2, null);
 
     }
 
@@ -195,6 +205,14 @@ public class PicoGfx implements Drawable, Clockable, Resettable, Poker, Interrup
 
         int get(int x, int y) {
             return data[(y*8+x)&63];
+        }
+    }
+
+    private static class Rgba {
+        int[] rgba;
+
+        public Rgba(int r, int g, int b, int a) {
+            this.rgba = new int[]{r,g,b,a};
         }
     }
 

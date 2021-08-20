@@ -29,6 +29,9 @@ public class PicoGfx implements Drawable, Clockable, Resettable, Poker, Interrup
     private static final int REG_LENGTH = 4;
     private static final int REG_SKIP = 5;
     private static final int REG_BG = 6;
+    private static final int REG_CTRL = 7;
+    private static final int CTRL_SAVE_AXAY = 0;
+    private static final int CTRL_RESTORE_AXAY = 1;
 
     private final int cyclesPerFrame;
     private final Tile[] tiles = new Tile[256];
@@ -55,6 +58,7 @@ public class PicoGfx implements Drawable, Clockable, Resettable, Poker, Interrup
     //private static final int[] COLOR_VALUES_2BIT = {0,109,182,255};
     //private static final int[] COLOR_VALUES_3BIT = {0,36,73,109,146,182,219,255};
     private boolean irq;
+    private int writePtrBackup;
 
     public PicoGfx(int systemSpeed, int[] font) {
         img = new BufferedImage(VISIBLE_WIDTH, VISIBLE_HEIGHT, BufferedImage.TYPE_INT_ARGB);
@@ -163,6 +167,17 @@ public class PicoGfx implements Drawable, Clockable, Resettable, Poker, Interrup
         writePtr &= MEM_MASK;
     }
 
+    private void handleCtrl(int data) {
+        switch(data) {
+            case CTRL_SAVE_AXAY:
+                writePtrBackup = writePtr;
+                break;
+            case CTRL_RESTORE_AXAY:
+                writePtr = writePtrBackup;
+                break;
+            default:
+        }
+    }
     @Override
     public void poke(int address, int data) {
         address = address & 7;
@@ -191,6 +206,9 @@ public class PicoGfx implements Drawable, Clockable, Resettable, Poker, Interrup
                 break;
             case REG_SKIP:
                 writeSkip = data;
+                break;
+            case REG_CTRL:
+                handleCtrl(data);
                 break;
             default:
         }

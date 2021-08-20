@@ -35,6 +35,8 @@ public class Keyboard implements Clockable {
             keymap.put(VK_0 + i, 0x30 + i);
         }
         keymap.put(VK_BACK_QUOTE, 0x3c);
+        keymap.put(VK_ENTER, 0x1b);
+        keymap.put(VK_BACK_SPACE, 0x1c);
     }
 
     @Override

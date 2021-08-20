@@ -1,5 +1,14 @@
 #importonce
 
+.const KEY_SHIFT = $80
+.const KEY_ALT = $81
+.const KEY_UP = $E0
+.const KEY_DOWN = $E1
+.const KEY_LEFT = $E2
+.const KEY_RIGHT = $E3
+.const KEY_ENTER = $0d
+.const KEY_BACKSPACE = $08
+
 .const CLOCK = $01
 .const KEYBOARD_SELECT = $FE
 .const NO_SELECT = $FF
@@ -29,7 +38,7 @@ readKeyboard:
 keyCodes:
     .byte 0
     .fill 26, i+'a'  // $01
-    .fill 5,0        // $1b
+    .byte KEY_ENTER, KEY_BACKSPACE, 0,0,0        // $1b
     .byte ' '        // $20
     .byte 0,0,0,0,0,0,$27,0,0,0 // $21
     .byte '+'        // $2b

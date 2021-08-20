@@ -8,6 +8,7 @@
 .const LENGTH = $c004
 .const SKIP = $c005
 .const SCR_BG = $c006
+.const CTRL_REG = $c007
 .const SCREEN_PAGE = 0
 .const COLOR_PAGE = 1
 .const CTRL_PAGE = 2
@@ -28,6 +29,9 @@
 .const SPI_DDR = SPI_VIA+3
 
 * = $E000
+
+#import "keyboard.asm"
+
 start:
     sei
     jsr setupPorts
@@ -35,18 +39,9 @@ start:
     lda #BGCOLOR
     sta SCR_BG
 
-    lda #39
-    sta LENGTH
-    lda #24
-    sta SKIP
-
-    lda #SCREEN_PAGE
-    sta PAGE
-    stz startValue
-    jsr fill
-
     stz AX
     stz AY
+    stz PAGE
     ldx 0
 !:
     lda message,x
@@ -57,10 +52,6 @@ start:
 !:
     lda #COLOR_PAGE
     sta PAGE
-    lda #255-75
-    sta startValue
-
-    jsr fill
 
     stz AX
     stz AY
@@ -77,108 +68,121 @@ start:
     stz LENGTH
     stz SKIP
 
-!:
+    stz cursorX
+    lda #1
+    sta cursorY
+    cli
+
+keyboardLoop:
+    lda cursorX
+    sta oldCursorX
+    lda cursorY
+    sta oldCursorY
     jsr readKeyboard
     cmp #0
-    beq !-
-
+    beq keyboardLoop
+    cmp #KEY_ENTER
+    bne !+
+    sei
+    jsr linefeed
+    jsr restoreCursor
+    cli
+    jmp keyboardLoop
+!:
     sta input
-    stz AX
-    stz AY
+    lda cursorX
+    sta AX
+    lda cursorY
+    sta AY
     stz PAGE
     lda input
     sta D
 
-    jmp !-
+    sei
+    jsr moveCursor
+    jsr restoreCursor
+    cli
+    jmp keyboardLoop
 
+restoreCursor:
+    lda #COLOR_PAGE
+    sta PAGE
+    lda oldCursorX
+    sta AX
+    lda oldCursorY
+    sta AY
+    lda #TEXTCOLOR
+    sta D
+    rts
 
-fill:
-    stz AX
-    ldy #2
-    sty AY
-    ldy startValue
-    lda #0
-!:  {
-        ldx #255
-    !:
-        sty D
-        iny
-        dex
-        bne !-
-    }
+moveCursor:
+    lda cursorX
     clc
     adc #1
-    cmp #8
-    bcc !-
+    cmp #50
+    bcc !+
+    jmp linefeed
+!:
+    sta cursorX
+    rts
+
+linefeed:
+    stz cursorX
+    clc
+    lda cursorY
+    adc #1
+    and #$1f
+    sta cursorY
+    sta AY
+    stz AX
+    stz PAGE
+    lda ' '
+    ldx #64
+!:
+    sta D
+    dex
+    bne !-
+
+    lda cursorY
+    sta AY
+    stz AX
+    lda #COLOR_PAGE
+    sta PAGE
+    lda #TEXTCOLOR
+    ldx #64
+!:
+    sta D
+    dex
+    bne!-
     rts
 
 irq:
     stx irqX
     sty irqY
     sta irqA
+    stz CTRL_REG // Save AX AY
 
-    lda #CTRL_PAGE
+    inc blink
+    lda #COLOR_PAGE
     sta PAGE
-    stz AX
-    stz AY
-    ldx #0
-    {
-    !:
-        lda control,x
-        sta D
-        inx
-        cpx #4
-        bcc !-
-    }
-    /*inc scrollPtr
-    ldx scrollPtr
-    lda sinTableLo,x
-    sta scrollY
-    lda sinTableHi,x
-    sta scrollY+1*/
-
-    stz AX
-    stz AY
-    stz PAGE
-    lda input
+    lda cursorX
+    sta AX
+    lda cursorY
+    sta AY
+    lda blink
+    asl
+    asl
+    asl
+    and #$80
+    ora #TEXTCOLOR
     sta D
 
-    //jsr checkInput
+    lda #1
+    sta CTRL_REG // Restore AX AY
     ldx irqX
     ldy irqY
     lda irqA
     rti
-
-checkInput:
-    lda $d000
-    rol
-    rol
-    bcs !+
-    {
-        clc
-        lda scrollX
-        adc #2
-        bcc !+
-        inc scrollX+1
-    !:
-        sta scrollX
-        rts
-    }
-!:
-    rol
-    bcs !+
-    {
-        sec
-        lda scrollX
-        sbc #2
-        bcs !+
-        dec scrollX+1
-    !:
-        sta scrollX
-        rts
-    }
-!:
-    rts
 
 setupPorts:
     stz SPI_PORT
@@ -190,14 +194,12 @@ setupPorts:
     sta SS_DDR
     rts
 
-#import "keyboard.asm"
-
 sinTableLo:
     .fill 256,<(256+128*sin(i*PI/128))
 sinTableHi:
     .fill 256,>(256+128*sin(i*PI/128))
 message:
-    .text "Hello world!"
+    .text "JOFMODORE 1.0 (C) 2020-2021 Johan Fransson"
     .byte 0
 * = $FFFC
     .word start
@@ -210,6 +212,16 @@ irqX:
 irqY:
     .byte 0
 irqA:
+    .byte 0
+cursorX:
+    .byte 0
+cursorY:
+    .byte 0
+oldCursorX:
+    .byte 0
+oldCursorY:
+    .byte 0
+blink:
     .byte 0
 input:
     .byte 0

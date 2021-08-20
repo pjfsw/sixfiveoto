@@ -81,6 +81,7 @@ start:
     jsr readKeyboard
     cmp #0
     beq !-
+
     sta input
     stz AX
     stz AY

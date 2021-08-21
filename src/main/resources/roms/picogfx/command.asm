@@ -29,10 +29,6 @@ parseCommand:
     rts
 
 !ok:
-    //ldx #<okMsg
-    //ldy #>okMsg
-    //lda #okLength
-    //jsr printLine
     ldx commandCount
     lda commandJmpLo,x
     sta jumpPointer
@@ -54,13 +50,19 @@ parseCommand:
 !parseChar:
     lda (ioAddress),y
     bne !+
-    lda #BGCOLOR
-    sta SCR_BG
-    jmp !ok-
+    {
+        cpx readBufferSize
+        bcs !+
+        lda readBuffer,x
+        cmp #' '
+        beq !+
+        jmp !inputError-
+    !:
+    }
+    jmp !checkArguments+
 !:
     cpx readBufferSize
     bcc !+
-    stz SCR_BG
     jmp !inputError-
 !:
     cmp readBuffer,x
@@ -72,10 +74,10 @@ parseCommand:
     inc commandCount
     jmp !parseNext-
 
+!checkArguments:
+    jmp !ok-
 
-okMsg:
-    .text "Ok!"
-.label okLength = *-okMsg
+
 errorMsg:
     .text "Error!"
 .label errorLength = *-errorMsg

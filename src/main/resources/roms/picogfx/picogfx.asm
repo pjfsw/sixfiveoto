@@ -98,6 +98,8 @@ clearScreen:
     stz cursorY
     rts
 
+callAddress:
+    rts
 
 irq:
     stx irqX

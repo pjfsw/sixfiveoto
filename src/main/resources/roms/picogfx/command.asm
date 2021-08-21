@@ -81,14 +81,19 @@ errorMsg:
 .label errorLength = *-errorMsg
 
 commandPtrLo:
-    .byte <clear, 0
+    .byte <cmdClear, <cmdSys, 0
 commandPtrHi:
-    .byte >clear, 0
+    .byte >cmdClear, >cmdSys, 0
 commandJmpLo:
-    .byte <clearScreen, 0
+    .byte <clearScreen, <callAddress, 0
 commandJmpHi:
-    .byte >clearScreen, 0
+    .byte >clearScreen, >callAddress, 0
+arguments:
+    .byte 0,1,0
 
-clear:
+cmdClear:
     .text "clear"
+    .byte 0
+cmdSys:
+    .text "sys"
     .byte 0

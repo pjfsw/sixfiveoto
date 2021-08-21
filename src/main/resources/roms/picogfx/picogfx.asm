@@ -175,4 +175,5 @@ inputOffset:
     .byte 0
 jumpPointer:
     .word 0
-
+argumentCount:
+    .byte 0

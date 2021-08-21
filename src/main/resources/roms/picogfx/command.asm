@@ -59,6 +59,7 @@ parseCommand:
         jmp !inputError-
     !:
     }
+    stx inputOffset
     jmp !checkArguments+
 !:
     cpx readBufferSize
@@ -75,8 +76,49 @@ parseCommand:
     jmp !parseNext-
 
 !checkArguments:
-    jmp !ok-
+    ldx commandCount
+    lda arguments,x
+    sta argumentCount
+!nextArgument:
+    jsr skipSpaces
+    ldx inputOffset
+    lda argumentCount
+    bne !+
+    cpx readBufferSize
+    beq !ok-
+    jmp !inputError-
+!:
+    cpx readBufferSize
+    bcc !parseArgument+
+    jmp !inputError-
+!parseArgument:
+    lda readBuffer,x
+    cmp #' '
+    beq !endOfArgument+
+    inx
+    cpx readBufferSize
+    bcs !endOfArgument+
+    jmp !parseArgument-
 
+!endOfArgument:
+    stx inputOffset
+    dec argumentCount
+    jmp !nextArgument-
+
+
+skipSpaces:
+    ldx inputOffset
+!:
+    cpx readBufferSize
+    bcs !+
+    lda readBuffer,x
+    cmp #' '
+    bne !+
+    inx
+    jmp !-
+!:
+    stx inputOffset
+    rts
 
 errorMsg:
     .text "Error!"

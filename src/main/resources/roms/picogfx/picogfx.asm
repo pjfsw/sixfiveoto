@@ -21,6 +21,7 @@
 
 .const BGCOLOR = %000110
 .const TEXTCOLOR = %111111
+.const MAX_LINE_LENGTH = 49
 
 .const SPI_VIA = $c800
 .const SS_PORT = SPI_VIA
@@ -30,7 +31,7 @@
 
 * = $E000
 
-#import "keyboard.asm"
+#import "readline.asm"
 
 start:
     sei
@@ -73,88 +74,42 @@ start:
     sta cursorY
     cli
 
-keyboardLoop:
-    lda cursorX
-    sta oldCursorX
-    lda cursorY
-    sta oldCursorY
-    jsr readKeyboard
-    cmp #0
-    beq keyboardLoop
-    cmp #KEY_ENTER
-    bne !+
+!:
+    jsr readline
+    ldx #<readBuffer
+    ldy #>readBuffer
+    lda #readBufferSize
+    jsr printLine
+    jmp !-
+
+printLine:
+    jsr print
     sei
     jsr linefeed
-    jsr restoreCursor
     cli
-    jmp keyboardLoop
-!:
-    sta input
-    lda cursorX
-    sta AX
-    lda cursorY
-    sta AY
-    stz PAGE
-    lda input
-    sta D
+    rts
 
+print:
     sei
-    jsr moveCursor
-    jsr restoreCursor
-    cli
-    jmp keyboardLoop
-
-restoreCursor:
-    lda #COLOR_PAGE
-    sta PAGE
-    lda oldCursorX
-    sta AX
-    lda oldCursorY
-    sta AY
-    lda #TEXTCOLOR
-    sta D
-    rts
-
-moveCursor:
-    lda cursorX
-    clc
-    adc #1
-    cmp #50
-    bcc !+
-    jmp linefeed
-!:
-    sta cursorX
-    rts
-
-linefeed:
-    stz cursorX
-    clc
-    lda cursorY
-    adc #1
-    and #$1f
-    sta cursorY
-    sta AY
-    stz AX
+    stx ioAddress
+    sty ioAddress+1
+    sta ioCount
     stz PAGE
-    lda ' '
-    ldx #64
-!:
-    sta D
-    dex
-    bne !-
-
+    stz AX
     lda cursorY
     sta AY
-    stz AX
-    lda #COLOR_PAGE
-    sta PAGE
-    lda #TEXTCOLOR
-    ldx #64
+    ldy #0
 !:
+    cpy ioCount
+    beq !+
+    lda (ioAddress),y
     sta D
-    dex
-    bne!-
+    iny
+    jmp !-
+!:
+    cli
     rts
+
 
 irq:
     stx irqX
@@ -206,6 +161,15 @@ message:
     .word irq
 
 .label CODE=*
+
+*=$01 virtual
+.zp {
+ioAddress:
+    .word 0
+ioCount:
+    .byte 0
+ }
+
 *=$7000 "hej" virtual
 irqX:
     .byte 0
@@ -223,7 +187,9 @@ oldCursorY:
     .byte 0
 blink:
     .byte 0
-input:
+readBuffer:
+    .fill MAX_LINE_LENGTH+1,0
+readBufferSize:
     .byte 0
 startValue:
     .byte 0

@@ -1,13 +1,6 @@
 package com.pjfsw.sixfiveoto.addressables;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.GraphicsConfiguration;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
-import java.awt.Point;
+import java.awt.*;
 import java.awt.image.BufferStrategy;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,12 +12,16 @@ import com.pjfsw.sixfiveoto.CpuStatistics;
 
 public class Screen {
     private static final int WAIT_PERIOD = 1_000 / 60;
-    public static final int W = 808;
+    public static final int W = 800;
     public static final int H = 768;
     //private final PixelFrame pixelComponent;
     private final JFrame frame;
     private final CpuStatistics cpuStatistics;
     private final Font font;
+    private final int leftOffset;
+    private final int topOffset;
+    private final int bottomOffset;
+    private final int rightOffset;
     private volatile boolean running = true;
     private int fps = 0;
     private final List<PositionedDrawable> drawables = new ArrayList<>();
@@ -38,10 +35,20 @@ public class Screen {
         this.font = new Font("Courier", Font.PLAIN, 14);
 
         frame = new JFrame("A Fine Emulator of 65C02", gc);
-        frame.setPreferredSize(new Dimension(W,H));
+
+        frame.setPreferredSize(new Dimension(W ,H));
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.pack();
         frame.setVisible(true);
+        Insets insets = frame.getInsets();
+        leftOffset = insets.left;
+        topOffset = insets.top;
+        bottomOffset = insets.bottom;
+        rightOffset = insets.right;
+        frame.setPreferredSize(new Dimension(W+leftOffset+rightOffset ,H+topOffset+bottomOffset));
+        frame.pack();
+        frame.setLocationRelativeTo(null);
+
         frame.createBufferStrategy(2);
         frame.setAlwaysOnTop(true);
         frame.setAlwaysOnTop(false);
@@ -82,8 +89,8 @@ public class Screen {
             }
             Graphics graphics = strategy.getDrawGraphics();
             graphics.setColor(Color.BLACK);
+            graphics.translate(leftOffset, topOffset);
             graphics.fillRect(0,0,W,H);
-            graphics.translate(0, frame.getInsets().top);
             draw(graphics);
             graphics.dispose();
             frames++;

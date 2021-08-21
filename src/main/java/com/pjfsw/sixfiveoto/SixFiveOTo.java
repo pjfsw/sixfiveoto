@@ -355,7 +355,11 @@ public class SixFiveOTo {
 
 
     public static void main(String[] args) {
-         try {
+        if (args.length != 1) {
+            System.out.println("You must provide a properties file on command line!");
+            System.exit(1);
+        }
+        try {
             Config properties = Config.createFromFile(args[0]);
             new SixFiveOTo(properties).start(true);
         } catch (IOException | InterruptedException e) {

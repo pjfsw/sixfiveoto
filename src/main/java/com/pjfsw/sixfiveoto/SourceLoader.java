@@ -13,7 +13,7 @@ public class SourceLoader {
         String assembler = System.getProperty("assembler");
         if (assembler == null) {
             System.out.println("Cannot assemble on the fly as 'assembler' property is not defined!");
-            System.out.println("Use Java property -D\"java -jar /path/to/KickAssembler/KickAss.jar\"");
+            System.out.println("Use Java property -Dassembler=\"java -jar /path/to/KickAssembler/KickAss.jar\"");
             System.out.println("Send a .PRG file as argument to launch emulator directly");
             System.exit(1);
         }

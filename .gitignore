@@ -6,5 +6,6 @@ target/
 *.ihex
 *.swp
 *.DS_Store
+*.iml
 __pycache__
 .idea

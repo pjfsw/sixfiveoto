@@ -4,20 +4,14 @@
 readline:
     jsr clearBuffer
 nextKey:
-    lda cursorX
-    sta oldCursorX
-    lda cursorY
-    sta oldCursorY
-
+    jsr updateCursor
     jsr readKeyboard
     cmp #0
     beq nextKey
     cmp #KEY_ENTER
     bne !+
-    sei
-    jsr linefeed
     jsr restoreCursor
-    cli
+    jsr linefeed
     rts
 !:
     ldx readBufferSize
@@ -25,6 +19,8 @@ nextKey:
     bcs nextKey
 
     sta readBuffer,x
+
+    jsr restoreCursor
     lda cursorX
     sta AX
     lda cursorY
@@ -35,15 +31,12 @@ nextKey:
     inx
     stx readBufferSize
 
-    sei
     jsr moveCursor
-    jsr restoreCursor
-    cli
     jmp nextKey
 
 clearBuffer:
     stz readBufferSize
-    ldx #63
+    ldx #64
 !:
     stz readBuffer,x
     dex
@@ -53,23 +46,16 @@ clearBuffer:
 restoreCursor:
     lda #COLOR_PAGE
     sta PAGE
-    lda oldCursorX
+    lda cursorX
     sta AX
-    lda oldCursorY
+    lda cursorY
     sta AY
     lda #TEXTCOLOR
     sta D
     rts
 
 moveCursor:
-    lda cursorX
-    clc
-    adc #1
-    cmp #50
-    bcc !+
-    jmp linefeed
-!:
-    sta cursorX
+    inc cursorX
     rts
 
 linefeed:
@@ -77,7 +63,6 @@ linefeed:
     clc
     lda cursorY
     adc #1
-    and #$1f
     sta cursorY
     sta AY
     stz AX
@@ -100,4 +85,20 @@ linefeed:
     sta D
     dex
     bne!-
+    rts
+
+updateCursor:
+    lda #COLOR_PAGE
+    sta PAGE
+    lda cursorX
+    sta AX
+    lda cursorY
+    sta AY
+    lda cursorBlink
+    asl
+    asl
+    asl
+    and #$80
+    ora #TEXTCOLOR
+    sta D
     rts

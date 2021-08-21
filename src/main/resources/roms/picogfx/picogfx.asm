@@ -14,14 +14,13 @@
 .const CTRL_PAGE = 2
 
 .const CTRL_SCRX = 0
+.const CTRL_SCRY = 2
 
-.const ROWS=30
-.const COLS=40
-.const MEMCOLS=64
+.const SCROLL_LIMIT=36
 
 .const BGCOLOR = %000110
 .const TEXTCOLOR = %111111
-.const MAX_LINE_LENGTH = 49
+.const MAX_LINE_LENGTH = 47
 
 .const SPI_VIA = $c800
 .const SS_PORT = SPI_VIA
@@ -75,6 +74,10 @@ start:
     cli
 
 !:
+    lda #'$'
+    jsr printChar
+    lda #' '
+    jsr printChar
     jsr readline
     ldx #<readBuffer
     ldy #>readBuffer
@@ -82,20 +85,62 @@ start:
     jsr printLine
     jmp !-
 
+updateScrollOffset:
+    lda cursorY
+    sec
+    sbc scrollOffset
+    cmp #SCROLL_LIMIT
+    bcs !+
+    rts
+!:
+    sec
+    lda cursorY
+    sbc #SCROLL_LIMIT
+    sta scrollOffset
+    and #63
+    tax
+    lda #CTRL_PAGE
+    sta PAGE
+    stz AY
+    lda #CTRL_SCRY
+    sta AX
+    lda rowToPixelLo,x
+    sta D
+    lda rowToPixelHi,x
+    sta D
+    rts
+
 printLine:
     jsr print
-    sei
     jsr linefeed
-    cli
+    jmp updateScrollOffset
+
+printChar:
+    tax
+    stz PAGE
+    lda cursorX
+    sta AX
+    lda cursorY
+    sta AY
+    stx D
+    lda #COLOR_PAGE
+    sta PAGE
+    lda cursorX
+    sta AX
+    lda cursorY
+    sta AY
+    lda #TEXTCOLOR
+    sta D
+    inc cursorX
     rts
 
 print:
-    sei
     stx ioAddress
     sty ioAddress+1
     sta ioCount
     stz PAGE
-    stz AX
+    lda cursorX
+    sta AX
     lda cursorY
     sta AY
     ldy #0
@@ -107,7 +152,6 @@ print:
     iny
     jmp !-
 !:
-    cli
     rts
 
 
@@ -115,25 +159,9 @@ irq:
     stx irqX
     sty irqY
     sta irqA
-    stz CTRL_REG // Save AX AY
+    stz CTRL_REG
+    inc cursorBlink
 
-    inc blink
-    lda #COLOR_PAGE
-    sta PAGE
-    lda cursorX
-    sta AX
-    lda cursorY
-    sta AY
-    lda blink
-    asl
-    asl
-    asl
-    and #$80
-    ora #TEXTCOLOR
-    sta D
-
-    lda #1
-    sta CTRL_REG // Restore AX AY
     ldx irqX
     ldy irqY
     lda irqA
@@ -156,6 +184,12 @@ sinTableHi:
 message:
     .text "JOFMODORE 1.0 (C) 2020-2021 Johan Fransson"
     .byte 0
+
+rowToPixelLo:
+    .fill 64,<(i*8)
+rowToPixelHi:
+    .fill 64,>(i*8)
+
 * = $FFFC
     .word start
     .word irq
@@ -181,14 +215,10 @@ cursorX:
     .byte 0
 cursorY:
     .byte 0
-oldCursorX:
-    .byte 0
-oldCursorY:
-    .byte 0
-blink:
+cursorBlink:
     .byte 0
 readBuffer:
-    .fill MAX_LINE_LENGTH+1,0
+    .fill 64,0
 readBufferSize:
     .byte 0
 startValue:
@@ -201,10 +231,6 @@ x:
     .byte 0
 y:
     .byte 0
-scrollPtr:
+scrollOffset:
     .byte 0
-control:
-scrollX:
-    .byte 0,0
-scrollY:
-    .byte 0,0
+

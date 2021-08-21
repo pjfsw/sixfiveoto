@@ -88,6 +88,8 @@ parseCommand:
     beq !ok-
     jmp !inputError-
 !:
+    jsr prepareStoreArgument
+    ldy #0
     cpx readBufferSize
     bcc !parseArgument+
     jmp !inputError-
@@ -95,16 +97,21 @@ parseCommand:
     lda readBuffer,x
     cmp #' '
     beq !endOfArgument+
-    inx
     cpx readBufferSize
     bcs !endOfArgument+
+    inx
+    //  Store argument
+    sta (ioAddress),y
+    iny
     jmp !parseArgument-
 
 !endOfArgument:
+    tya
     stx inputOffset
     dec argumentCount
+    ldx argumentCount
+    sta argumentLength,x
     jmp !nextArgument-
-
 
 skipSpaces:
     ldx inputOffset
@@ -118,6 +125,20 @@ skipSpaces:
     jmp !-
 !:
     stx inputOffset
+    rts
+
+prepareStoreArgument:
+    ldy argumentCount
+    lda argumentPtrLo,y
+    sta ioAddress
+    lda argumentPtrHi,y
+    sta ioAddress+1
+    ldy #MAX_LINE_LENGTH-1
+    lda #0
+!:
+    sta (ioAddress),y
+    dey
+    bpl !-
     rts
 
 errorMsg:
@@ -135,6 +156,10 @@ commandJmpHi:
 arguments:
     .byte 0,1,0
 
+argumentPtrLo:
+    .byte <argument2, <argument1
+argumentPtrHi:
+    .byte >argument2, >argument1
 cmdClear:
     .text "clear"
     .byte 0

@@ -99,6 +99,14 @@ clearScreen:
     rts
 
 callAddress:
+    lda argumentLength
+    ldx #<argument1
+    ldy #>argument1
+    jsr printLine
+    //ldx argumentLength
+    //lda digit,x
+    //jsr printChar
+
     rts
 
 irq:
@@ -132,6 +140,8 @@ rowToPixelLo:
     .fill 64,<(i*8)
 rowToPixelHi:
     .fill 64,>(i*8)
+digit:
+    .text "0123456789ABCDEF"
 
 * = $FFFA "Vectors"
     .word 0
@@ -177,3 +187,9 @@ jumpPointer:
     .word 0
 argumentCount:
     .byte 0
+argument1:
+    .fill MAX_LINE_LENGTH,0
+argument2:
+    .fill MAX_LINE_LENGTH,0
+argumentLength:
+    .byte 0,0

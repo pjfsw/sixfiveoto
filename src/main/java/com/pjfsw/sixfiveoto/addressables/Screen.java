@@ -13,7 +13,7 @@ import com.pjfsw.sixfiveoto.CpuStatistics;
 public class Screen {
     private static final int WAIT_PERIOD = 1_000 / 60;
     public static final int W = 800;
-    public static final int H = 768;
+    public static final int H = 744;
     //private final PixelFrame pixelComponent;
     private final JFrame frame;
     private final CpuStatistics cpuStatistics;

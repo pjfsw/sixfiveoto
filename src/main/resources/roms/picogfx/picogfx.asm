@@ -96,7 +96,17 @@ clearScreen:
 
     stz cursorX
     stz cursorY
+    stz scrollOffset
+
+    lda #CTRL_PAGE
+    sta PAGE
+    stz AY
+    lda #CTRL_SCRY
+    sta AX
+    stz D
+    stz D
     rts
+
 
 callAddress:
     lda argumentLength
@@ -140,8 +150,6 @@ rowToPixelLo:
     .fill 64,<(i*8)
 rowToPixelHi:
     .fill 64,>(i*8)
-digit:
-    .text "0123456789ABCDEF"
 
 * = $FFFA "Vectors"
     .word 0

@@ -19,7 +19,7 @@
 .const SCROLL_LIMIT=36
 
 .const BGCOLOR = %000110
-.const TEXTCOLOR = %111111
+.const DERPESCOLOR = %111111
 .const MAX_LINE_LENGTH = 47
 
 .const SPI_VIA = $c800
@@ -57,6 +57,8 @@ start:
     jmp !-
 
 startupScreen:
+    lda #DERPESCOLOR
+    sta textColor
     lda #BGCOLOR
     sta SCR_BG
 
@@ -93,7 +95,7 @@ clearScreen:
 
     lda #COLOR_PAGE
     sta PAGE
-    lda #TEXTCOLOR
+    lda textColor
     jsr fillPage
 
     stz cursorX
@@ -146,6 +148,17 @@ setBgColor:
     jmp valueError
 !:
     stx SCR_BG
+    rts
+
+setFgColor:
+    lda argumentLength
+    ldx #<argument1
+    ldy #>argument1
+    jsr readHexString
+    bcc !+
+    jmp valueError
+!:
+    stx textColor
     rts
 
 irq:
@@ -216,7 +229,7 @@ readBuffer:
     .fill 64,0
 readBufferSize:
     .byte 0
-bg:
+textColor:
     .byte 0
 scrollOffset:
     .byte 0

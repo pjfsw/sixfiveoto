@@ -43,7 +43,7 @@ printChar:
     sta AX
     lda cursorY
     sta AY
-    lda #TEXTCOLOR
+    lda textColor
     sta D
     inc cursorX
     rts
@@ -106,7 +106,7 @@ linefeed:
     stz AX
     lda #COLOR_PAGE
     sta PAGE
-    lda #TEXTCOLOR
+    lda textColor
     ldx #64
 !:
     sta D

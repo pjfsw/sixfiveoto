@@ -68,7 +68,7 @@ restoreCursor:
     sta AX
     lda cursorY
     sta AY
-    lda #TEXTCOLOR
+    lda textColor
     sta D
     rts
 
@@ -89,6 +89,6 @@ updateCursor:
     asl
     asl
     and #$80
-    ora #TEXTCOLOR
+    ora textColor
     sta D
     rts

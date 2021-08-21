@@ -15,16 +15,30 @@ parseCommand:
     jmp !nextChar-
 !:
     cmp #'a'
-    bcc !inputError+
+    bcc inputError
     cmp #'{'
-    bcs !inputError+
+    bcs inputError
     stx inputOffset
     jmp !startParsing+
 
-!inputError:
+inputError:
     ldx #<errorMsg
     ldy #>errorMsg
     lda #errorLength
+    jsr printLine
+    rts
+
+argError:
+    ldx #<argErrMsg
+    ldy #>argErrMsg
+    lda #argErrLength
+    jsr printLine
+    rts
+
+valueError:
+    ldx #<valueErrMsg
+    ldy #>valueErrMsg
+    lda #valueErrLength
     jsr printLine
     rts
 
@@ -42,7 +56,7 @@ parseCommand:
     ldx commandCount
     lda commandPtrLo,x
     sta ioAddress
-    beq !inputError-
+    beq inputError
     lda commandPtrHi,x
     sta ioAddress+1
     ldx inputOffset
@@ -56,7 +70,7 @@ parseCommand:
         lda readBuffer,x
         cmp #' '
         beq !+
-        jmp !inputError-
+        jmp inputError
     !:
     }
     stx inputOffset
@@ -64,7 +78,7 @@ parseCommand:
 !:
     cpx readBufferSize
     bcc !+
-    jmp !inputError-
+    jmp argError
 !:
     cmp readBuffer,x
     bne !nextCommand+
@@ -86,13 +100,13 @@ parseCommand:
     bne !+
     cpx readBufferSize
     beq !ok-
-    jmp !inputError-
+    jmp argError
 !:
     jsr prepareStoreArgument
     ldy #0
     cpx readBufferSize
     bcc !parseArgument+
-    jmp !inputError-
+    jmp argError
 !parseArgument:
     lda readBuffer,x
     cmp #' '
@@ -142,13 +156,18 @@ prepareStoreArgument:
     rts
 
 errorMsg:
-    .text "Error!"
+    .text "Command error!"
 .label errorLength = *-errorMsg
+argErrMsg:
+    .text "Argument error!"
+.label argErrLength = *-argErrMsg
 
+.print "Cmd table = " + toHexString(*)
 commandPtrLo:
     .byte <cmdClear, <cmdSys, <cmdBg, <cmdPeek, 0
 commandPtrHi:
     .byte >cmdClear, >cmdSys, >cmdBg, >cmdPeek, 0
+.print "Jump table = " + toHexString(*)
 commandJmpLo:
     .byte <clearScreen, <callAddress, <setBgColor, <peekByte, 0
 commandJmpHi:

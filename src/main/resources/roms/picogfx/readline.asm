@@ -58,34 +58,6 @@ moveCursor:
     inc cursorX
     rts
 
-linefeed:
-    stz cursorX
-    clc
-    lda cursorY
-    adc #1
-    sta cursorY
-    sta AY
-    stz AX
-    stz PAGE
-    lda ' '
-    ldx #64
-!:
-    sta D
-    dex
-    bne !-
-
-    lda cursorY
-    sta AY
-    stz AX
-    lda #COLOR_PAGE
-    sta PAGE
-    lda #TEXTCOLOR
-    ldx #64
-!:
-    sta D
-    dex
-    bne!-
-    rts
 
 updateCursor:
     lda #COLOR_PAGE

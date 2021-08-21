@@ -111,27 +111,27 @@ clearScreen:
 
 
 peekByte:
-    rts
-    /*lda argumentLength
+    lda argumentLength
     ldx #<argument1
     ldy #>argument1
     jsr readHexString
     bcc !+
-    stz SCR_BG
-    jmp !inputError-
+    jmp valueError
 !:
     stx ioAddress
     sty ioAddress+1
     lda (ioAddress)
-    jmp printByte
-*/
+    jsr printByte
+    jmp linefeed
+
+
 callAddress:
     lda argumentLength
     ldx #<argument1
     ldy #>argument1
     jsr readHexString
     bcc !+
-    jmp !inputError-
+    jmp valueError
 !:
     stx ioAddress
     sty ioAddress+1
@@ -143,7 +143,7 @@ setBgColor:
     ldy #>argument1
     jsr readHexString
     bcc !+
-    jmp !inputError-
+    jmp valueError
 !:
     stx SCR_BG
     rts
@@ -174,6 +174,10 @@ message:
     .text "JOFMODORE 1.0 (C) 2020-2021 Johan Fransson"
 .label messageLength = *-message
     .byte 0
+
+valueErrMsg:
+    .text "Argument must be hex!"
+.label valueErrLength = *-valueErrMsg
 
 rowToPixelLo:
     .fill 64,<(i*8)

@@ -27,8 +27,7 @@ updateScrollOffset:
 
 printLine:
     jsr print
-    jsr linefeed
-    jmp updateScrollOffset
+    jmp linefeed
 
 printChar:
     tax
@@ -48,7 +47,7 @@ printChar:
     sta D
     inc cursorX
     rts
-/*
+
 printByte:
     tay
     lsr
@@ -65,7 +64,6 @@ printByte:
     lda digit,x
     jsr printChar
     rts
-*/
 
 print:
     stx ioAddress
@@ -86,3 +84,32 @@ print:
     jmp !-
 !:
     rts
+
+linefeed:
+    stz cursorX
+    clc
+    lda cursorY
+    adc #1
+    sta cursorY
+    sta AY
+    stz AX
+    stz PAGE
+    lda ' '
+    ldx #64
+!:
+    sta D
+    dex
+    bne !-
+
+    lda cursorY
+    sta AY
+    stz AX
+    lda #COLOR_PAGE
+    sta PAGE
+    lda #TEXTCOLOR
+    ldx #64
+!:
+    sta D
+    dex
+    bne!-
+    jmp updateScrollOffset

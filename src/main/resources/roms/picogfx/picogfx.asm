@@ -28,45 +28,18 @@
 .const SS_DDR = SPI_VIA+2
 .const SPI_DDR = SPI_VIA+3
 
-* = $E000
+* = $E000 "ROM"
 
 #import "readline.asm"
+#import "print.asm"
+#import "command.asm"
 
 start:
     sei
     jsr setupPorts
-
-    lda #BGCOLOR
-    sta SCR_BG
-
-    stz AX
-    stz AY
-    stz PAGE
-    ldx 0
-!:
-    lda message,x
-    beq !+
-    sta D
-    inx
-    jmp !-
-!:
-    lda #COLOR_PAGE
-    sta PAGE
-
-    stz AX
-    stz AY
-    ldx 0
-    ldy #TEXTCOLOR
-!:
-    lda message,x
-    beq !+
-    sty D
-    inx
-    jmp !-
-!:
-
     stz LENGTH
     stz SKIP
+    jsr startupScreen
 
     stz cursorX
     lda #1
@@ -79,79 +52,50 @@ start:
     lda #' '
     jsr printChar
     jsr readline
-    ldx #<readBuffer
-    ldy #>readBuffer
-    lda #readBufferSize
-    jsr printLine
+    jsr parseCommand
     jmp !-
 
-updateScrollOffset:
-    lda cursorY
-    sec
-    sbc scrollOffset
-    cmp #SCROLL_LIMIT
-    bcs !+
+startupScreen:
+    lda #BGCOLOR
+    sta SCR_BG
+
+    jsr clearScreen
+
+    ldx #<message
+    ldy #>message
+    lda #messageLength
+    jsr printLine
     rts
-!:
-    sec
-    lda cursorY
-    sbc #SCROLL_LIMIT
-    sta scrollOffset
-    and #63
-    tax
-    lda #CTRL_PAGE
-    sta PAGE
+
+fillPage:
+    stz AX
     stz AY
-    lda #CTRL_SCRY
-    sta AX
-    lda rowToPixelLo,x
-    sta D
-    lda rowToPixelHi,x
-    sta D
+
+    ldx #15
+!:
+    ldy #0
+    {
+    !:
+        sta D
+        iny
+        bne !-
+    }
+    dex
+    bpl !-
     rts
 
-printLine:
-    jsr print
-    jsr linefeed
-    jmp updateScrollOffset
-
-printChar:
-    tax
+clearScreen:
     stz PAGE
-    lda cursorX
-    sta AX
-    lda cursorY
-    sta AY
-    stx D
+    lda #' '
+    jsr fillPage
+
     lda #COLOR_PAGE
     sta PAGE
-    lda cursorX
-    sta AX
-    lda cursorY
-    sta AY
     lda #TEXTCOLOR
-    sta D
-    inc cursorX
-    rts
+    jsr fillPage
 
-print:
-    stx ioAddress
-    sty ioAddress+1
-    sta ioCount
-    stz PAGE
-    lda cursorX
-    sta AX
-    lda cursorY
-    sta AY
-    ldy #0
-!:
-    cpy ioCount
-    beq !+
-    lda (ioAddress),y
-    sta D
-    iny
-    jmp !-
-!:
+    stz cursorX
+    stz cursorY
     rts
 
 
@@ -177,12 +121,9 @@ setupPorts:
     sta SS_DDR
     rts
 
-sinTableLo:
-    .fill 256,<(256+128*sin(i*PI/128))
-sinTableHi:
-    .fill 256,>(256+128*sin(i*PI/128))
 message:
     .text "JOFMODORE 1.0 (C) 2020-2021 Johan Fransson"
+.label messageLength = *-message
     .byte 0
 
 rowToPixelLo:
@@ -190,13 +131,14 @@ rowToPixelLo:
 rowToPixelHi:
     .fill 64,>(i*8)
 
-* = $FFFC
+* = $FFFA "Vectors"
+    .word 0
     .word start
     .word irq
 
-.label CODE=*
+//.label CODE=*
 
-*=$01 virtual
+*=$00 "zp" virtual
 .zp {
 ioAddress:
     .word 0
@@ -204,7 +146,7 @@ ioCount:
     .byte 0
  }
 
-*=$7000 "hej" virtual
+*=$0200 "Monitor RAM space" virtual
 irqX:
     .byte 0
 irqY:
@@ -221,16 +163,14 @@ readBuffer:
     .fill 64,0
 readBufferSize:
     .byte 0
-startValue:
-    .byte 0
 bg:
-    .byte 0
-a:
-    .byte 0
-x:
-    .byte 0
-y:
     .byte 0
 scrollOffset:
     .byte 0
+commandCount:
+    .byte 0
+inputOffset:
+    .byte 0
+jumpPointer:
+    .word 0
 

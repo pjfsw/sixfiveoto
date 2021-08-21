@@ -137,6 +137,11 @@ peekPage:
     sty peekAddress+1
     ldy #0
 !nextByte:
+    tya
+    and #$07
+    bne !+
+    jsr printPeekAddress
+!:
     lda (peekAddress),y
     phy
     jsr printByte
@@ -145,18 +150,44 @@ peekPage:
     ply
     iny
     tya
-    and #$0f
-    {
-        bne !+
-        phy
-        jsr linefeed
-        ply
-    !:
-    }
+    and #$07
+    beq !printAscii+
+    jmp !nextByte-
+
+!printAscii:
+    tya
+    sec
+    sbc #8
+    tay
+!nextAscii:
+    lda (peekAddress),y
+    phy
+    jsr printChar
+    ply
+    iny
+    tya
+    and #$07
+    bne !nextAscii-
+    phy
+    jsr linefeed
+    ply
     tya
     bne !nextByte-
-
     rts
+
+printPeekAddress:
+    phy
+    lda peekAddress+1
+    jsr printByte
+    pla
+    pha
+    jsr printByte
+    lda #' '
+    jsr printChar
+    ply
+    rts
+
+
 
 callAddress:
     jsr argToHex

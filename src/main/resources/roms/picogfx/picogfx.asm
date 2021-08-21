@@ -33,6 +33,7 @@
 #import "readline.asm"
 #import "print.asm"
 #import "command.asm"
+#import "string.asm"
 
 start:
     sei
@@ -84,6 +85,7 @@ fillPage:
     bpl !-
     rts
 
+.print "Clearscreen = " + *
 clearScreen:
     stz PAGE
     lda #' '
@@ -108,15 +110,42 @@ clearScreen:
     rts
 
 
+peekByte:
+    rts
+    /*lda argumentLength
+    ldx #<argument1
+    ldy #>argument1
+    jsr readHexString
+    bcc !+
+    stz SCR_BG
+    jmp !inputError-
+!:
+    stx ioAddress
+    sty ioAddress+1
+    lda (ioAddress)
+    jmp printByte
+*/
 callAddress:
     lda argumentLength
     ldx #<argument1
     ldy #>argument1
-    jsr printLine
-    //ldx argumentLength
-    //lda digit,x
-    //jsr printChar
+    jsr readHexString
+    bcc !+
+    jmp !inputError-
+!:
+    stx ioAddress
+    sty ioAddress+1
+    jmp (ioAddress)
 
+setBgColor:
+    lda argumentLength
+    ldx #<argument1
+    ldy #>argument1
+    jsr readHexString
+    bcc !+
+    jmp !inputError-
+!:
+    stx SCR_BG
     rts
 
 irq:
@@ -195,6 +224,12 @@ jumpPointer:
     .word 0
 argumentCount:
     .byte 0
+currentByte:
+    .byte 0
+currentNibble:
+    .byte 0
+tmpNumber:
+    .word 0
 argument1:
     .fill MAX_LINE_LENGTH,0
 argument2:

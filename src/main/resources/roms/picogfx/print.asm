@@ -48,6 +48,24 @@ printChar:
     sta D
     inc cursorX
     rts
+/*
+printByte:
+    tay
+    lsr
+    lsr
+    lsr
+    lsr
+    and #15
+    tax
+    lda digit,x
+    jsr printChar
+    tya
+    and #15
+    tax
+    lda digit,x
+    jsr printChar
+    rts
+*/
 
 print:
     stx ioAddress

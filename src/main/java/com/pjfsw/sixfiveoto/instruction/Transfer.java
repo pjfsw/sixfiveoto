@@ -1,8 +1,5 @@
 package com.pjfsw.sixfiveoto.instruction;
 
-import static java.util.Collections.singletonList;
-
-import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 

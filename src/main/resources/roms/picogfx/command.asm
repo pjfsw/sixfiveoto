@@ -164,16 +164,16 @@ argErrMsg:
 
 .print "Cmd table = " + toHexString(*)
 commandPtrLo:
-    .byte <cmdClear, <cmdSys, <cmdBg, <cmdPeek, <cmdFg, 0
+    .byte <cmdClear, <cmdSys, <cmdBg, <cmdPeek, <cmdFg, <cmdPage, 0
 commandPtrHi:
-    .byte >cmdClear, >cmdSys, >cmdBg, >cmdPeek, >cmdFg, 0
+    .byte >cmdClear, >cmdSys, >cmdBg, >cmdPeek, >cmdFg, >cmdPage, 0
 .print "Jump table = " + toHexString(*)
 commandJmpLo:
-    .byte <clearScreen, <callAddress, <setBgColor, <peekByte, <setFgColor, 0
+    .byte <clearScreen, <callAddress, <setBgColor, <peekByte, <setFgColor, <peekPage, 0
 commandJmpHi:
-    .byte >clearScreen, >callAddress, >setBgColor, >peekByte, >setFgColor, 0
+    .byte >clearScreen, >callAddress, >setBgColor, >peekByte, >setFgColor, >peekPage, 0
 arguments:
-    .byte 0,1,1,1,1,0
+    .byte 0,1,1,1,1,1,0
 
 argumentPtrLo:
     .byte <argument2, <argument1
@@ -193,4 +193,7 @@ cmdPeek:
     .byte 0
 cmdFg:
     .text "fg"
+    .byte 0
+cmdPage:
+    .text "page"
     .byte 0

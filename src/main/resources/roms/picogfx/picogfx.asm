@@ -111,12 +111,14 @@ clearScreen:
     stz D
     rts
 
-
-peekByte:
+argToHex:
     lda argumentLength
     ldx #<argument1
     ldy #>argument1
-    jsr readHexString
+    jmp readHexString
+
+peekByte:
+    jsr argToHex
     bcc !+
     jmp valueError
 !:
@@ -126,12 +128,38 @@ peekByte:
     jsr printByte
     jmp linefeed
 
+peekPage:
+    jsr argToHex
+    bcc !+
+    jmp valueError
+!:
+    stz peekAddress
+    sty peekAddress+1
+    ldy #0
+!nextByte:
+    lda (peekAddress),y
+    phy
+    jsr printByte
+    lda #' '
+    jsr printChar
+    ply
+    iny
+    tya
+    and #$0f
+    {
+        bne !+
+        phy
+        jsr linefeed
+        ply
+    !:
+    }
+    tya
+    bne !nextByte-
+
+    rts
 
 callAddress:
-    lda argumentLength
-    ldx #<argument1
-    ldy #>argument1
-    jsr readHexString
+    jsr argToHex
     bcc !+
     jmp valueError
 !:
@@ -140,10 +168,7 @@ callAddress:
     jmp (ioAddress)
 
 setBgColor:
-    lda argumentLength
-    ldx #<argument1
-    ldy #>argument1
-    jsr readHexString
+    jsr argToHex
     bcc !+
     jmp valueError
 !:
@@ -151,10 +176,7 @@ setBgColor:
     rts
 
 setFgColor:
-    lda argumentLength
-    ldx #<argument1
-    ldy #>argument1
-    jsr readHexString
+    jsr argToHex
     bcc !+
     jmp valueError
 !:
@@ -210,6 +232,8 @@ ioAddress:
     .word 0
 ioCount:
     .byte 0
+peekAddress:
+    .word 0
  }
 
 *=$0200 "Monitor RAM space" virtual

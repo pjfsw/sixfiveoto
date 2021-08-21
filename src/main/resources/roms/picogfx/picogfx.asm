@@ -85,7 +85,7 @@ fillPage:
     bpl !-
     rts
 
-.print "Clearscreen = " + *
+.print "Clearscreen = " + toHexString(*)
 clearScreen:
     stz PAGE
     lda #' '
@@ -176,7 +176,7 @@ message:
     .byte 0
 
 valueErrMsg:
-    .text "Argument must be hex!"
+    .text "Argument must be 1-4 byte hex!"
 .label valueErrLength = *-valueErrMsg
 
 rowToPixelLo:

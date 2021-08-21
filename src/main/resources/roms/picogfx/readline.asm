@@ -14,6 +14,24 @@ nextKey:
     jsr linefeed
     rts
 !:
+    cmp #KEY_BACKSPACE
+    bne !+
+    jsr restoreCursor
+    ldx readBufferSize
+    beq nextKey
+    dex
+    stx readBufferSize
+    //stz readBuffer,x
+    dec cursorX
+    stz PAGE
+    lda cursorX
+    sta AX
+    lda cursorY
+    sta AY
+    lda #' '
+    sta D
+    jmp nextKey
+!:
     ldx readBufferSize
     cpx #MAX_LINE_LENGTH // Stop reading after 63 chars
     bcs nextKey

@@ -164,21 +164,21 @@ argErrMsg:
 
 .print "Cmd table = " + toHexString(*)
 commandPtrLo:
-    .byte <cmdClear, <cmdSys, <cmdBg, <cmdPeek, <cmdFg, <cmdPage, 0
+    .byte <cmdClear, <cmdSys, <cmdBg, <cmdPeek, <cmdFg, <cmdPage, <cmdPoke, 0
 commandPtrHi:
-    .byte >cmdClear, >cmdSys, >cmdBg, >cmdPeek, >cmdFg, >cmdPage, 0
+    .byte >cmdClear, >cmdSys, >cmdBg, >cmdPeek, >cmdFg, >cmdPage, >cmdPoke, 0
 .print "Jump table = " + toHexString(*)
 commandJmpLo:
-    .byte <clearScreen, <callAddress, <setBgColor, <peekByte, <setFgColor, <peekPage, 0
+    .byte <clearScreen, <callAddress, <setBgColor, <peekByte, <setFgColor, <peekPage, <pokeByte, 0
 commandJmpHi:
-    .byte >clearScreen, >callAddress, >setBgColor, >peekByte, >setFgColor, >peekPage, 0
+    .byte >clearScreen, >callAddress, >setBgColor, >peekByte, >setFgColor, >peekPage, >pokeByte, 0
 arguments:
-    .byte 0,1,1,1,1,1,0
+    .byte 0,1,1,1,1,1,2,0
 
 argumentPtrLo:
-    .byte <argument2, <argument1
+    .byte 0, <argument1, <argument2
 argumentPtrHi:
-    .byte >argument2, >argument1
+    .byte 0, >argument1, >argument2
 cmdClear:
     .text "clear"
     .byte 0
@@ -196,4 +196,7 @@ cmdFg:
     .byte 0
 cmdPage:
     .text "page"
+    .byte 0
+cmdPoke:
+    .text "poke"
     .byte 0

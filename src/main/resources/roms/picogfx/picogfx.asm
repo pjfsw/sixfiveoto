@@ -117,6 +117,25 @@ argToHex:
     ldy #>argument1
     jmp readHexString
 
+pokeByte:
+    lda argumentLength+1
+    ldx #<argument2
+    ldy #>argument2
+    jsr readHexString
+    bcc !+
+    jmp valueError
+
+!:
+    stx peekAddress
+    sty peekAddress+1
+    jsr argToHex
+    bcc !+
+    jmp valueError
+!:
+    txa
+    sta (peekAddress)
+    rts
+
 peekByte:
     jsr argToHex
     bcc !+

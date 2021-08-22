@@ -1,96 +1,220 @@
 package com.pjfsw.sixfiveoto;
 
-import java.io.File;
-import java.io.IOException;
+import java.awt.KeyboardFocusManager;
+import java.awt.event.KeyEvent;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.Clip;
-import javax.sound.sampled.FloatControl;
 import javax.sound.sampled.LineUnavailableException;
-import javax.sound.sampled.Mixer;
-import javax.sound.sampled.Mixer.Info;
 import javax.sound.sampled.SourceDataLine;
-import javax.sound.sampled.UnsupportedAudioFileException;
+import javax.swing.JFrame;
+import javax.swing.WindowConstants;
+
+import com.google.common.collect.ImmutableMap;
 
 public class AudioTest {
-    private static final int BUFFER_SIZE_SAMPLES = 512;
-    private static final int SAMPLE_RATE = 48000;
-
-    byte[] createBuffer(int t, double freq) {
-        double period = (double)SAMPLE_RATE / freq;
-        byte[] buffer = new byte[BUFFER_SIZE_SAMPLES];
-        for (int i = 0; i < BUFFER_SIZE_SAMPLES; i++) {
-            int angle = t % (int)period;
-            long sample = (long)(100 * Math.sin(angle * Math.PI / (2 * period)));
-            t++;
-            buffer[i] = (byte)sample;
-            //System.out.println(String.format(
-//                "Sample: %04X Lo: %02X", sample, buffer[i]));
-        }
-        return buffer;
-    }
-
-    void play() throws LineUnavailableException {
-        AudioFormat af = new AudioFormat(SAMPLE_RATE, 8, 1, true, false);
-        try (SourceDataLine line = AudioSystem.getSourceDataLine(af)) {
-            line.open(af, BUFFER_SIZE_SAMPLES);
-            line.start();
-            long samplesToWrite = SAMPLE_RATE;
-            int t = 0;
-            while (samplesToWrite > 0) {
-                if (line.available() >= BUFFER_SIZE_SAMPLES) {
-                    byte[] buffer = createBuffer(t, 440);
-                    int bytesWritten = line.write(buffer, 0, buffer.length);
-                    samplesToWrite -= bytesWritten;
-                    System.out.println(String.format("%d %d", buffer.length, bytesWritten));
-                    t += bytesWritten;
-                }
-            }
-        }
-    }
-
-    void playClip() throws LineUnavailableException, IOException, InterruptedException,
-        UnsupportedAudioFileException {
-
-        AudioFormat af = new AudioFormat(SAMPLE_RATE, 16, 1, true, false);
-
-        try (
-            AudioInputStream sound1 = AudioSystem.getAudioInputStream(new File("/Users/johanfr/priv/eclipsecpp/pixla/poop2.wav"));
-            Clip clip1 = AudioSystem.getClip();
-            Clip clip2 = AudioSystem.getClip()
-        ) {
-            clip1.open(sound1);
-            int samples = SAMPLE_RATE/880;
-            byte[] beep = new byte[samples*2];
-            for (int i = 0; i < samples; i++) {
-                int v = 0;
-                for (int harmonics = 1; harmonics < 20; harmonics+=2) {
-                    v += (int)(28000.0 * Math.sin(harmonics*2*i*Math.PI/samples) / harmonics);
-                }
-
-                beep[i*2] = (byte)(v & 0xff);
-                beep[i*2+1] = (byte)(v >> 8);
-            }
-
-            clip2.open(af, beep, 0, beep.length);
-            FloatControl volume = (FloatControl)clip2.getControl(FloatControl.Type.MASTER_GAIN);
-            volume.setValue(-6.0f);
-            clip1.start();
-            clip2.loop(SAMPLE_RATE/(10*samples));
-            Thread.sleep(1000);
-            clip2.stop();
-            Thread.sleep(1000);
-            clip1.stop();
-        }
-    }
+    private final Synth synth;
+    private final JFrame frame;
+    private volatile boolean done = false;
+    private static final int SAMPLE_RATE = 44100;
 
     public static void main(String[] args) {
         try {
-            new AudioTest().playClip();
-        } catch (Exception e) {
+            new AudioTest().play();
+            System.exit(0);
+        } catch (LineUnavailableException e) {
             e.printStackTrace();
+        }
+    }
+
+    private AudioTest() {
+        this.frame = new JFrame();
+        frame.setVisible(true);
+        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+
+        this.synth = new Synth();
+        initKeyListener();
+    }
+
+    private void initKeyListener() {
+        Map<Character,Integer> offsets = ImmutableMap.<Character,Integer>builder()
+            .put('q', 0)
+            .put('2', 1)
+            .put('w', 2)
+            .put('3', 3)
+            .put('e', 4)
+            .put('r', 5)
+            .put('5', 6)
+            .put('t', 7)
+            .put('6', 8)
+            .put('y', 9)
+            .put('7', 10)
+            .put('u', 11)
+            .put('i', 12)
+            .build();
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher((event) -> {
+/*            if (event.getID() == KeyEvent.KEY_RELEASED) {
+            }*/
+            if (event.getID() != KeyEvent.KEY_PRESSED) {
+                return false;
+            }
+            if (event.getID() == KeyEvent.KEY_PRESSED) {
+                if (event.getKeyCode() == KeyEvent.VK_ESCAPE) {
+                    done = true;
+                }
+                int offset = offsets.getOrDefault(event.getKeyChar(), 0);
+                synth.setOffset(offset);
+                System.err.println("PRESSED " + event.getKeyCode());
+                return false;
+            }
+            return true;
+        });
+    }
+
+    private void play() throws LineUnavailableException {
+        AudioFormat af = new AudioFormat( (float )SAMPLE_RATE, 16, 1, true, false );
+        try (SourceDataLine sdl = AudioSystem.getSourceDataLine( af )) {
+            sdl.open();
+            sdl.start();
+            AudioMixer audioMixer = new AudioMixer(sdl, synth);
+            ExecutorService executorService = Executors.newSingleThreadExecutor();
+            Future<?> future =  executorService.submit(audioMixer);
+            while (!done) {
+                AudioMixer.waitMs(10);
+            }
+            frame.dispose();
+            audioMixer.stop();
+            sdl.stop();
+            future.cancel(true);
+            executorService.shutdown();
+        }
+    }
+
+    private static class Synth {
+        private final double[] freqTable;
+        private final int[] note;
+        private int n = 0;
+        private final int[] sequence;
+        private int offset;
+
+        public Synth() {
+            freqTable = new double[128];
+            note = new int[3];
+            sequence = new int[]{48,60,63,67,70,72,75,60};
+
+            for (int n = 0 ; n < 127; n++) {
+                freqTable[n] = 440 * Math.pow(2, (double)(n-69)/12);
+            }
+            for (int i = 0; i < note.length; i++) {
+                note[i] = (i * 3) % sequence.length;
+            }
+        }
+        public double getFrequency(int i) {
+            return freqTable[i];
+        }
+
+        public void setOffset(int offset) {
+            this.offset = offset;
+        }
+
+        private double get(int i) {
+            double out = 0;
+            double f = getFrequency(sequence[note[i]] + offset);
+            double w = n * f * 2.0 * Math.PI / (double)SAMPLE_RATE;
+            for (int harm = 1; harm < 16; harm += 2) {
+                double amp = Math.sin(harm * w)/harm;
+                out += amp;
+            }
+
+
+            return out;
+        }
+
+        public short get() {
+            double out = 0;
+            for (int i = 0; i < note.length; i++) {
+                out += get(i);
+            }
+            out *= 0.15;
+            if (out < -0.5 || out > 0.5) {
+                System.err.printf("OVERFLOW %.2f%n", out);
+            }
+            n++;
+            return (short)(out * 32767.0);
+        }
+
+        public void tick() {
+            for (int i = 0; i < note.length; i++) {
+                note[i] = (note[i] + 1) % sequence.length;
+            }
+        }
+    }
+
+    private static class AudioMixer implements Runnable {
+        private final SourceDataLine sdl;
+        private final byte[] buf;
+        private final Synth synth;
+        private final long delay;
+        private int n;
+        public volatile boolean running = true;
+        private int offset = 0;
+
+        private static final int SAMPLES = 256;
+        private static final int BUFFER_SIZE = SAMPLES * 2;
+
+        public AudioMixer(SourceDataLine sdl, Synth synth) {
+            this.sdl = sdl;
+            this.synth = synth;
+            buf = new byte[BUFFER_SIZE];
+            delay = 1_000_000_000L * SAMPLES / SAMPLE_RATE;
+            n = 0;
+        }
+
+        public void stop() {
+            this.running = false;
+        }
+
+        public static void waitMs(long ms) {
+            try {
+                Thread.sleep(ms);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        private static void waitNanos(long ns) {
+            try {
+                Thread.sleep(ns/1_000_000, (int)ns % 1_000_000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        public void run() {
+            while (running) {
+                long nanos = System.nanoTime();
+                for (int sample = 0; sample < SAMPLES; sample++) {
+                    n++;
+                    if (n % 8000 == 0) {
+                        synth.tick();
+                    }
+                    short out = synth.get();
+                    buf[sample * 2] = (byte)(out & 0xFF);
+                    buf[sample * 2 + 1] = (byte)(out >> 8);
+                }
+                sdl.write( buf, 0, BUFFER_SIZE );
+                long elapsedNanos = System.nanoTime() - nanos;
+                offset += (delay-elapsedNanos);
+                if (offset > 10000) {
+                    waitNanos(10000);
+                    offset-=10000;
+                }
+            }
         }
     }
 }

@@ -55,6 +55,9 @@ public class AudioTest {
             .put('7', 10)
             .put('u', 11)
             .put('i', 12)
+            .put('m',-1)
+            .put('j',-2)
+            .put(',', 0)
             .build();
         KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher((event) -> {
             if (event.getID() != KeyEvent.KEY_PRESSED) {
@@ -107,14 +110,17 @@ public class AudioTest {
         private final int[] note;
         private final int[] bassSequence;
         private final int[][] channelSequence;
+        private final double[] gain;
         private int n = 0;
         private final int[] sequence;
         private int offset;
 
         private final double[] ramp;
         private int[] rampPos;
+        private int phase;
+
         public Synth() {
-            ramp = new double[4000];
+            ramp = new double[8000];
             for (int i = 0; i < ramp.length; i++) {
                 double d = 1 - (double)i/ramp.length;
                 ramp[i] = d;
@@ -126,10 +132,14 @@ public class AudioTest {
             bassSequence = new int[]{36,36,0,36,36,0,36,36};
             channelSequence = new int[note.length][];
             rampPos = new int[note.length];
+            gain = new double[note.length];
+
             for (int i = 0; i < note.length-1; i++) {
                 channelSequence[i] = sequence;
                 rampPos[i] = -1;
+                gain[i] = 0.6-i/10.0;
             }
+            gain[note.length-1] = 1.0;
             channelSequence[note.length-1] = bassSequence;
 
             for (int n = 0 ; n < 127; n++) {
@@ -148,16 +158,10 @@ public class AudioTest {
             this.offset = offset;
         }
 
-        private double get(int i) {
-            double out = 0;
-            double f = getFrequency(note[i]);
-            double w = n * f * 2.0 * Math.PI / (double)SAMPLE_RATE;
-            /* Square wave
-            for (int harmonic = 1; harmonic < 16; harmonic += 2) {
-                double amp = Math.sin(harmonic * w)/harmonic;
-                out += amp;
-            }*/
+        private double generateSaw(double f, int phase) {
             double sign = -1;
+            double out = 0;
+            double w = (n+phase) * f * 2.0 * Math.PI / (double)SAMPLE_RATE;
             for (int harmonic = 1; harmonic < 30; harmonic++) {
                 double f2 = harmonic * f;
                 if (f2 < 18000) {
@@ -166,6 +170,29 @@ public class AudioTest {
                     sign = -sign;
                 }
             }
+            return out;
+        }
+
+        private double generatePulse(double f) {
+            double w = n * f * 2.0 * Math.PI / (double)SAMPLE_RATE;
+            double out = 0;
+            for (int harmonic = 1; harmonic < 40; harmonic += 2) {
+                double f2 = harmonic * f;
+                if (f2 < 18000) {
+                    double amp = Math.sin(harmonic * w)/harmonic;
+                    out += amp;
+                }
+            }
+            return out;
+        }
+
+        private double get(int i) {
+            double out = 0;
+            double f = getFrequency(note[i]);
+            out = generatePulse(f);
+            //out = generateSaw(f, 0);
+
+
             if (rampPos[i] >= 0) {
                 out = out * ramp[rampPos[i]];
             } else {
@@ -184,13 +211,14 @@ public class AudioTest {
         public short get() {
             double out = 0;
             for (int i = 0; i < sequencePos.length; i++) {
-                out += get(i);
+                out += gain[i] * get(i);
             }
-            out *= 0.12;
-            if (out < -0.5 || out > 0.5) {
+            out *= 0.1;
+            if (out < -0.52 || out > 0.52) {
                 System.err.printf("Audio exceeding -6 dBFS %.2f%n", out);
             }
             n++;
+            phase = (phase + 1);
             return (short)(out * 32767.0);
         }
 

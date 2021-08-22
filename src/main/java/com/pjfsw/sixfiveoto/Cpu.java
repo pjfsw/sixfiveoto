@@ -132,6 +132,7 @@ public class Cpu {
 
     public void reset() {
         registers.pc = Memory.readWord(addressDecoder, RESET_VECTOR);
+        registers.i(true);
         totalCycles = 0;
     }
 

@@ -1,6 +1,7 @@
 .cpu _65c02
 .encoding "ascii"
 
+.const IRQ = $0300
 .const D = $c000
 .const AY = $c001
 .const AX = $c002
@@ -36,8 +37,8 @@
 #import "string.asm"
 
 start:
-    sei
     jsr setupPorts
+    jsr copyIrq
     stz LENGTH
     stz SKIP
     jsr startupScreen
@@ -45,7 +46,6 @@ start:
     stz cursorX
     lda #1
     sta cursorY
-    cli
 
 !:
     lda #'$'
@@ -55,6 +55,17 @@ start:
     jsr readline
     jsr parseCommand
     jmp !-
+
+copyIrq: // IRQ vector is hardwired to point at RAM address so we need to copy ours to RAM
+    ldx #0
+!:
+    lda irqSource,x
+    sta IRQ,x
+    inx
+    cpx #irqLength
+    bcc !-
+    cli
+    rts
 
 startupScreen:
     lda #DERPESCOLOR
@@ -233,18 +244,6 @@ setFgColor:
     stx textColor
     rts
 
-irq:
-    stx irqX
-    sty irqY
-    sta irqA
-    stz CTRL_REG
-    inc cursorBlink
-
-    ldx irqX
-    ldy irqY
-    lda irqA
-    rti
-
 setupPorts:
     stz SPI_PORT
     lda #%01000001
@@ -269,10 +268,27 @@ rowToPixelLo:
 rowToPixelHi:
     .fill 64,>(i*8)
 
+
+irqSource:
+.pseudopc IRQ {
+irq:
+    stx irqX
+    sty irqY
+    sta irqA
+    stz CTRL_REG
+    inc cursorBlink
+
+    ldx irqX
+    ldy irqY
+    lda irqA
+    rti
+}
+.label irqLength = *-irqSource
+
 * = $FFFA "Vectors"
     .word 0
     .word start
-    .word irq
+    .word IRQ
 
 //.label CODE=*
 

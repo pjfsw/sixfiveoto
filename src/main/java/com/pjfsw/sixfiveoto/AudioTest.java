@@ -105,22 +105,32 @@ public class AudioTest {
         private final double[] freqTable;
         private final int[] sequencePos;
         private final int[] note;
+        private final int[] bassSequence;
+        private final int[][] channelSequence;
         private int n = 0;
         private final int[] sequence;
         private int offset;
 
         private final double[] ramp;
-        private int rampPos = -1;
+        private int[] rampPos;
         public Synth() {
-            ramp = new double[8000];
+            ramp = new double[4000];
             for (int i = 0; i < ramp.length; i++) {
                 double d = 1 - (double)i/ramp.length;
                 ramp[i] = d;
             }
             freqTable = new double[128];
-            note = new int[3];
+            note = new int[4];
             sequencePos = new int[note.length];
             sequence = new int[]{48,60,63,67,70,72,75,60};
+            bassSequence = new int[]{36,36,0,36,36,0,36,36};
+            channelSequence = new int[note.length][];
+            rampPos = new int[note.length];
+            for (int i = 0; i < note.length-1; i++) {
+                channelSequence[i] = sequence;
+                rampPos[i] = -1;
+            }
+            channelSequence[note.length-1] = bassSequence;
 
             for (int n = 0 ; n < 127; n++) {
                 freqTable[n] = 440 * Math.pow(2, (double)(n-69)/12);
@@ -142,15 +152,29 @@ public class AudioTest {
             double out = 0;
             double f = getFrequency(note[i]);
             double w = n * f * 2.0 * Math.PI / (double)SAMPLE_RATE;
+            /* Square wave
             for (int harmonic = 1; harmonic < 16; harmonic += 2) {
                 double amp = Math.sin(harmonic * w)/harmonic;
                 out += amp;
+            }*/
+            double sign = -1;
+            for (int harmonic = 1; harmonic < 30; harmonic++) {
+                double amp = 0.6 * sign * Math.sin(harmonic * w) / harmonic;
+                out += amp;
+                sign = -sign;
             }
-            if (rampPos >= 0) {
-                out = out * ramp[rampPos];
+            if (rampPos[i] >= 0) {
+                out = out * ramp[rampPos[i]];
             } else {
                 out = 0;
             }
+            if (rampPos[i] > 0) {
+                rampPos[i]++;
+                if (rampPos[i] >= ramp.length) {
+                    rampPos[i] = -1;
+                }
+            }
+
             return out;
         }
 
@@ -159,29 +183,30 @@ public class AudioTest {
             for (int i = 0; i < sequencePos.length; i++) {
                 out += get(i);
             }
-            out *= 0.15;
+            out *= 0.12;
             if (out < -0.5 || out > 0.5) {
                 System.err.printf("Audio exceeding -6 dBFS %.2f%n", out);
             }
             n++;
-            if (rampPos > 0) {
-                rampPos++;
-                if (rampPos >= ramp.length) {
-                    rampPos = -1;
-                }
-            }
             return (short)(out * 32767.0);
         }
 
         public void tick() {
             for (int i = 0; i < sequencePos.length; i++) {
                 sequencePos[i] = (sequencePos[i] + 1) % sequence.length;
-                note[i] = sequence[sequencePos[i]] + offset;
+                int nextNote =  channelSequence[i][sequencePos[i]];
+                if (nextNote > 0) {
+                    rampPos[i] = 0;
+                    note[i] = nextNote + offset;
+                }
             }
-            rampPos = 0;
         }
         public void off() {
-            rampPos = 1;
+            for (int i = 0; i < note.length; i++) {
+                if (rampPos[i] == 0) {
+                    rampPos[i] = 1;
+                }
+            }
         }
     }
 
@@ -226,7 +251,7 @@ public class AudioTest {
                     int step = n % 8000;
                     if (step == 0) {
                         synth.tick();
-                    } else if (step == 2000) {
+                    } else if (step == 1000) {
                         synth.off();
                     }
                     short out = synth.get();

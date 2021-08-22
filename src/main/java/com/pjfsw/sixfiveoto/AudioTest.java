@@ -57,8 +57,6 @@ public class AudioTest {
             .put('i', 12)
             .build();
         KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher((event) -> {
-/*            if (event.getID() == KeyEvent.KEY_RELEASED) {
-            }*/
             if (event.getID() != KeyEvent.KEY_PRESSED) {
                 return false;
             }
@@ -84,7 +82,7 @@ public class AudioTest {
             ExecutorService executorService = Executors.newSingleThreadExecutor();
             Future<?> future =  executorService.submit(audioMixer);
             while (!done) {
-                AudioMixer.waitMs(10);
+                waitMs(10);
             }
             frame.dispose();
             audioMixer.stop();
@@ -94,23 +92,42 @@ public class AudioTest {
         }
     }
 
+    private static void waitMs(long ms) {
+        try {
+            Thread.sleep(ms);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+
     private static class Synth {
         private final double[] freqTable;
+        private final int[] sequencePos;
         private final int[] note;
         private int n = 0;
         private final int[] sequence;
         private int offset;
 
+        private final double[] ramp;
+        private int rampPos = -1;
         public Synth() {
+            ramp = new double[8000];
+            for (int i = 0; i < ramp.length; i++) {
+                double d = 1 - (double)i/ramp.length;
+                ramp[i] = d;
+            }
             freqTable = new double[128];
             note = new int[3];
+            sequencePos = new int[note.length];
             sequence = new int[]{48,60,63,67,70,72,75,60};
 
             for (int n = 0 ; n < 127; n++) {
                 freqTable[n] = 440 * Math.pow(2, (double)(n-69)/12);
             }
-            for (int i = 0; i < note.length; i++) {
-                note[i] = (i * 3) % sequence.length;
+            for (int i = 0; i < sequencePos.length; i++) {
+                sequencePos[i] = (i * 3) % sequence.length;
+                note[i] = sequencePos[i];
             }
         }
         public double getFrequency(int i) {
@@ -123,34 +140,48 @@ public class AudioTest {
 
         private double get(int i) {
             double out = 0;
-            double f = getFrequency(sequence[note[i]] + offset);
+            double f = getFrequency(note[i]);
             double w = n * f * 2.0 * Math.PI / (double)SAMPLE_RATE;
-            for (int harm = 1; harm < 16; harm += 2) {
-                double amp = Math.sin(harm * w)/harm;
+            for (int harmonic = 1; harmonic < 16; harmonic += 2) {
+                double amp = Math.sin(harmonic * w)/harmonic;
                 out += amp;
             }
-
-
+            if (rampPos >= 0) {
+                out = out * ramp[rampPos];
+            } else {
+                out = 0;
+            }
             return out;
         }
 
         public short get() {
             double out = 0;
-            for (int i = 0; i < note.length; i++) {
+            for (int i = 0; i < sequencePos.length; i++) {
                 out += get(i);
             }
             out *= 0.15;
             if (out < -0.5 || out > 0.5) {
-                System.err.printf("OVERFLOW %.2f%n", out);
+                System.err.printf("Audio exceeding -6 dBFS %.2f%n", out);
             }
             n++;
+            if (rampPos > 0) {
+                rampPos++;
+                if (rampPos >= ramp.length) {
+                    rampPos = -1;
+                }
+            }
             return (short)(out * 32767.0);
         }
 
         public void tick() {
-            for (int i = 0; i < note.length; i++) {
-                note[i] = (note[i] + 1) % sequence.length;
+            for (int i = 0; i < sequencePos.length; i++) {
+                sequencePos[i] = (sequencePos[i] + 1) % sequence.length;
+                note[i] = sequence[sequencePos[i]] + offset;
             }
+            rampPos = 0;
+        }
+        public void off() {
+            rampPos = 1;
         }
     }
 
@@ -178,14 +209,6 @@ public class AudioTest {
             this.running = false;
         }
 
-        public static void waitMs(long ms) {
-            try {
-                Thread.sleep(ms);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-
         private static void waitNanos(long ns) {
             try {
                 Thread.sleep(ns/1_000_000, (int)ns % 1_000_000);
@@ -200,8 +223,11 @@ public class AudioTest {
                 long nanos = System.nanoTime();
                 for (int sample = 0; sample < SAMPLES; sample++) {
                     n++;
-                    if (n % 8000 == 0) {
+                    int step = n % 8000;
+                    if (step == 0) {
                         synth.tick();
+                    } else if (step == 2000) {
+                        synth.off();
                     }
                     short out = synth.get();
                     buf[sample * 2] = (byte)(out & 0xFF);

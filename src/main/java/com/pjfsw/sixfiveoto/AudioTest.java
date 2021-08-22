@@ -159,9 +159,12 @@ public class AudioTest {
             }*/
             double sign = -1;
             for (int harmonic = 1; harmonic < 30; harmonic++) {
-                double amp = 0.6 * sign * Math.sin(harmonic * w) / harmonic;
-                out += amp;
-                sign = -sign;
+                double f2 = harmonic * f;
+                if (f2 < 18000) {
+                    double amp = 0.6 * sign * Math.sin(harmonic * w) / harmonic;
+                    out += amp;
+                    sign = -sign;
+                }
             }
             if (rampPos[i] >= 0) {
                 out = out * ramp[rampPos[i]];

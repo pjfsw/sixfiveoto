@@ -124,13 +124,6 @@ public class Screen {
         graphics.setColor(normalColor);
         graphics.drawString(String.format("FPS: %d", fps), 220 ,610);
     }
-/*
-    @Override
-    public int peek(final int address) {
-        int oldFrameCounter = frameCounter;
-        frameCounter = 0;
-        return oldFrameCounter;
-    }*/
 
     private static class PositionedDrawable {
         private final Point position;

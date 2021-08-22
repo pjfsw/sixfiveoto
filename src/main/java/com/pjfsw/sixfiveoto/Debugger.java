@@ -51,20 +51,22 @@ public class Debugger implements Drawable {
 
         if (enabled) {
             g2.setFont(font);
-            g2.setColor(Color.DARK_GRAY);
-
-            g2.fillRect(0,ROWS_OFFSET-font.getSize(), 320, ROWSIZE+4);
             g2.setColor(Color.WHITE);
 
             int i = 0;
             for (Row row : this.instructions.get()) {
-                if (symbols.containsKey(row.address)) {
-                    g2.drawString("; " + symbols.get(row.address), 224, ROWS_OFFSET+i);
-                }
+                String instr = String.format("%s %s",
+                    row.instruction,
+                    symbols.containsKey(row.address)?
+                        "; " + symbols.get(row.address) : "");
+
+
                 g2.drawString(String.format("$%04X", row.address),0,ROWS_OFFSET+i);
-                g2.drawString(row.instruction, 96,ROWS_OFFSET+i);
+                g2.drawString(instr, 96, ROWS_OFFSET + i);
                 i+=ROWSIZE;
+                g2.setColor(Color.GRAY);
             }
+            g2.setColor(Color.LIGHT_GRAY);
             g2.drawString(registerValues, 0,108);
         }
     }

@@ -33,4 +33,16 @@ public class FunctionGenerator {
         }
         return out;
     }
+
+    static double generateTriangle(int sample, int sampleRate, double f, double cutoff) {
+        double w = sample * f * 2.0 * Math.PI / (double)sampleRate;
+        double out = 0;
+        double sign = -1;
+        for (int harmonic = 0; harmonic < 1000; harmonic ++) {
+            int n = 2*harmonic+1;
+            out += sign * Math.pow(n, -2) * Math.sin(n * w);
+        }
+        out *= 0.81;
+        return out;
+    }
 }

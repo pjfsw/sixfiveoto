@@ -16,6 +16,19 @@ import javax.swing.WindowConstants;
 
 import com.google.common.collect.ImmutableMap;
 
+/**
+ * Tests for simple audio generation for a sound chip.
+ *
+ * Control ideas:
+ *
+ * Channel waveform: Sawtooth / Triangle? (TBD)
+ * Channel phase: on/off
+ * Channel phase: 0-255
+ * Channel frequency
+ * Ramp length (release time from ramp offset to 0) - only a few values
+ * Ramp offset (initial level after release)
+ *
+ */
 public class AudioTest {
     private final Synth synth;
     private final JFrame frame;
@@ -24,11 +37,14 @@ public class AudioTest {
 
     private static final int WAVE_TABLES = 8;
     private static final int WAVE_TABLE_BASE_SIZE = 8192;
-    private static float[][] waveTable = initWaveTable(WAVE_TABLES, WAVE_TABLE_BASE_SIZE);
+    private static final float[][] sawWaveTable = initWaveTable(WAVE_TABLES, WAVE_TABLE_BASE_SIZE, FunctionGenerator::generateSaw);
+    private static final float[][] triWaveTable = initWaveTable(WAVE_TABLES, WAVE_TABLE_BASE_SIZE, FunctionGenerator::generateTriangle);
+
+    private static float[][] waveTable;
 
     public static void main(String[] args) {
         try {
-            waveTable = initWaveTable(WAVE_TABLES, WAVE_TABLE_BASE_SIZE);
+            waveTable = sawWaveTable;
             new AudioTest().play();
             System.exit(0);
         } catch (LineUnavailableException e) {
@@ -36,7 +52,11 @@ public class AudioTest {
         }
     }
 
-    private static float[][] initWaveTable(int tables, int samples) {
+    interface WaveFunction {
+        double generateWave(int sample, int sampleRate, double f, double cutoff);
+    }
+
+    private static float[][] initWaveTable(int tables, int samples, WaveFunction function) {
         float[][] waveTable = new float[tables][];
         // First octave = C1 = 32.70
         // Second octave = C2 = 65.41
@@ -49,7 +69,7 @@ public class AudioTest {
             float[] table = new float[length];
             for (int t = 0; t < length; t++) {
                 // 19200/ 32 = 600
-                table[t] = (float)FunctionGenerator.generateSaw(t, length, 1, (double)400/(1<<tableIndex));
+                table[t] = (float)function.generateWave(t, length, 1, (double)400/(1<<tableIndex));
             }
             waveTable[tableIndex] = table;
         }
@@ -221,8 +241,8 @@ public class AudioTest {
             float phase1 = waveTable[table][offset % tableLength];
             int offset2 = offset + dutyCycle * tableLength / 256;
             float phase2 = waveTable[table][offset2 % tableLength];
-             out = phase1-phase2;
             //out = phase1;
+            out = phase1-phase2;
 
             if (rampPos[i] >= 0) {
                 out = out * ramp[rampPos[i]];

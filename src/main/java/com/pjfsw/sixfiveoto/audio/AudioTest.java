@@ -24,7 +24,6 @@ public class AudioTest {
 
     private static final int WAVE_TABLES = 8;
     private static final int WAVE_TABLE_BASE_SIZE = 8192;
-//    private static final int WAVE_TABLE_BASE_SIZE = 32768;
     private static float[][] waveTable = initWaveTable(WAVE_TABLES, WAVE_TABLE_BASE_SIZE);
 
     public static void main(String[] args) {
@@ -147,7 +146,6 @@ public class AudioTest {
         private final int[][] channelSequence;
         private final double[] gain;
         private int n = 0;
-        private final int[] sequence;
         private int offset;
 
         private final double[] ramp;
@@ -164,26 +162,27 @@ public class AudioTest {
             freqTable = new double[128];
             note = new int[3];
             sequencePos = new int[note.length];
-            sequence = new int[]{72,75,77,79,72,67,75,84};
-            int[] bassSequence = new int[] { 36, 48, 36,36,48,36,36,48 };
+            int[] sequence1 = new int[]{60,0,60,0,62,63,65,67,65,0,65,0,65,63,62,58};
+            int[] sequence2 = new int[]{63,0,63,0,65,67,70,72,70,0,70,0,70,67,67,65};
+            int[] bassSequence = new int[] { 36, 48, 36,36,48,36,36,48,36,48,36,36,48,36,36,48 };
             channelSequence = new int[note.length][];
             rampPos = new int[note.length];
             gain = new double[note.length];
 
-            for (int i = 0; i < note.length-1; i++) {
-                channelSequence[i] = sequence;
+            channelSequence[0] = sequence1;
+            channelSequence[1] = sequence2;
+            channelSequence[2] = bassSequence;
+            for (int i = 0; i < note.length; i++) {
                 rampPos[i] = -1;
-                gain[i] = 0.6-i/10.0;
+                gain[i] = 0.9;
             }
-            gain[note.length-1] = 1.0;
-            channelSequence[note.length-1] = bassSequence;
 
             for (int n = 0 ; n < 127; n++) {
                 freqTable[n] = 440 * Math.pow(2, (double)(n-69)/12);
             }
             for (int i = 0; i < sequencePos.length; i++) {
-                sequencePos[i] = (i * 3) % sequence.length;
-                note[i] = sequencePos[i];
+                sequencePos[i] = 0;
+                note[i] = channelSequence[i][sequencePos[i]];
             }
         }
         public double getFrequency(int i) {
@@ -199,7 +198,7 @@ public class AudioTest {
             double out = 0;
             int note = this.note[i];
             double f = getFrequency(note);
-            int table = (note-24)/12;
+            int table = (note-36)/12;
             if (table < 0) {
                 table = 0;
             }
@@ -211,10 +210,11 @@ public class AudioTest {
             int tableLength = waveTable[table].length;
             int dutyCycle = (phaseOffset + (phaseMod>>8) % phaseModSize)%256;
             int offset = (int)(f * n * tableLength / SAMPLE_RATE);
+            //out = FunctionGenerator.generateSaw(n, SAMPLE_RATE, f, 20000);
             float phase1 = waveTable[table][offset % tableLength];
             int offset2 = offset + dutyCycle * tableLength / 256;
             float phase2 = waveTable[table][offset2 % tableLength];
-            out = phase1-phase2;
+             out = phase1-phase2;
             //out = phase1;
 
             if (rampPos[i] >= 0) {
@@ -249,7 +249,7 @@ public class AudioTest {
         public void tick() {
             phaseMod = 0;
             for (int i = 0; i < sequencePos.length; i++) {
-                sequencePos[i] = (sequencePos[i] + 1) % sequence.length;
+                sequencePos[i] = (sequencePos[i] + 1) % channelSequence[i].length;
                 int nextNote =  channelSequence[i][sequencePos[i]];
                 if (nextNote > 0) {
                     rampPos[i] = 0;
@@ -304,13 +304,13 @@ public class AudioTest {
             while (running) {
                 long nanos = System.nanoTime();
                 for (int sample = 0; sample < SAMPLES; sample++) {
-                    n++;
                     int step = n % 8000;
                     if (step == 0) {
                         synth.tick();
                     } else if (step == 1000) {
                         synth.off();
                     }
+                    n++;
                     short out = synth.get();
                     buf[sample * 2] = (byte)(out & 0xFF);
                     buf[sample * 2 + 1] = (byte)(out >> 8);

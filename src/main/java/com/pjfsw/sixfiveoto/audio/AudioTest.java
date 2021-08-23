@@ -1,4 +1,4 @@
-package com.pjfsw.sixfiveoto;
+package com.pjfsw.sixfiveoto.audio;
 
 import java.awt.KeyboardFocusManager;
 import java.awt.event.KeyEvent;
@@ -22,8 +22,14 @@ public class AudioTest {
     private volatile boolean done = false;
     private static final int SAMPLE_RATE = 44100;
 
+    private static final int WAVE_TABLES = 8;
+    private static final int WAVE_TABLE_BASE_SIZE = 8192;
+//    private static final int WAVE_TABLE_BASE_SIZE = 32768;
+    private static float[][] waveTable = initWaveTable(WAVE_TABLES, WAVE_TABLE_BASE_SIZE);
+
     public static void main(String[] args) {
         try {
+            waveTable = initWaveTable(WAVE_TABLES, WAVE_TABLE_BASE_SIZE);
             new AudioTest().play();
             System.exit(0);
         } catch (LineUnavailableException e) {
@@ -31,6 +37,26 @@ public class AudioTest {
         }
     }
 
+    private static float[][] initWaveTable(int tables, int samples) {
+        float[][] waveTable = new float[tables][];
+        // First octave = C1 = 32.70
+        // Second octave = C2 = 65.41
+        // ...
+        // Eight ocrta = C8 = 4186.01
+        int totalSize = 0;
+        for (int tableIndex = 0; tableIndex < tables; tableIndex++) {
+            int length = samples / (1 << tableIndex);
+            totalSize += length;
+            float[] table = new float[length];
+            for (int t = 0; t < length; t++) {
+                // 19200/ 32 = 600
+                table[t] = (float)FunctionGenerator.generateSaw(t, length, 1, (double)600/(1<<tableIndex));
+            }
+            waveTable[tableIndex] = table;
+        }
+        System.err.printf("Table total size %d entries%n", totalSize);
+        return waveTable;
+    }
     private AudioTest() {
         this.frame = new JFrame();
         frame.setVisible(true);
@@ -55,9 +81,19 @@ public class AudioTest {
             .put('7', 10)
             .put('u', 11)
             .put('i', 12)
+            .put(',', 0)
             .put('m',-1)
             .put('j',-2)
-            .put(',', 0)
+            .put('n',-3)
+            .put('h',-4)
+            .put('b',-5)
+            .put('g',-6)
+            .put('v',-7)
+            .put('c',-8)
+            .put('d',-9)
+            .put('x',-10)
+            .put('s',-11)
+            .put('z',-12)
             .build();
         KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher((event) -> {
             if (event.getID() != KeyEvent.KEY_PRESSED) {
@@ -108,7 +144,6 @@ public class AudioTest {
         private final double[] freqTable;
         private final int[] sequencePos;
         private final int[] note;
-        private final int[] bassSequence;
         private final int[][] channelSequence;
         private final double[] gain;
         private int n = 0;
@@ -117,7 +152,8 @@ public class AudioTest {
 
         private final double[] ramp;
         private int[] rampPos;
-        private int phase;
+
+        private int phaseMod = 0;
 
         public Synth() {
             ramp = new double[8000];
@@ -126,10 +162,10 @@ public class AudioTest {
                 ramp[i] = d;
             }
             freqTable = new double[128];
-            note = new int[4];
+            note = new int[3];
             sequencePos = new int[note.length];
-            sequence = new int[]{48,60,63,67,70,72,75,60};
-            bassSequence = new int[]{36,36,0,36,36,0,36,36};
+            sequence = new int[]{72,75,77,79,72,67,75,84};
+            int[] bassSequence = new int[] { 36, 48, 36,36,48,36,36,48 };
             channelSequence = new int[note.length][];
             rampPos = new int[note.length];
             gain = new double[note.length];
@@ -158,40 +194,28 @@ public class AudioTest {
             this.offset = offset;
         }
 
-        private double generateSaw(double f, int phase) {
-            double sign = -1;
-            double out = 0;
-            double w = (n+phase) * f * 2.0 * Math.PI / (double)SAMPLE_RATE;
-            for (int harmonic = 1; harmonic < 30; harmonic++) {
-                double f2 = harmonic * f;
-                if (f2 < 18000) {
-                    double amp = 0.6 * sign * Math.sin(harmonic * w) / harmonic;
-                    out += amp;
-                    sign = -sign;
-                }
-            }
-            return out;
-        }
-
-        private double generatePulse(double f) {
-            double w = n * f * 2.0 * Math.PI / (double)SAMPLE_RATE;
-            double out = 0;
-            for (int harmonic = 1; harmonic < 40; harmonic += 2) {
-                double f2 = harmonic * f;
-                if (f2 < 18000) {
-                    double amp = Math.sin(harmonic * w)/harmonic;
-                    out += amp;
-                }
-            }
-            return out;
-        }
 
         private double get(int i) {
             double out = 0;
-            double f = getFrequency(note[i]);
-            out = generatePulse(f);
-            //out = generateSaw(f, 0);
-
+            int note = this.note[i];
+            double f = getFrequency(note);
+            int table = (note-24)/12;
+            if (table < 0) {
+                table = 0;
+            }
+            if (table > waveTable.length-1) {
+                table = waveTable.length-1;
+            }
+            int phaseOffset = 64;
+            int phaseModSize = 192;
+            int tableLength = waveTable[table].length;
+            int dutyCycle = (phaseOffset + (phaseMod>>8) % phaseModSize)%256;
+            int offset = (int)(f * n * tableLength / SAMPLE_RATE);
+            float phase1 = waveTable[table][offset % tableLength];
+            int offset2 = offset + dutyCycle * tableLength / 256;
+            float phase2 = waveTable[table][offset2 % tableLength];
+            out = phase1-phase2;
+            //out = phase1;
 
             if (rampPos[i] >= 0) {
                 out = out * ramp[rampPos[i]];
@@ -218,17 +242,19 @@ public class AudioTest {
                 System.err.printf("Audio exceeding -6 dBFS %.2f%n", out);
             }
             n++;
-            phase = (phase + 1);
+            phaseMod++;
             return (short)(out * 32767.0);
         }
 
         public void tick() {
+            phaseMod = 0;
             for (int i = 0; i < sequencePos.length; i++) {
                 sequencePos[i] = (sequencePos[i] + 1) % sequence.length;
                 int nextNote =  channelSequence[i][sequencePos[i]];
                 if (nextNote > 0) {
                     rampPos[i] = 0;
                     note[i] = nextNote + offset;
+                    //System.err.printf("%d=%f Hz%n", note[i], getFrequency(note[i]));
                 }
             }
         }

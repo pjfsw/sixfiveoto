@@ -49,7 +49,7 @@ public class AudioTest {
             float[] table = new float[length];
             for (int t = 0; t < length; t++) {
                 // 19200/ 32 = 600
-                table[t] = (float)FunctionGenerator.generateSaw(t, length, 1, (double)600/(1<<tableIndex));
+                table[t] = (float)FunctionGenerator.generateSaw(t, length, 1, (double)400/(1<<tableIndex));
             }
             waveTable[tableIndex] = table;
         }
@@ -145,37 +145,44 @@ public class AudioTest {
         private final int[] note;
         private final int[][] channelSequence;
         private final double[] gain;
+        private final int[] phaseMod;
         private int n = 0;
         private int offset;
 
         private final double[] ramp;
         private int[] rampPos;
 
-        private int phaseMod = 0;
-
         public Synth() {
-            ramp = new double[8000];
+            ramp = new double[16000];
+            double att = 0.6;
             for (int i = 0; i < ramp.length; i++) {
-                double d = 1 - (double)i/ramp.length;
+                double d = 1;
+                if (i > 0) {
+                    d = att - att * (double)i/ramp.length;
+                }
                 ramp[i] = d;
             }
             freqTable = new double[128];
-            note = new int[3];
+            note = new int[4];
+            phaseMod = new  int[note.length];
             sequencePos = new int[note.length];
-            int[] sequence1 = new int[]{60,0,60,0,62,63,65,67,65,0,65,0,65,63,62,58};
-            int[] sequence2 = new int[]{63,0,63,0,65,67,70,72,70,0,70,0,70,67,67,65};
-            int[] bassSequence = new int[] { 36, 48, 36,36,48,36,36,48,36,48,36,36,48,36,36,48 };
+            int[] sequence1 = new int[]{60,60,0,60, 60,0,60,60, 0,60,60,0, 60,0,60,0 };
+            int[] sequence2 = new int[]{63,63,0,63, 63,0,63,65, 0,65,65,0, 65,0,67,0 };
+            int[] sequence3 = new int[]{70,70,0,70, 70,0,70,69, 0,69,69,0, 70,0,72,0 };
+            int[] bassSequence = new int[] { 24,36,0,0, 36,0,36,24,0,24,36,0,39,0,41,43 };
             channelSequence = new int[note.length][];
             rampPos = new int[note.length];
             gain = new double[note.length];
 
             channelSequence[0] = sequence1;
             channelSequence[1] = sequence2;
-            channelSequence[2] = bassSequence;
+            channelSequence[2] = sequence3;
+            channelSequence[3] = bassSequence;
             for (int i = 0; i < note.length; i++) {
                 rampPos[i] = -1;
-                gain[i] = 0.9;
+                gain[i] = 0.4;
             }
+            gain[note.length-1] = 0.9;
 
             for (int n = 0 ; n < 127; n++) {
                 freqTable[n] = 440 * Math.pow(2, (double)(n-69)/12);
@@ -205,10 +212,10 @@ public class AudioTest {
             if (table > waveTable.length-1) {
                 table = waveTable.length-1;
             }
-            int phaseOffset = 64;
-            int phaseModSize = 192;
+            int phaseOffset = 20;
+            int phaseModSize = 255;
             int tableLength = waveTable[table].length;
-            int dutyCycle = (phaseOffset + (phaseMod>>8) % phaseModSize)%256;
+            int dutyCycle = (phaseOffset + (phaseMod[i]>>8) % phaseModSize)%256;
             int offset = (int)(f * n * tableLength / SAMPLE_RATE);
             //out = FunctionGenerator.generateSaw(n, SAMPLE_RATE, f, 20000);
             float phase1 = waveTable[table][offset % tableLength];
@@ -236,26 +243,26 @@ public class AudioTest {
             double out = 0;
             for (int i = 0; i < sequencePos.length; i++) {
                 out += gain[i] * get(i);
+                phaseMod[i]++;
             }
             out *= 0.1;
             if (out < -0.52 || out > 0.52) {
                 System.err.printf("Audio exceeding -6 dBFS %.2f%n", out);
             }
             n++;
-            phaseMod++;
             return (short)(out * 32767.0);
         }
 
         public void tick() {
-            phaseMod = 0;
             for (int i = 0; i < sequencePos.length; i++) {
-                sequencePos[i] = (sequencePos[i] + 1) % channelSequence[i].length;
                 int nextNote =  channelSequence[i][sequencePos[i]];
                 if (nextNote > 0) {
+                    phaseMod[i] = 0;
                     rampPos[i] = 0;
                     note[i] = nextNote + offset;
                     //System.err.printf("%d=%f Hz%n", note[i], getFrequency(note[i]));
                 }
+                sequencePos[i] = (sequencePos[i] + 1) % channelSequence[i].length;
             }
         }
         public void off() {
@@ -304,10 +311,10 @@ public class AudioTest {
             while (running) {
                 long nanos = System.nanoTime();
                 for (int sample = 0; sample < SAMPLES; sample++) {
-                    int step = n % 8000;
+                    int step = n % 6000;
                     if (step == 0) {
                         synth.tick();
-                    } else if (step == 1000) {
+                    } else if (step == 800) {
                         synth.off();
                     }
                     n++;

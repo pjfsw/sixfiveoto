@@ -37,14 +37,12 @@ public class AudioTest {
 
     private static final int WAVE_TABLES = 8;
     private static final int WAVE_TABLE_BASE_SIZE = 8192;
-    private static final float[][] sawWaveTable = initWaveTable(WAVE_TABLES, WAVE_TABLE_BASE_SIZE, FunctionGenerator::generateSaw);
-    private static final float[][] triWaveTable = initWaveTable(WAVE_TABLES, WAVE_TABLE_BASE_SIZE, FunctionGenerator::generateTriangle);
 
     private static float[][] waveTable;
 
     public static void main(String[] args) {
         try {
-            waveTable = sawWaveTable;
+            waveTable = initWaveTable(WAVE_TABLES, WAVE_TABLE_BASE_SIZE, FunctionGenerator::generateSaw);
             new AudioTest().play();
             System.exit(0);
         } catch (LineUnavailableException e) {
@@ -52,10 +50,25 @@ public class AudioTest {
         }
     }
 
+    /**
+     * A wave function that provides amplitude output
+     */
     interface WaveFunction {
         double generateWave(int sample, int sampleRate, double f, double cutoff);
     }
 
+    /**
+     * Generate a wave tables, with predefined waveform data for each octave. Each table is calculated
+     * in such way that harmonics should never exceed 20 KHz to avoid Nyquist frequency. For example, a 30 Hz base
+     * frequency needs to be filtered at 20000 but the table is generated 1 Hz meaning 20000/30 = 666 is the cutoff
+     * For each octave the table resolution can be cut in half due to the increased frequency and distance between
+     * accesses.
+     *
+     * @param tables Number of tables to generate
+     * @param samples Number of samples for the first table. Each consequtive table will halve the number of samples.
+     * @param function Wavetable generation function
+     * @return a set of wavetables to be used for fast audio generation.
+     */
     private static float[][] initWaveTable(int tables, int samples, WaveFunction function) {
         float[][] waveTable = new float[tables][];
         // First octave = C1 = 32.70
@@ -68,8 +81,11 @@ public class AudioTest {
             totalSize += length;
             float[] table = new float[length];
             for (int t = 0; t < length; t++) {
-                // 19200/ 32 = 600
-                table[t] = (float)function.generateWave(t, length, 1, (double)400/(1<<tableIndex));
+                // Cutoff at about 11.4 KHz (350 * 32.7) to allow for the same table to be used
+                // for all notes within the octave without hitting the Nyquist frequency.
+                // I.e MIDI C-1 = 32.7 Hz, cutoff 350 * 32.7 = 11.4 KHz
+                // but MIDI B-1 = 61.7 Hz, cutoff 350 * 61.7 = 21.6 KHz
+                table[t] = (float)function.generateWave(t, length, 1, (double)350/(1<<tableIndex));
             }
             waveTable[tableIndex] = table;
         }
@@ -270,7 +286,12 @@ public class AudioTest {
                 System.err.printf("Audio exceeding -6 dBFS %.2f%n", out);
             }
             n++;
-            return (short)(out * 32767.0);
+             return (short)(out * 32767);
+             //return (short)(16 * (short)(out * 2047.0)); // 12 bit
+              //return (short)(256 * (short)(out * 127.0)); // 8 bit
+             //return (short)(512 * (short)(out * 63.0));  // 7 bit
+
+
         }
 
         public void tick() {

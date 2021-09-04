@@ -18,18 +18,17 @@ public class HeaderFileConsumer extends OutputConsumerAdapter {
         hFile = new ArrayList<>();
         hFile.add(String.format("#ifndef _%s_H", uname));
         hFile.add(String.format("#define _%s_H", uname));
-        hFile.add(String.format("uint16_t %s[] = {", name));
+        hFile.add(String.format("uint8_t %s[] = {", name));
         hLine = "";
     }
 
 
     @Override
-    public void consumePixels(int left, int right) {
+    public void consumePixels(int aByte) {
         if (hLine.isEmpty()) {
             hLine = "    ";
         }
-        // This weird swapping is due to little endian
-        hLine += String.format("0x%04x, ", (right << 8) | left);
+        hLine += String.format("0x%02x, ", aByte);
         if (hLine.length() > 120) {
             hFile.add(hLine);
             hLine = "";
@@ -42,18 +41,17 @@ public class HeaderFileConsumer extends OutputConsumerAdapter {
             hFile.add(hLine);
         }
         hFile.add("};");
-        hFile.add(String.format("const uint16_t %s_width = %d;", name, getWidth()));
+        hFile.add(String.format("const uint16_t %s_width = %d;", name, getWidthInBytes()));
         hFile.add(String.format("const uint16_t %s_height = %d;", name, getHeight()));
         Integer[] palette = getPalette();
-        if (palette  != null) {
-            String paletteString = String.format("uint32_t %s_palette = 0x%02x%02x%02x%02x;",
-                name,
-                palette[3],
-                palette[2],
-                palette[1],
-                palette[0]
-            );
-            hFile.add(paletteString);
+        if (palette != null) {
+            hFile.add(String.format("uint8_t %s_palette[] = {", name));
+            String s = "    ";
+            for (Integer col : palette) {
+                s += String.format("0x%02x, ", col);
+            }
+            hFile.add(s);
+            hFile.add("};");
         }
         hFile.add("#endif");
         Files.write(new File(name+".h").toPath(), hFile, Charset.defaultCharset());

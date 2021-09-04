@@ -3,13 +3,11 @@
 
 .const IRQ = $0300
 .const D = $c000
-.const AY = $c001
-.const AX = $c002
-.const PAGE = $c003
-.const LENGTH = $c004
-.const SKIP = $c005
-.const SCR_BG = $c006
-.const CTRL_REG = $c007
+.const AH = $c003
+.const AY = AH
+.const AL = $c002
+.const AX = AL
+.const PAGE = $c001
 .const SCREEN_PAGE = 0
 .const COLOR_PAGE = 1
 .const CTRL_PAGE = 2
@@ -39,10 +37,16 @@
 start:
     jsr setupPorts
     jsr copyIrq
-    stz LENGTH
-    stz SKIP
+    jmp *
+
     jsr startupScreen
 
+    lda #$80
+    sta PAGE
+    lda #$08
+    sta AY
+    lda #$ff
+    sta D
     stz cursorX
     lda #1
     sta cursorY
@@ -70,8 +74,6 @@ copyIrq: // IRQ vector is hardwired to point at RAM address so we need to copy o
 startupScreen:
     lda #DERPESCOLOR
     sta textColor
-    lda #BGCOLOR
-    sta SCR_BG
 
     jsr clearScreen
 
@@ -100,26 +102,6 @@ fillPage:
 
 .print "Clearscreen = " + toHexString(*)
 clearScreen:
-    stz PAGE
-    lda #' '
-    jsr fillPage
-
-    lda #COLOR_PAGE
-    sta PAGE
-    lda textColor
-    jsr fillPage
-
-    stz cursorX
-    stz cursorY
-    stz scrollOffset
-
-    lda #CTRL_PAGE
-    sta PAGE
-    stz AY
-    lda #CTRL_SCRY
-    sta AX
-    stz D
-    stz D
     rts
 
 argToHex:
@@ -229,11 +211,11 @@ callAddress:
     jmp (ioAddress)
 
 setBgColor:
-    jsr argToHex
+    /*jsr argToHex
     bcc !+
     jmp valueError
 !:
-    stx SCR_BG
+    stx SCR_BG*/
     rts
 
 setFgColor:
@@ -269,14 +251,29 @@ rowToPixelHi:
     .fill 64,>(i*8)
 
 
+.macro scrollX(address) {
+    lda #$32
+    sta AL
+    lda #$d0
+    sta AH
+    lda address
+    sta D
+    lda address+1
+    sta D
+}
+
 irqSource:
 .pseudopc IRQ {
 irq:
     stx irqX
     sty irqY
     sta irqA
-    stz CTRL_REG
-    inc cursorBlink
+
+    inc scrollOffset
+    bne !+
+    inc scrollOffset+1
+!:
+    scrollX(scrollOffset);
 
     ldx irqX
     ldy irqY

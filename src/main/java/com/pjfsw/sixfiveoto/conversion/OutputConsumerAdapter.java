@@ -6,7 +6,7 @@ abstract public class OutputConsumerAdapter implements OutputConsumer {
     private Integer[] palette;
 
     @Override
-    public void consumeWidth(int width) {
+    public void consumeWidthInBytes(int width) {
         this.width = width;
     }
 
@@ -21,7 +21,7 @@ abstract public class OutputConsumerAdapter implements OutputConsumer {
 
     }
 
-    public int getWidth() {
+    public int getWidthInBytes() {
         return width;
     }
 

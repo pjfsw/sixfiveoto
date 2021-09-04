@@ -17,28 +17,30 @@ public class BinFileConsumer extends OutputConsumerAdapter {
     }
 
     @Override
-    public void consumePixels(int left, int right) {
-        pixelData.add((byte)(left));
-        pixelData.add((byte)(right));
+    public void consumePixels(int aByte) {
+        pixelData.add((byte)(aByte));
     }
 
     @Override
     public void produce() throws IOException {
-        byte[] buffer = new byte[pixelData.size()];
-        int n = 0;
+        Integer[] palette = getPalette();
+        if (palette == null) {
+            palette = new Integer[0];
+        }
+        // Store "J", width in bytes (8-bit), height (16-bit little endian), pixel data, 4 byte palette
+        byte[] buffer = new byte[5+palette.length + pixelData.size()];
+        buffer[0] = (byte)'J';
+        buffer[1] = (byte)(getWidthInBytes());
+        buffer[2] = (byte)(getHeight()&0xff);
+        buffer[3] = (byte)(getHeight()>>8);
+        buffer[4] = (byte)palette.length;
+        int n = 5;
+        for (Integer color : palette) {
+            buffer[n++] = (byte)(color & 0xff);
+        }
         for (Byte b : pixelData) {
             buffer[n++] = b;
         }
-        Files.write(buffer, new File(name+"_pixels.bin"));
-        Integer[] palette = getPalette();
-        if (palette == null) {
-            return;
-        }
-        buffer = new byte[palette.length];
-        n = 0;
-        for (Integer integer : palette) {
-            buffer[n++] = (byte)(integer & 0xFF);
-        }
-        Files.write(buffer, new File(name+"_palette.bin"));
+        Files.write(buffer, new File(name+".jfi"));
     }
 }

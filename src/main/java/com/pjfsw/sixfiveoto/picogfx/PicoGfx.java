@@ -30,6 +30,10 @@ public class PicoGfx implements Drawable, Clockable, Resettable, Poker, Interrup
     private static final int REG_AL = 2;
     private static final int REG_AH = 3;
 
+    private static final int SPRITE_RIGHT_EDGE = 416;
+    private static final int NUMBER_OF_SPRITES = 8;
+    private static final int BITMAP_WIDTH_BYTES = 200;
+
     private final int cyclesPerFrame;
     private final Tile[] tiles = new Tile[256];
     private final int[] registers = new int[MEM_MASK+1];
@@ -43,6 +47,12 @@ public class PicoGfx implements Drawable, Clockable, Resettable, Poker, Interrup
     private static final int BITMAP_HEIGHT = 0xd036;
     private static final int BITMAP_PTR = 0xd038;
     private static final int BITMAP_PALETTE = 0xd03a;
+    private static final int SPRITE_X = 0xd000;
+    private static final int SPRITE_Y = 0xd010;
+    private static final int SPRITE_H = 0xd020;
+    private static final int SPRITE_PTR = 0xd028;
+    private static final int SPRITE_DATA = 0x10000;
+
 
     private final int[] font;
     private final BufferedImage img;
@@ -71,7 +81,7 @@ public class PicoGfx implements Drawable, Clockable, Resettable, Poker, Interrup
         $0d034-$0d035 : Bitmap start, 0-1023, 512 = first visible row
         $0d036-$0d037 : Bitmap height
         $0d038-$0d039 : Bitmap pointer represented as offset in 16-bit words from GFX base
-        $0d03a-$0d03d : Bitmap palette (4 colours)
+        $0d03a-$0d049 : Bitmap palette (16 colours)
         $10000-$1ffff : Sprite RAM
 
      */
@@ -103,30 +113,51 @@ public class PicoGfx implements Drawable, Clockable, Resettable, Poker, Interrup
             }
         }
         try {
-            byte[] picBytes = Files.readAllBytes(
-                new File(getClass().getResource("derp_pixels.bin").toURI()).toPath());
-            int n = 0;
-            for (int y = 0; y < 220; y++) {
-                for (int x = 0; x < 280/4; x++) {
-                    registers[0x10000+y*100+x] = picBytes[n];
-                    n++;
-                }
-            }
-            registers[BITMAP_PTR] = 0;
-            registers[BITMAP_PTR+1] = 0x80;
-            registers[BITMAP_START] = 0;
-            registers[BITMAP_START+1] = 2;
-            registers[BITMAP_HEIGHT] = 220;
-            registers[BITMAP_HEIGHT+1] = 0;
-            registers[BITMAP_PALETTE] = 0;
-            registers[BITMAP_PALETTE+1] = 0x15;
-            registers[BITMAP_PALETTE+2] = 0x2a;
-            registers[BITMAP_PALETTE+3] = 0x3f;
+            loadBitmap("sixteencolors.jfi", 0x10200);
+            loadSprite("spritedata.jfi", 0x10000);
         } catch (IOException | URISyntaxException e) {
             e.printStackTrace();
         }
-
     }
+
+    private void loadSprite(String filename, int loadAddress) throws IOException, URISyntaxException {
+        Jfi jfi = Jfi.load(filename);
+        if (jfi.getWidth() != 16) {
+            throw new IllegalArgumentException("Sprites must be 16 pixels wide!");
+        }
+        for (int i = 0; i < jfi.getData().length; i++) {
+            registers[loadAddress+i] = jfi.getData()[i];
+        }
+        for (int i = 0; i < NUMBER_OF_SPRITES; i++) {
+            registers[SPRITE_PTR+i] = (loadAddress & 0xFFFF) >> 8;
+            registers[SPRITE_H+i] = jfi.getHeight();
+            registers[SPRITE_X+i*2] = i * 16;
+            registers[SPRITE_Y+i*2] = 33;
+        }
+    }
+
+
+    private void loadBitmap(String filename, int loadAddress) throws URISyntaxException, IOException {
+        Jfi jfi = Jfi.load(filename);
+
+        registers[BITMAP_HEIGHT] = jfi.getHeight() & 0xff;
+        registers[BITMAP_HEIGHT+1] = jfi.getHeight() >> 8;
+
+        System.arraycopy(jfi.getPalette(), 0, registers, BITMAP_PALETTE, jfi.getPalette().length);
+
+        int n = 0;
+        for (int y = 0; y < jfi.getHeight(); y++) {
+            for (int x = 0; x < Math.min(BITMAP_WIDTH_BYTES, jfi.getWidth()); x++) {
+                registers[loadAddress+y*BITMAP_WIDTH_BYTES+x] = jfi.getData()[n];
+                n++;
+            }
+        }
+        registers[BITMAP_PTR] = (loadAddress>>1) & 0xff;
+        registers[BITMAP_PTR+1] = loadAddress>>9;
+        registers[BITMAP_START] = 0;
+        registers[BITMAP_START+1] = 2;
+    }
+
     private void init() {
         cycles = 0;
         Arrays.fill(registers, 0);
@@ -194,12 +225,12 @@ public class PicoGfx implements Drawable, Clockable, Resettable, Poker, Interrup
     private void drawBitmap(WritableRaster raster, int y, int bitmapStart) {
         int bitmapPtr = registers[BITMAP_PTR] + registers[BITMAP_PTR+1] << 8;
         int bitmapRow = (y - bitmapStart - 512) & 0x1ff;
-        int bitmapOffset = ((bitmapPtr << 1) + bitmapRow * 100);
-        for (int x = 0; x < VISIBLE_WIDTH; x+=4) {
+        int bitmapOffset = ((bitmapPtr << 1) + bitmapRow * BITMAP_WIDTH_BYTES);
+        for (int x = 0; x < VISIBLE_WIDTH; x+=2) {
             int c = registers[bitmapOffset & 0x1ffff];
-            for (int i = 0; i < 4; i++) {
-                int shift = 6 - 2 * i;
-                int color = (c >> shift) & 3;
+            for (int i = 0; i < 2; i++) {
+                int shift = 4 - 4 * i;
+                int color = (c >> shift) & 15;
                 int colorIndex = registers[BITMAP_PALETTE + color];
                 raster.setPixel(x+i, y, colorDac[colorIndex & COLOR_MASK].rgba);
             }
@@ -208,20 +239,41 @@ public class PicoGfx implements Drawable, Clockable, Resettable, Poker, Interrup
 
     }
 
+    private void drawSprites(WritableRaster raster, int y) {
+        for (int i = 0; i < NUMBER_OF_SPRITES; i++) {
+            int spritePos = y - registers[SPRITE_Y + i * 2] - (registers[SPRITE_Y + i * 2 + 1] << 8);
+            if (spritePos < 0 || spritePos >= registers[SPRITE_H]) {
+                continue;
+            }
+            int spriteOffset = (spritePos << 4) + (registers[SPRITE_PTR + i] << 8);
+            int xpos = registers[SPRITE_X + i * 2] + (registers[SPRITE_X + i * 2 + 1] << 8);
+            int n = Math.min(16, SPRITE_RIGHT_EDGE-xpos);
+            for (int x = 0; x < n; x++) {
+                int color = registers[SPRITE_DATA+(spriteOffset&0xFFFF)];
+                if ((color & 0x80) == 0) {
+                    raster.setPixel(xpos, y, colorDac[color & COLOR_MASK].rgba);
+                }
+                xpos++;
+                spriteOffset++;
+            }
+        }
+    }
+
     @Override
     public void draw(Graphics graphics) {
         Graphics2D g2 = (Graphics2D)graphics;
         WritableRaster raster = img.getRaster();
         int scrollX = registers[SCROLL_X] + ((registers[SCROLL_X+1] & 1) << 8);
         int scrollY = registers[SCROLL_Y] + ((registers[SCROLL_Y+1] & 1) << 8);
-        int bitmapStart = (registers[BITMAP_START] + registers[BITMAP_START+1] << 8)-512;
-        int bitmapHeight = registers[BITMAP_HEIGHT] + registers[BITMAP_HEIGHT+1] << 8;
+        int bitmapStart = registers[BITMAP_START] + (registers[BITMAP_START+1] << 8)-512;
+        int bitmapHeight = registers[BITMAP_HEIGHT] + (registers[BITMAP_HEIGHT+1] << 8);
         for (int y = 0; y < VISIBLE_HEIGHT; y++) {
-            if (y < 220) {
+            if (y >= bitmapStart && y < bitmapStart+bitmapHeight) {
                 drawBitmap(raster, y, bitmapStart);
             } else {
                 drawTiles(raster, y, scrollX, scrollY);
             }
+            drawSprites(raster, y);
         }
 
         g2.drawImage(img, 0,0, VISIBLE_WIDTH*2, VISIBLE_HEIGHT*2, null);

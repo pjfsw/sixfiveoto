@@ -4,8 +4,12 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.imageio.ImageIO;
 
@@ -51,8 +55,62 @@ public class ImageToBitmap {
         img = ImageIO.read(f);
     }
 
+    private Map<Integer,Integer> getColorFrequency(BufferedImage img) {
+        Map<Integer,Integer> freq = new HashMap<>() ;
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                int rgb = getRgb6(img.getRGB(x + xofs, y + yofs));
+                if (freq.containsKey(rgb)) {
+                    freq.put(rgb, freq.get(rgb)+1);
+                } else {
+                    freq.put(rgb, 1);
+                }
+            }
+        }
+        return freq;
+    }
+
+    private static int getRgb6(int rgba) {
+        rgba = rgba & 0xFFFFFF;
+        int b = (rgba & 255) >> 6;
+        int g = ((rgba >> 8) & 255) >> 6;
+        int r = ((rgba >> 16) & 255) >> 6;
+        return b | (g << 2) | (r << 4);
+    }
+
+    private static int findNearestColor(int c, Set<Integer> colors) {
+        int minDistance = Integer.MAX_VALUE;
+        int nearestColor = 0;
+        int r1 = (c >> 4) & 3;
+        int g1 = (c >> 2) & 3;
+        int b1 = c & 3;
+        for (Integer color : colors) {
+            int r2 = (color >> 4) & 3;
+            int g2 = (color >> 2) & 3;
+            int b2 = color & 3;
+            int r = r1-r2;
+            int g = g1-g2;
+            int b = b1-b2;
+            int distance = r*r + g*g + b*b;
+            if (distance < minDistance) {
+                nearestColor = color;
+                minDistance = distance;
+            }
+        }
+        return nearestColor;
+    }
+
     public void run() throws IOException {
-        Map<Integer,Integer> colors = new HashMap<>();
+        Map<Integer,Integer> colors = new LinkedHashMap<>();
+        Map<Integer,Integer> colorFrequency = getColorFrequency(img);
+        List<Integer> rgbList = new ArrayList<>(colorFrequency.keySet());
+        rgbList.sort(Comparator.comparingInt(key -> -colorFrequency.get(key)));
+        for (int i = 0; i < 16; i++) {
+            colors.put(rgbList.get(i), i);
+        }
+
+        colorFrequency.forEach((k,v) -> System.out.printf("Color %d = %d%n", k, v));
+        rgbList.forEach(rgb -> System.out.printf("Palette = %d%n", rgb));
         for (int y = 0; y < h; y++) {
             int shift = 16;
             int bitmap = 0;
@@ -61,34 +119,24 @@ public class ImageToBitmap {
                     bitmap = 0;
                     shift = 16;
                 }
-                shift -= 2;
+                shift -= 4;
                 int rgba = img.getRGB(x+xofs,y+yofs);
-                int b = (rgba & 255) >> 6;
-                int g = ((rgba >> 8) & 255) >> 6;
-                int r = ((rgba >> 16) & 255) >> 6;
-                int c = b | (g << 2) | (r << 4);
-                int a = (rgba >> 24) & 255;
-                if (a > 0) {
-                    if (!colors.containsKey(c)) {
-                        colors.put(c, colors.size());
-                    }
-                    bitmap = bitmap | (colors.get(c) << shift);
+                int c = getRgb6(rgba);
+                if (!colors.containsKey(c)) {
+                    c = findNearestColor(c, colors.keySet());
                 }
+                bitmap = bitmap | (colors.get(c) << shift);
                 if (shift == 0) {
                     for (OutputConsumer consumer : consumers) {
-                        // Now left is in highbyte and right is in lowbyte. Let receiver handle
-                        // endianness
-                        consumer.consumePixels(bitmap >> 8, bitmap & 255);
+                        consumer.consumePixels(bitmap >> 8);
+                        consumer.consumePixels(bitmap & 255);
                     }
                 }
-            }
-            if (colors.size() > 4) {
-                System.err.printf("Warning, too many (%d) colours%n", colors.size());
             }
         }
         Integer[] paletteRgb = colors.keySet().toArray(new Integer[0]);
         for (OutputConsumer consumer : consumers) {
-            consumer.consumeWidth(w);
+            consumer.consumeWidthInBytes(w/2);
             consumer.consumeHeight(h);
             consumer.consumePalette(paletteRgb);
             consumer.produce();

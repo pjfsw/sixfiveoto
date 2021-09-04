@@ -36,7 +36,7 @@ public class AudioTest {
     private static final int SAMPLE_RATE = 44100;
 
     private static final int WAVE_TABLES = 8;
-    private static final int WAVE_TABLE_BASE_SIZE = 8192;
+    private static final int WAVE_TABLE_BASE_SIZE = 32768;
 
     private static float[][] waveTable;
 

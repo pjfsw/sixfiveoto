@@ -29,9 +29,10 @@ load_image:
     lda #>pixels
     sta ZP_PTR+1
     // Rows in y and cols in x for simplicity
-    ldy #198
+    ldy #height
 !:
-    ldx #144
+    jsr padding
+    ldx #width
     {
     !:
         lda (ZP_PTR)
@@ -45,18 +46,12 @@ load_image:
         dex
         bne !-
     }
-    // Pad rest of line with zero in a stupid and inefficient way
-    ldx #56
-    {
-    !:
-        stz D
-        dex
-        bne !-
-    }
+    jsr padding
 
     dey
     bne !-
 
+    stz PAGE
     lda #<pico_bitmap_start
     sta AL
     lda #>pico_bitmap_start
@@ -68,6 +63,17 @@ load_image:
     inx
     cpx #22
     bne !-
+    rts
+
+padding:
+    // Pad rest of line with zero in a stupid and inefficient way
+    ldx #(200-width)/2
+    {
+    !:
+        stz D
+        dex
+        bne !-
+    }
     rts
 
 pixels:

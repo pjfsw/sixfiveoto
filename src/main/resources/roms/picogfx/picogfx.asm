@@ -287,6 +287,9 @@ sinTableLo:
 sinTableHi:
     .fill 256, >(300+100*sin(i*PI/128))
 
+bmpSinTable:
+    .fill 256, 20+20*sin(i*PI/128)
+
 .macro scrollX(address) {
     lda #$62
     sta AL
@@ -298,8 +301,6 @@ sinTableHi:
     sta D
 }
 
-.const SPRITE_Y = $6420;
-
 irqSource:
 .pseudopc IRQ {
 irq:
@@ -307,15 +308,25 @@ irq:
     sty irqY
     sta irqA
 
+    lda #0
+    sta PAGE
+    lda #<pico_bitmap_start
+    sta AL
+    lda #>pico_bitmap_start
+    sta AH
+    ldy sinPos
+    lda bmpSinTable,y
+    sta D
+
     inc scrollOffset
     bne !+
     inc scrollOffset+1
 !:
     scrollX(scrollOffset);
 
-    lda #<SPRITE_Y
+    lda #<pico_sprite_y
     sta AL
-    lda #>SPRITE_Y
+    lda #>pico_sprite_y
     sta AH
 
     ldx #15
@@ -328,7 +339,7 @@ irq:
     lda sinTableHi,y
     sta D
     dex
-    bne !-
+    bpl !-
 
     .const screenSelectReg = $06464;
     lda #<screenSelectReg

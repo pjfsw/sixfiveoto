@@ -2,12 +2,6 @@
 .encoding "ascii"
 
 .const IRQ = $0300
-.const D = $c000
-.const AH = $c003
-.const AY = AH
-.const AL = $c002
-.const AX = AL
-.const PAGE = $c001
 .const SCREEN_PAGE = 0
 .const COLOR_PAGE = 1
 .const CTRL_PAGE = 2
@@ -29,17 +23,23 @@
 
 * = $E000 "ROM"
 
+#import "picoreg.asm"
+.const AY = AH
+.const AX = AL
+
 #import "readline.asm"
 #import "print.asm"
 #import "command.asm"
 #import "string.asm"
-
+#import "loader.asm"
 start:
-    jsr initTheDerpes
     jsr setupPorts
+    jsr load_rom
+    jsr LOAD_TARGET
+    jsr initTheDerpes
     jsr copyIrq
     jmp *
-
+/*
     jsr startupScreen
 
     lda #$80
@@ -60,7 +60,7 @@ start:
     jsr readline
     jsr parseCommand
     jmp !-
-
+*/
 initTheDerpes:
     lda #0
     ldx #15
@@ -71,13 +71,11 @@ initTheDerpes:
     dex
     bne !-
 
-    .const fontRow = $6480+35
-    .const fontAddress = $5000+(32*16)
 
     // Poke a custom font value in font 1
-    lda #<fontAddress
+    lda #<(pico_font_1 + 16 * 32)
     sta AL
-    lda #>fontAddress
+    lda #>(pico_font_1 + 16 * 32)
     sta AH
     ldx #255
     lda #$f0
@@ -88,9 +86,9 @@ initTheDerpes:
 
 
     // Set a different font for row 35
-    lda #<fontRow
+    lda #<(pico_font_select + 35)
     sta AL
-    lda #>fontRow
+    lda #>(pico_font_select + 35)
     sta AH
     lda #1
     sta D

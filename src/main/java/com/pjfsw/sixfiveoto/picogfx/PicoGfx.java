@@ -100,7 +100,7 @@ public class PicoGfx implements Drawable, Clockable, Resettable, Poker, Interrup
             chPos = (chPos+1) % message.length;
         }
         try {
-            loadBitmap("sixteencolors.jif", 0x10200);
+            //loadBitmap("sixteencolors.jif", 0x10200);
             loadSprite("spritedata.jif", 0x10000);
         } catch (IOException | URISyntaxException e) {
             e.printStackTrace();
@@ -123,30 +123,6 @@ public class PicoGfx implements Drawable, Clockable, Resettable, Poker, Interrup
         }
     }
 
-
-    private void loadBitmap(String filename, int loadAddress) throws URISyntaxException, IOException {
-        Jif jif = Jif.load(filename);
-
-        registers[BITMAP_HEIGHT] = jif.getHeight() & 0xff;
-        registers[BITMAP_HEIGHT+1] = jif.getHeight() >> 8;
-
-        System.arraycopy(jif.getPalette(), 0, registers, BITMAP_PALETTE, jif.getPalette().length);
-
-        int n = 0;
-        int width = Math.min(BITMAP_WIDTH_BYTES, jif.getWidth());
-        int xofs = (BITMAP_WIDTH_BYTES-width)/2;
-
-        for (int y = 0; y < jif.getHeight(); y++) {
-            for (int x = 0; x < width; x++) {
-                registers[loadAddress+y*BITMAP_WIDTH_BYTES+x+xofs] = jif.getData()[n];
-                n++;
-            }
-        }
-        registers[BITMAP_PTR] = (loadAddress>>1) & 0xff;
-        registers[BITMAP_PTR+1] = loadAddress>>9;
-        registers[BITMAP_START] = 0;
-        registers[BITMAP_START+1] = 2;
-    }
 
     private void init() {
         cycles = 0;
@@ -206,7 +182,7 @@ public class PicoGfx implements Drawable, Clockable, Resettable, Poker, Interrup
         int screenOffset = (registers[SCREEN_SELECT] & 1) << 13;
         int sy = (y + scrollY) & 0x1ff;
         int sy3 = sy>>3;
-        int font = registers[FONT_SELECT+sy3];
+        int font = registers[FONT_SELECT+sy3] % NUMBER_OF_FONTS;
         for (int x = 0; x < VISIBLE_WIDTH; x++) {
             int sx = (x + scrollX) & 0x1ff;
             int screenPos = screenOffset + (sy3 * CHARS_PER_LINE) + (sx>>3);
@@ -220,7 +196,10 @@ public class PicoGfx implements Drawable, Clockable, Resettable, Poker, Interrup
     }
 
     private void drawBitmap(WritableRaster raster, int y, int bitmapStart) {
-        int bitmapPtr = registers[BITMAP_PTR] + registers[BITMAP_PTR+1] << 8;
+        int bitmapPtr = registers[BITMAP_PTR] + (registers[BITMAP_PTR+1] << 8);
+        if (bitmapPtr > 0) {
+            System.out.printf("BitmapPtr = %04x%n", bitmapPtr);
+        }
         int bitmapRow = (y - bitmapStart - 512) & 0x1ff;
         int bitmapOffset = ((bitmapPtr << 1) + bitmapRow * BITMAP_WIDTH_BYTES);
         for (int x = 0; x < VISIBLE_WIDTH; x+=2) {
@@ -307,8 +286,8 @@ public class PicoGfx implements Drawable, Clockable, Resettable, Poker, Interrup
                 writePtr = (writePtr & 0x100FF) | (data<<8);
                 break;
             case REG_PAGE:
-                writePtr = (writePtr & 0x0FFFF) | ((data&0x80)<<9);
-                writePtr = (writePtr + (data & 0x7F)) & MEM_MASK;
+                writePtr = (writePtr & 0x0FFFF) | ((data&1)<<16);
+                //writePtr = (writePtr + (data & 0x7F)) & MEM_MASK;
                 break;
             default:
         }

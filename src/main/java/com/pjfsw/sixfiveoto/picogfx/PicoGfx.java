@@ -99,30 +99,7 @@ public class PicoGfx implements Drawable, Clockable, Resettable, Poker, Interrup
             registers[SCREEN1_OFFSET + SCREEN_OFFSET+i] = message[chPos];
             chPos = (chPos+1) % message.length;
         }
-        try {
-            //loadBitmap("sixteencolors.jif", 0x10200);
-            loadSprite("spritedata.jif", 0x11000);
-        } catch (IOException | URISyntaxException e) {
-            e.printStackTrace();
-        }
     }
-
-    private void loadSprite(String filename, int loadAddress) throws IOException, URISyntaxException {
-        Jif jif = Jif.load(filename);
-        if (jif.getWidth() != 16) {
-            throw new IllegalArgumentException("Sprites must be 16 pixels wide!");
-        }
-        for (int i = 0; i < jif.getData().length; i++) {
-            registers[loadAddress+i] = jif.getData()[i];
-        }
-        for (int i = 0; i < NUMBER_OF_SPRITES; i++) {
-            registers[SPRITE_PTR+i] = (loadAddress & 0xFFFF) >> 8;
-            registers[SPRITE_H+i] = jif.getHeight();
-            registers[SPRITE_X+i*2] = 12+i * 24;
-            registers[SPRITE_Y+i*2] = 33;
-        }
-    }
-
 
     private void init() {
         cycles = 0;

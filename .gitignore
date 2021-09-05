@@ -9,3 +9,6 @@ target/
 *.iml
 __pycache__
 .idea
+*.h
+*.png
+*.jpg

@@ -5,34 +5,55 @@
 #import "loadtarget.asm"
 
 .var jifTemplate = "Id=0,Width=1,Height=2,PaletteSize=4,Data=5"
-.var jif = LoadBinary("sixteencolors.jif", jifTemplate)
-.var width = jif.ugetWidth(0)
-.var height = (jif.ugetHeight(0)+(jif.ugetHeight(1)<<8))
+.var bmp_jif = LoadBinary("sixteencolors.jif", jifTemplate)
+.var bmp_width = bmp_jif.ugetWidth(0)
+.var bmp_height = (bmp_jif.ugetHeight(0)+(bmp_jif.ugetHeight(1)<<8))
+.var spr_jif = LoadBinary("spritedata.jif", jifTemplate)
+.var spr_width = spr_jif.ugetWidth(0)
+.var spr_height = (spr_jif.ugetHeight(0)+(spr_jif.ugetHeight(1)<<8))
 
 .label BITMAP_POINTER = $64c0
+.label SPRITE_POINTER = $11000
 .const ZP_PTR = $80
 
 * = LOAD_TARGET
 .pseudopc LOAD_TARGET {
 load_image:
     sei
+    jsr copy_bitmap
+    jsr copy_sprite
+    jsr copy_regs
+    rts
+
+copy_bitmap:
+    copy_image_data(pixels, BITMAP_POINTER, bmp_width, bmp_height, (200-bmp_width)/2)
+    rts
+
+copy_sprite:
+    copy_image_data(sprite, SPRITE_POINTER, 16, spr_height, 0)
+    rts
+
+.macro copy_image_data(src_addr,vram_addr,w,h,pad_pixels) {
     // Copy the image into VRAM
-    lda #0
+    lda #(vram_addr > $ffff ? 1 : 0)
     sta PAGE
-    lda #<BITMAP_POINTER
+    lda #<vram_addr
     sta AL
-    lda #>BITMAP_POINTER
+    lda #>vram_addr
     sta AH
     // Use zero page for source address
-    lda #<pixels
+    lda #<src_addr
     sta ZP_PTR
-    lda #>pixels
+    lda #>src_addr
     sta ZP_PTR+1
     // Rows in y and cols in x for simplicity
-    ldy #height
+    ldy #h
 !:
-    jsr padding
-    ldx #width
+    .if (pad_pixels > 0) {
+        ldx #pad_pixels
+        jsr padding
+    }
+    ldx #w
     {
     !:
         lda (ZP_PTR)
@@ -46,28 +67,34 @@ load_image:
         dex
         bne !-
     }
-    jsr padding
+    .if (pad_pixels > 0) {
+        ldx #pad_pixels
+        jsr padding
+    }
 
     dey
     bne !-
 
+}
+
+copy_regs:
     stz PAGE
-    lda #<pico_bitmap_start
+    lda #<pico_sprite_x
     sta AL
-    lda #>pico_bitmap_start
+    lda #>pico_sprite_x
     sta AH
     ldx #0
 !:
-    lda bitmap_start,x
+    lda reg_start,x
     sta D
     inx
-    cpx #22
+    cpx #reg_length
     bne !-
     rts
 
 padding:
     // Pad rest of line with zero in a stupid and inefficient way
-    ldx #(200-width)/2
+    //ldx #(200-bmp_width)/2
     {
     !:
         stz D
@@ -76,15 +103,29 @@ padding:
     }
     rts
 
+sprite:
+    .print "Sprite width * height = " + spr_width + " * " + spr_height
+    .fill spr_width * spr_height, spr_jif.getData(i+spr_jif.getPaletteSize(0))
+
 pixels:
-    .print "Width * Height = " + width + " * " + height
-    .fill width * height, jif.getData(i+jif.getPaletteSize(0))
+    .print "Width * Height = " + bmp_width + " * " + bmp_height
+    .fill bmp_width * bmp_height, bmp_jif.getData(i+bmp_jif.getPaletteSize(0))
+reg_start:
+spr_x:
+    .fillword pico_no_of_sprites, 12 + i * 24
+    .fillword pico_no_of_sprites, 33
+    .fill pico_no_of_sprites, 24
+    .fill pico_no_of_sprites, SPRITE_POINTER>>8
+    .word 0 // scroll-y
+    .word 0 // scroll-x
+    .byte 0 // screen-select
+    .fill 5,0 // reserved
 bitmap_start:
     .word 528           // first visible row
-    .word height        // bitmap height
+    .word bmp_height   // bitmap height
     .byte <(BITMAP_POINTER/2), >(BITMAP_POINTER/2)  // bitmap pointer in video RAM
 palette:
-    .fill 16,jif.getData(i)
-
+    .fill 16,bmp_jif.getData(i)
+.label reg_length=*-reg_start
 }
 

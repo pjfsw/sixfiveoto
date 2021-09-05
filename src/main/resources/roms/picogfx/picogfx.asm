@@ -35,6 +35,7 @@
 #import "string.asm"
 
 start:
+    jsr initTheDerpes
     jsr setupPorts
     jsr copyIrq
     jmp *
@@ -60,6 +61,40 @@ start:
     jsr parseCommand
     jmp !-
 
+initTheDerpes:
+    lda #0
+    ldx #15
+!:
+    sta sinPos,x
+    clc
+    adc #2
+    dex
+    bne !-
+
+    .const fontRow = $6480+35
+    .const fontAddress = $5000+(32*16)
+
+    // Poke a custom font value in font 1
+    lda #<fontAddress
+    sta AL
+    lda #>fontAddress
+    sta AH
+    ldx #255
+    lda #$f0
+!:
+    sta D
+    dex
+    bne !-
+
+
+    // Set a different font for row 35
+    lda #<fontRow
+    sta AL
+    lda #>fontRow
+    sta AH
+    lda #1
+    sta D
+    rts
 copyIrq: // IRQ vector is hardwired to point at RAM address so we need to copy ours to RAM
     ldx #0
 !:
@@ -249,18 +284,23 @@ rowToPixelLo:
     .fill 64,<(i*8)
 rowToPixelHi:
     .fill 64,>(i*8)
-
+sinTableLo:
+    .fill 256, <(300+100*sin(i*PI/128))
+sinTableHi:
+    .fill 256, >(300+100*sin(i*PI/128))
 
 .macro scrollX(address) {
-    lda #$32
+    lda #$62
     sta AL
-    lda #$d0
+    lda #$64
     sta AH
     lda address
     sta D
     lda address+1
     sta D
 }
+
+.const SPRITE_Y = $6420;
 
 irqSource:
 .pseudopc IRQ {
@@ -274,6 +314,36 @@ irq:
     inc scrollOffset+1
 !:
     scrollX(scrollOffset);
+
+    lda #<SPRITE_Y
+    sta AL
+    lda #>SPRITE_Y
+    sta AH
+
+    ldx #15
+!:
+    inc sinPos,x
+    lda sinPos,x
+    tay
+    lda sinTableLo,y
+    sta D
+    lda sinTableHi,y
+    sta D
+    dex
+    bne !-
+
+    .const screenSelectReg = $06464;
+    lda #<screenSelectReg
+    sta AL
+    lda #>screenSelectReg
+    sta AH
+    inc screenSelect
+    lda screenSelect
+    rol
+    rol
+    and #1
+    sta D
+
 
     ldx irqX
     ldy irqY
@@ -340,3 +410,7 @@ argument2:
     .fill MAX_LINE_LENGTH,0
 argumentLength:
     .byte 0,0
+screenSelect:
+    .byte 0
+sinPos:
+    .fill 16,i

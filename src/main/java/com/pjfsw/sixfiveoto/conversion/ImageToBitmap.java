@@ -42,7 +42,7 @@ public class ImageToBitmap {
         }
         consumers = new ArrayList<>();
         consumers.add(new HeaderFileConsumer(name));
-        consumers.add(new BinFileConsumer(name));
+        consumers.add(new JifFileConsumer(name));
 
         File jpg = new File(args[0]+".jpg");
         File png = new File(args[0]+".png");
@@ -105,6 +105,21 @@ public class ImageToBitmap {
         Map<Integer,Integer> colorFrequency = getColorFrequency(img);
         List<Integer> rgbList = new ArrayList<>(colorFrequency.keySet());
         rgbList.sort(Comparator.comparingInt(key -> -colorFrequency.get(key)));
+        // Swap darkest color to be 0
+        int darkest = Integer.MAX_VALUE;
+        int index = 0;
+        for (int i = 0; i < rgbList.size(); i++) {
+            if (rgbList.get(i) < darkest) {
+                index = i;
+                darkest = rgbList.get(i);
+            }
+        }
+        if (index > 0) {
+            int tmp = rgbList.get(0);
+            rgbList.set(0, rgbList.get(index));
+            rgbList.set(index, tmp);
+        }
+
         for (int i = 0; i < 16; i++) {
             colors.put(rgbList.get(i), i);
         }

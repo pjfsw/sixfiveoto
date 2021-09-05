@@ -14,7 +14,7 @@ public class PngToSprite {
         int w = Integer.parseInt(args[1]);
         int h = Integer.parseInt(args[2]);
         List<OutputConsumer> consumers = new ArrayList<>();
-        consumers.add(new BinFileConsumer(name));
+        consumers.add(new JifFileConsumer(name));
         consumers.add(new HeaderFileConsumer(name));
 
         try {

@@ -7,11 +7,11 @@ import java.util.List;
 
 import com.google.common.io.Files;
 
-public class BinFileConsumer extends OutputConsumerAdapter {
+public class JifFileConsumer extends OutputConsumerAdapter {
     private final String name;
     private List<Byte> pixelData = new ArrayList<>();
 
-    public BinFileConsumer(String name) {
+    public JifFileConsumer(String name) {
         this.name = name;
 
     }
@@ -41,6 +41,6 @@ public class BinFileConsumer extends OutputConsumerAdapter {
         for (Byte b : pixelData) {
             buffer[n++] = b;
         }
-        Files.write(buffer, new File(name+".jfi"));
+        Files.write(buffer, new File(name+".jif"));
     }
 }

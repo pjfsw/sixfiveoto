@@ -60,4 +60,8 @@ load_rom:
     sta LOAD_PTR_ZP+1
     cmp #$80            // load 32k
     bne !-
+
+    lda #$ff           // Unselect ROM
+    sta SS_PORT
+
     rts

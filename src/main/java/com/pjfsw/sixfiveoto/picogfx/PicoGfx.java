@@ -5,8 +5,9 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.Arrays;
+
+import javax.imageio.ImageIO;
 
 import com.pjfsw.sixfiveoto.addressables.Clockable;
 import com.pjfsw.sixfiveoto.addressables.Drawable;
@@ -60,8 +61,8 @@ public class PicoGfx implements Drawable, Clockable, Resettable, Poker, Interrup
     private static final int SPRITE_DATA    = 0x10000;
 
 
-    private final int[] font;
     private final BufferedImage img;
+    private final BufferedImage fontImage;
     private int writePtr = 0;
     private int cycles;
     private static final int COLORS = 64;
@@ -70,17 +71,36 @@ public class PicoGfx implements Drawable, Clockable, Resettable, Poker, Interrup
     private static final int[] COLOR_VALUES_2BIT = {0,85,170,255};
     private boolean irq;
 
-    public PicoGfx(int systemSpeed, int[] font)  {
+    public PicoGfx(int systemSpeed) throws IOException {
+        fontImage = ImageIO.read(getClass().getResource("font.png"));
+        if (fontImage.getWidth() != 128 && fontImage.getHeight() != 128) {
+            throw new IllegalArgumentException("Expected font.png to be 128x128");
+        }
         img = new BufferedImage(VISIBLE_WIDTH, VISIBLE_HEIGHT, BufferedImage.TYPE_INT_ARGB);
         this.cyclesPerFrame = systemSpeed/60;
-        this.font = font;
         init();
+    }
+
+    private void createFont() {
+        Arrays.fill(registers, FONT_OFFSET, FONT_OFFSET+0x1000, 0);
+
+        for (int y = 0; y < 128; y++) {
+            for (int x = 0; x < 128; x++) {
+                int pixel = fontImage.getRGB(x,y);
+                if (pixel < 0) {
+                    int tileOffset = (((y >> 3) << 4) + (x >> 3)) << 4;
+                    int tileByte = ((y & 7)<<1) + ((x>>2)&1);
+                    int shift = (3-(x&3))<<1;
+                    registers[FONT_OFFSET+tileOffset+tileByte] |= (1 << shift);
+                }
+            }
+        }
     }
 
     private void init_test() {
         int c=0;
         for (int i = 0; i < 256; i++) {
-            registers[SCREEN_PALETTE+i*4] = (c)&63;
+            registers[SCREEN_PALETTE+i*4] = 0;
             registers[SCREEN_PALETTE+i*4+1] = (c+1)&63;
             registers[SCREEN_PALETTE+i*4+2] = (c+2)&63;
             registers[SCREEN_PALETTE+i*4+3] = (c+3)&63;
@@ -104,7 +124,7 @@ public class PicoGfx implements Drawable, Clockable, Resettable, Poker, Interrup
     private void init() {
         cycles = 0;
         Arrays.fill(registers, 0);
-        System.arraycopy(font, 0, registers, FONT_OFFSET, font.length);
+        createFont();
         writePtr = 0;
         for (int font = 0; font < NUMBER_OF_FONTS; font++) {
             for (int i = 0; i < 256; i++) {

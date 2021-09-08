@@ -341,7 +341,7 @@ irq:
     dex
     bpl !-
 
-    .const screenSelectReg = $06464;
+    /*.const screenSelectReg = $06464;
     lda #<screenSelectReg
     sta AL
     lda #>screenSelectReg
@@ -351,7 +351,7 @@ irq:
     rol
     rol
     and #1
-    sta D
+    sta D*/
 
 
     ldx irqX

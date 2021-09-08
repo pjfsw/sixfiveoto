@@ -119,8 +119,7 @@ public final class PartCreator {
     }
 
     private static Part createPicoGfx(Config properties) throws IOException {
-        int [] font = readDump("src/main/resources/dumps/font.txt");
-        PicoGfx picoGfx = new PicoGfx(ClockspeedGetter.getClockSpeed(properties), font);
+        PicoGfx picoGfx = new PicoGfx(ClockspeedGetter.getClockSpeed(properties));
         return Part.builder(PartType.PICOGFX)
             .withPoker(picoGfx)
             .withClockable(picoGfx)

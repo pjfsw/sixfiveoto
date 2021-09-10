@@ -55,7 +55,7 @@ public class SixFiveOTo {
     private final List<Keyboard> keyboards = new ArrayList<>();
     private int runUntilPc = -1;
 
-    private SixFiveOTo(Config properties)
+    private SixFiveOTo(Config properties, int scaling)
         throws IOException, InterruptedException
     {
         executorService =
@@ -104,7 +104,7 @@ public class SixFiveOTo {
             }
         }
 
-        screen = new Screen(cpuStatistics);
+        screen = new Screen(cpuStatistics, scaling);
 
         // Add  the reset normally
         for (Entry<String, Part> entry : collectedParts.entrySet()) {
@@ -356,13 +356,18 @@ public class SixFiveOTo {
 
     public static void main(String[] args) {
         System.out.println("[SixFiveOTo starting]");
-        if (args.length != 1) {
+        if (args.length < 1) {
             System.out.println("You must provide a properties file on command line!");
             System.exit(1);
         }
+        String propertiesFile = args[0];
+        int scaling = 1;
+        if (args.length > 1 && args[1].equalsIgnoreCase("doublesize")) {
+            scaling = 2;
+        }
         try {
-            Config properties = Config.createFromFile(args[0]);
-            new SixFiveOTo(properties).start(true);
+            Config properties = Config.createFromFile(propertiesFile);
+            new SixFiveOTo(properties, scaling).start(true);
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
             System.exit(1);

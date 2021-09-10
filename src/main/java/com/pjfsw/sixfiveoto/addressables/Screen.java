@@ -22,12 +22,14 @@ public class Screen {
     private final int topOffset;
     private final int bottomOffset;
     private final int rightOffset;
+    private final int scaling;
     private volatile boolean running = true;
     private int fps = 0;
     private final List<PositionedDrawable> drawables = new ArrayList<>();
 
-    public Screen(CpuStatistics cpuStatistics) {
+    public Screen(CpuStatistics cpuStatistics, int scaling) {
         this.cpuStatistics = cpuStatistics;
+        this.scaling = scaling;
 
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
         GraphicsDevice[] gs = ge.getScreenDevices();
@@ -45,7 +47,7 @@ public class Screen {
         topOffset = insets.top;
         bottomOffset = insets.bottom;
         rightOffset = insets.right;
-        frame.setPreferredSize(new Dimension(W+leftOffset+rightOffset ,H+topOffset+bottomOffset));
+        frame.setPreferredSize(new Dimension(scaling*W+leftOffset+rightOffset ,scaling*H+topOffset+bottomOffset));
         frame.pack();
         frame.setLocationRelativeTo(null);
 
@@ -88,10 +90,12 @@ public class Screen {
                 frameTime -= 1000;
             }
             Graphics graphics = strategy.getDrawGraphics();
-            graphics.setColor(Color.BLACK);
-            graphics.translate(leftOffset, topOffset);
-            graphics.fillRect(0,0,W,H);
-            draw(graphics);
+            Graphics2D g2 = (Graphics2D)graphics;
+            g2.setColor(Color.BLACK);
+            g2.translate(leftOffset, topOffset);
+            g2.scale(scaling, scaling);
+            g2.fillRect(0,0,W,H);
+            draw(g2);
             graphics.dispose();
             frames++;
             strategy.show();

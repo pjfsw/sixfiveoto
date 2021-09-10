@@ -68,7 +68,7 @@ public class PicoGfx implements Drawable, Clockable, Resettable, Poker, Interrup
     private static final int COLORS = 64;
     private static final int COLOR_MASK = COLORS-1;
     private final Rgba[] colorDac = new Rgba[COLORS];
-    private static final int[] COLOR_VALUES_2BIT = {0,85,170,255};
+    private static final int[] COLOR_VALUES_2BIT = {0,80,170,255};
     private boolean irq;
 
     public PicoGfx(int systemSpeed) throws IOException {
@@ -137,7 +137,7 @@ public class PicoGfx implements Drawable, Clockable, Resettable, Poker, Interrup
             int b = i & 3;
             colorDac[i] = new Rgba(COLOR_VALUES_2BIT[r], COLOR_VALUES_2BIT[g], COLOR_VALUES_2BIT[b],255);
         }
-        init_test();
+        //init_test();
     }
 
     private void createTile(int font, int i) {

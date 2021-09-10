@@ -11,8 +11,6 @@
 
 .const SCROLL_LIMIT=36
 
-.const BGCOLOR = %000110
-.const DERPESCOLOR = %111111
 .const MAX_LINE_LENGTH = 47
 
 .const SPI_VIA = $c800
@@ -34,12 +32,11 @@
 #import "loader.asm"
 start:
     jsr setupPorts
-    jsr load_rom
-    jsr LOAD_TARGET
-    jsr initTheDerpes
+    //jsr load_rom
+    //jsr LOAD_TARGET
+    //jsr initTheDerpes
     jsr copyIrq
-    jmp *
-/*
+
     jsr startupScreen
 
     lda #$80
@@ -60,7 +57,7 @@ start:
     jsr readline
     jsr parseCommand
     jmp !-
-*/
+
 initTheDerpes:
     lda #0
     ldx #15
@@ -105,8 +102,19 @@ copyIrq: // IRQ vector is hardwired to point at RAM address so we need to copy o
     rts
 
 startupScreen:
-    lda #DERPESCOLOR
-    sta textColor
+    lda #<pico_screen_pal
+    sta AL
+    lda #>pico_screen_pal
+    sta AH
+    lda #%000000
+    sta D
+    lda #%101010
+    sta D
+    stz D
+    stz D
+    lda #%101010
+    sta D
+    stz D
 
     jsr clearScreen
 
@@ -114,27 +122,31 @@ startupScreen:
     ldy #>message
     lda #messageLength
     jsr printLine
-    rts
 
-fillPage:
-    stz AX
-    stz AY
-
-    ldx #15
-!:
-    ldy #0
-    {
-    !:
-        sta D
-        iny
-        bne !-
-    }
-    dex
-    bpl !-
+    ldx #<message2
+    ldy #>message2
+    lda #message2Length
+    jsr printLine
     rts
 
 .print "Clearscreen = " + toHexString(*)
 clearScreen:
+    lda #<pico_scr_0
+    sta AL
+    lda #>pico_scr_0
+    sta AH
+    ldx #32     // Clean 8192 bytes of VRAM = palette 0
+!:
+    ldy #0
+    {
+    !:
+        stz D
+        dey
+        bne !-
+    }
+    dex
+    bne !-
+
     rts
 
 argToHex:
@@ -232,8 +244,6 @@ printPeekAddress:
     ply
     rts
 
-
-
 callAddress:
     jsr argToHex
     bcc !+
@@ -242,22 +252,6 @@ callAddress:
     stx ioAddress
     sty ioAddress+1
     jmp (ioAddress)
-
-setBgColor:
-    /*jsr argToHex
-    bcc !+
-    jmp valueError
-!:
-    stx SCR_BG*/
-    rts
-
-setFgColor:
-    jsr argToHex
-    bcc !+
-    jmp valueError
-!:
-    stx textColor
-    rts
 
 setupPorts:
     stz SPI_PORT
@@ -273,6 +267,10 @@ message:
     .text "JOFMODORE 1.0 (C) 2020-2021 Johan Fransson"
 .label messageLength = *-message
     .byte 0
+
+message2:
+    .text "JOFDOS 1.0"
+.label message2Length = *-message2
 
 valueErrMsg:
     .text "Argument must be 1-4 byte hex!"
@@ -310,6 +308,8 @@ irq:
 
     lda #0
     sta PAGE
+    /*lda #0
+    sta PAGE
     lda #<pico_bitmap_start
     sta AL
     lda #>pico_bitmap_start
@@ -339,20 +339,7 @@ irq:
     lda sinTableHi,y
     sta D
     dex
-    bpl !-
-
-    /*.const screenSelectReg = $06464;
-    lda #<screenSelectReg
-    sta AL
-    lda #>screenSelectReg
-    sta AH
-    inc screenSelect
-    lda screenSelect
-    rol
-    rol
-    and #1
-    sta D*/
-
+    bpl !-*/
 
     ldx irqX
     ldy irqY

@@ -23,11 +23,7 @@ nextKey:
     stx readBufferSize
     //stz readBuffer,x
     dec cursorX
-    stz PAGE
-    lda cursorX
-    sta AX
-    lda cursorY
-    sta AY
+    jsr setPosition
     lda #' '
     sta D
     jmp nextKey
@@ -39,11 +35,7 @@ nextKey:
     sta readBuffer,x
 
     jsr restoreCursor
-    lda cursorX
-    sta AX
-    lda cursorY
-    sta AY
-    stz PAGE
+    jsr setPosition
     lda readBuffer,x
     sta D
     inx
@@ -62,14 +54,8 @@ clearBuffer:
     rts
 
 restoreCursor:
-    lda #COLOR_PAGE
-    sta PAGE
-    lda cursorX
-    sta AX
-    lda cursorY
-    sta AY
-    lda textColor
-    sta D
+    jsr setColorPosition
+    stz D
     rts
 
 moveCursor:
@@ -78,17 +64,7 @@ moveCursor:
 
 
 updateCursor:
-    lda #COLOR_PAGE
-    sta PAGE
-    lda cursorX
-    sta AX
-    lda cursorY
-    sta AY
-    lda cursorBlink
-    asl
-    asl
-    asl
-    and #$80
-    ora textColor
+    jsr setColorPosition
+    lda #1
     sta D
     rts

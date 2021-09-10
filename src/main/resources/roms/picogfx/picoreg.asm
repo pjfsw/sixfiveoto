@@ -13,6 +13,7 @@
 .const pico_col_1         = $3000
 .const pico_font_0        = $4000
 .const pico_font_1        = $5000
+.const pico_screen_pal    = $6000
 .const pico_font_select   = $6480
 .const pico_sprite_x      = $6400
 .const pico_sprite_y      = $6420

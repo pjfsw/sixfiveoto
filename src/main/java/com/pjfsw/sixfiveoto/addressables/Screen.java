@@ -20,14 +20,12 @@ public class Screen {
     private final Font font;
     private final int leftOffset;
     private final int topOffset;
-    private final int bottomOffset;
-    private final int rightOffset;
-    private final int scaling;
+    private final float scaling;
     private volatile boolean running = true;
     private int fps = 0;
     private final List<PositionedDrawable> drawables = new ArrayList<>();
 
-    public Screen(CpuStatistics cpuStatistics, int scaling) {
+    public Screen(CpuStatistics cpuStatistics, float scaling) {
         this.cpuStatistics = cpuStatistics;
         this.scaling = scaling;
 
@@ -45,9 +43,12 @@ public class Screen {
         Insets insets = frame.getInsets();
         leftOffset = insets.left;
         topOffset = insets.top;
-        bottomOffset = insets.bottom;
-        rightOffset = insets.right;
-        frame.setPreferredSize(new Dimension(scaling*W+leftOffset+rightOffset ,scaling*H+topOffset+bottomOffset));
+        int bottomOffset = insets.bottom;
+        int rightOffset = insets.right;
+        frame.setPreferredSize(new Dimension(
+            (int)(scaling*W)+leftOffset + rightOffset,
+            (int)(scaling*H)+topOffset + bottomOffset)
+        );
         frame.pack();
         frame.setLocationRelativeTo(null);
 

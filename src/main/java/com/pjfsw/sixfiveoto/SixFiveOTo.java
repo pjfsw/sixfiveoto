@@ -55,7 +55,7 @@ public class SixFiveOTo {
     private final List<Keyboard> keyboards = new ArrayList<>();
     private int runUntilPc = -1;
 
-    private SixFiveOTo(Config properties, int scaling)
+    private SixFiveOTo(Config properties, float scaling)
         throws IOException, InterruptedException
     {
         executorService =
@@ -361,9 +361,11 @@ public class SixFiveOTo {
             System.exit(1);
         }
         String propertiesFile = args[0];
-        int scaling = 1;
-        if (args.length > 1 && args[1].equalsIgnoreCase("doublesize")) {
-            scaling = 2;
+        float scaling = 1;
+        String scaleParam = "scale:";
+        if (args.length > 1 && args[1].startsWith(scaleParam)) {
+            String[] scaleParts = args[1].split(":");
+            scaling = Float.parseFloat(scaleParts[1]);
         }
         try {
             Config properties = Config.createFromFile(propertiesFile);

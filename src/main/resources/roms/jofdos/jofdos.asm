@@ -21,20 +21,20 @@
 
 * = $E000 "ROM"
 
-.const BGCOLOR = %000000
-.const TEXTCOLOR = %101010
+.const BGCOLOR = %010101
+.const TEXTCOLOR = %111111
 
+#import "dir.asm"
 #import "picoreg.asm"
 #import "readline.asm"
 #import "print.asm"
 #import "command.asm"
 #import "string.asm"
 #import "loader.asm"
+
+
 start:
     jsr setupPorts
-    //jsr load_rom
-    //jsr LOAD_TARGET
-    //jsr initTheDerpes
     jsr copyIrq
 
     jsr startupScreen
@@ -52,38 +52,6 @@ start:
     jsr parseCommand
     jmp !-
 
-initTheDerpes:
-    lda #0
-    ldx #15
-!:
-    sta sinPos,x
-    clc
-    adc #2
-    dex
-    bne !-
-
-
-    // Poke a custom font value in font 1
-    lda #<(pico_font_1 + 16 * 32)
-    sta AL
-    lda #>(pico_font_1 + 16 * 32)
-    sta AH
-    ldx #255
-    lda #$f0
-!:
-    sta D
-    dex
-    bne !-
-
-
-    // Set a different font for row 35
-    lda #<(pico_font_select + 35)
-    sta AL
-    lda #>(pico_font_select + 35)
-    sta AH
-    lda #1
-    sta D
-    rts
 copyIrq: // IRQ vector is hardwired to point at RAM address so we need to copy ours to RAM
     ldx #0
 !:
@@ -162,7 +130,7 @@ clearScreen:
     stz D
     stz D
     stz D
-    
+
     stz cursorX
     stz cursorY
     lda #<pico_scroll_y
@@ -357,7 +325,17 @@ ioCount:
     .byte 0
 peekAddress:
     .word 0
- }
+loadSource:
+    .word 0
+loadTarget:
+    .word 0
+loadCount:
+    .byte 0
+stringSource:
+    .word 0
+stringTarget:
+    .word 0
+}
 
 *=$0200 "Monitor RAM space" virtual
 irqX:
@@ -398,7 +376,3 @@ argument2:
     .fill MAX_LINE_LENGTH,0
 argumentLength:
     .byte 0,0
-screenSelect:
-    .byte 0
-sinPos:
-    .fill 16,i

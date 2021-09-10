@@ -1,8 +1,8 @@
 .cpu _65c02
 .encoding "ascii"
 
-#import "picoreg.asm"
-#import "loadtarget.asm"
+#import "../picoreg.asm"
+#import "../loadtarget.asm"
 
 .var jifTemplate = "Id=0,Width=1,Height=2,PaletteSize=4,Data=5"
 .var bmp_jif = LoadBinary("sixteencolors.jif", jifTemplate)
@@ -16,8 +16,30 @@
 .label SPRITE_POINTER = $11000
 .const ZP_PTR = $80
 
-* = LOAD_TARGET
+/*
+  Filesystem v0.1
+  2 bytes diskoffset in 256 byte sectors
+  14 byte filename
+  Filename starts with 0 => no more files
+
+  A program starts with the following header
+  1 byte header "X"  for executable, will autostart after load
+  1 byte number of 256-bytes to load
+  1 byte target page in memory HEADER INCLUDE, autostart occurs at load address + 3
+*/
+* = $0000
+.byte 1
+.text "ImageTest"
+.align 16
+.byte 0,0
+
+* = $0200
 .pseudopc LOAD_TARGET {
+.byte $58  // "X"
+.byte >(image_test_length)
+.byte >LOAD_TARGET
+
+image_test_start:
 load_image:
     jsr copy_bitmap
     jsr copy_sprite
@@ -126,5 +148,7 @@ bitmap_start:
 palette:
     .fill 16,bmp_jif.getData(i)
 .label reg_length=*-reg_start
+    .align $100
+.label image_test_length = *-image_test_start
 }
 

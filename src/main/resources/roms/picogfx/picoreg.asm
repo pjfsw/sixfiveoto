@@ -4,6 +4,8 @@
 .const PAGE = $c001
 .const AH = $c003
 .const AL = $c002
+.const SAVEADDR = $c006
+.const RESTADDR = $c007
 
 .const pico_no_of_sprites = 16
 

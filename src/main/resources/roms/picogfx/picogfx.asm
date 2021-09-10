@@ -24,6 +24,7 @@
 #import "picoreg.asm"
 .const AY = AH
 .const AX = AL
+.const TEXTCOLOR = %011011
 
 #import "readline.asm"
 #import "print.asm"
@@ -39,14 +40,8 @@ start:
 
     jsr startupScreen
 
-    lda #$80
-    sta PAGE
-    lda #$08
-    sta AY
-    lda #$ff
-    sta D
     stz cursorX
-    lda #1
+    lda #2
     sta cursorY
 
 !:
@@ -108,16 +103,17 @@ startupScreen:
     sta AH
     lda #%000000
     sta D
-    lda #%101010
+    lda #TEXTCOLOR
     sta D
     stz D
     stz D
-    lda #%101010
+    lda #TEXTCOLOR
     sta D
     stz D
 
     jsr clearScreen
 
+    jsr setPosition
     ldx #<message
     ldy #>message
     lda #messageLength
@@ -146,7 +142,15 @@ clearScreen:
     }
     dex
     bne !-
-
+    stz cursorX
+    stz cursorY
+    lda #<pico_scroll_y
+    sta AL
+    lda #>pico_scroll_y
+    sta AH
+    stz D
+    stz D
+    stz scrollOffset
     rts
 
 argToHex:
@@ -269,7 +273,7 @@ message:
     .byte 0
 
 message2:
-    .text "JOFDOS 1.0"
+    .text "Welcome to JOFDOS"
 .label message2Length = *-message2
 
 valueErrMsg:
@@ -305,42 +309,11 @@ irq:
     stx irqX
     sty irqY
     sta irqA
+    sta SAVEADDR
 
-    lda #0
-    sta PAGE
-    /*lda #0
-    sta PAGE
-    lda #<pico_bitmap_start
-    sta AL
-    lda #>pico_bitmap_start
-    sta AH
-    ldy sinPos
-    lda bmpSinTable,y
-    sta D
+    inc cursorBlink
 
-    inc scrollOffset
-    bne !+
-    inc scrollOffset+1
-!:
-    scrollX(scrollOffset);
-
-    lda #<pico_sprite_y
-    sta AL
-    lda #>pico_sprite_y
-    sta AH
-
-    ldx #15
-!:
-    inc sinPos,x
-    lda sinPos,x
-    tay
-    lda sinTableLo,y
-    sta D
-    lda sinTableHi,y
-    sta D
-    dex
-    bpl !-*/
-
+    sta RESTADDR
     ldx irqX
     ldy irqY
     lda irqA

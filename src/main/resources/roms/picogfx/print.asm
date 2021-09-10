@@ -27,15 +27,14 @@ updateScrollOffset:
     rts
 
 printLine:
-    lda #1
-    sta cursorX
     jsr print
     jmp linefeed
 
 printChar:
-    tax
+    pha
     jsr setPosition
-    stx D
+    pla
+    sta D
     inc cursorX
     rts
 
@@ -72,40 +71,47 @@ print:
 !:
     rts
 
-linefeed:
-    stz cursorX
-    clc
-    lda cursorY
-    adc #1
-    sta cursorY
-    jsr setPosition
-    lda #' '
+fillLine:
     ldx #64
 !:
     sta D
     dex
     bne !-
+    rts
 
+linefeed:
+    stz cursorX
+    clc
+    lda cursorY
+    adc #1
+    and #63
+    sta cursorY
+    jsr setPosition
+    lda #' '
+    jsr fillLine
+
+    jsr setColorPosition
+    lda #0
+    jsr fillLine
     jmp updateScrollOffset
 
-setPosition:
-    clc
+.macro setVramPosition(lowTable, highTable) {
     ldx cursorY
-    lda yToScreenLo,x
+    clc
+    lda lowTable,x
     adc cursorX
     sta AL
-    adc yToScreenHi,x
+    lda #0
+    adc highTable,x
     sta AH
+}
+
+setPosition:
+    setVramPosition(yToScreenLo, yToScreenHi)
     rts
 
 setColorPosition:
-    clc
-    ldx cursorY
-    lda yToColorLo,x
-    adc cursorX
-    sta AL
-    adc yToColorHi,x
-    sta AH
+    setVramPosition(yToColorLo, yToColorHi)
     rts
 
 yToScreenLo:

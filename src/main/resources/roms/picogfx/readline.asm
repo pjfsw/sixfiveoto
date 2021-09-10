@@ -11,8 +11,7 @@ nextKey:
     cmp #KEY_ENTER
     bne !+
     jsr restoreCursor
-    jsr linefeed
-    rts
+    jmp linefeed
 !:
     cmp #KEY_BACKSPACE
     bne !+
@@ -34,8 +33,10 @@ nextKey:
 
     sta readBuffer,x
 
+    phx
     jsr restoreCursor
     jsr setPosition
+    plx
     lda readBuffer,x
     sta D
     inx
@@ -65,6 +66,11 @@ moveCursor:
 
 updateCursor:
     jsr setColorPosition
-    lda #1
+    lda cursorBlink
+    lsr
+    lsr
+    lsr
+    lsr
+    and #1
     sta D
     rts

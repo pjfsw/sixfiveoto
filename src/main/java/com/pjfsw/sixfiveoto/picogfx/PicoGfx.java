@@ -27,6 +27,8 @@ public class PicoGfx implements Drawable, Clockable, Resettable, Poker, Interrup
     private static final int REG_PAGE = 1;
     private static final int REG_AL = 2;
     private static final int REG_AH = 3;
+    private static final int REG_SAVE_ADDR = 6;
+    private static final int REG_RESTORE_ADDR = 7;
 
     private static final int SPRITE_LEFT_OFFSET = -16;
     private static final int SPRITE_TOP_OFFSET = -112;
@@ -70,6 +72,7 @@ public class PicoGfx implements Drawable, Clockable, Resettable, Poker, Interrup
     private final Rgba[] colorDac = new Rgba[COLORS];
     private static final int[] COLOR_VALUES_2BIT = {0,80,170,255};
     private boolean irq;
+    private int savedWritePtr;
 
     public PicoGfx(int systemSpeed) throws IOException {
         fontImage = ImageIO.read(getClass().getResource("font.png"));
@@ -241,10 +244,6 @@ public class PicoGfx implements Drawable, Clockable, Resettable, Poker, Interrup
 
         int bitmapStart = registers[BITMAP_START] + (registers[BITMAP_START+1] << 8)-512;
         int bitmapHeight = registers[BITMAP_HEIGHT] + (registers[BITMAP_HEIGHT+1] << 8);
-        /*if (bitmapStart > 0) {
-            System.out.printf("BitmapPtr = %04x, BitmapStart = %04x, BitmapHeight = %04x%n",
-                getBitmapPtr(), bitmapStart, bitmapHeight);
-        }*/
 
         for (int y = 0; y < VISIBLE_HEIGHT; y++) {
             if (y >= bitmapStart && y < bitmapStart+bitmapHeight) {
@@ -291,6 +290,12 @@ public class PicoGfx implements Drawable, Clockable, Resettable, Poker, Interrup
             case REG_PAGE:
                 writePtr = (writePtr & 0x0FFFF) | ((data&1)<<16);
                 //writePtr = (writePtr + (data & 0x7F)) & MEM_MASK;
+                break;
+            case REG_SAVE_ADDR:
+                savedWritePtr = writePtr;
+                break;
+            case REG_RESTORE_ADDR:
+                writePtr = savedWritePtr;
                 break;
             default:
         }

@@ -18,6 +18,7 @@ public class SourceLoader {
             System.exit(1);
         }
 
+        System.out.printf("[Assembling \"%s\"%n", source);
         Process ps = Runtime.getRuntime().exec(ArrayUtils.addAll(assembler.split(" "), source));
         int result = ps.waitFor();
         InputStream is = ps.getInputStream();

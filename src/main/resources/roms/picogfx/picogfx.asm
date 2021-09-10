@@ -21,11 +21,10 @@
 
 * = $E000 "ROM"
 
-#import "picoreg.asm"
-.const AY = AH
-.const AX = AL
-.const TEXTCOLOR = %011011
+.const BGCOLOR = %010101
+.const TEXTCOLOR = %111111
 
+#import "picoreg.asm"
 #import "readline.asm"
 #import "print.asm"
 #import "command.asm"
@@ -101,14 +100,17 @@ startupScreen:
     sta AL
     lda #>pico_screen_pal
     sta AH
-    lda #%000000
-    sta D
-    lda #TEXTCOLOR
-    sta D
+    ldx #BGCOLOR
+    ldy #TEXTCOLOR
+    // First color palette is text color on background color
+    stx D
+    sty D
     stz D
     stz D
-    lda #TEXTCOLOR
-    sta D
+    // Second palette is reversed
+    sty D
+    stx D
+    stz D
     stz D
 
     jsr clearScreen
@@ -268,12 +270,12 @@ setupPorts:
     rts
 
 message:
-    .text "JOFMODORE 1.0 (C) 2020-2021 Johan Fransson"
+    .text "JOFMODORE/JOFDOS 1.0"
 .label messageLength = *-message
     .byte 0
 
 message2:
-    .text "Welcome to JOFDOS"
+    .text "Copyright 2020-2021 PJFSW"
 .label message2Length = *-message2
 
 valueErrMsg:

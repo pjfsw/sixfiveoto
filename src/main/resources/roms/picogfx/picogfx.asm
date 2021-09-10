@@ -21,8 +21,8 @@
 
 * = $E000 "ROM"
 
-.const BGCOLOR = %010101
-.const TEXTCOLOR = %111111
+.const BGCOLOR = %000000
+.const TEXTCOLOR = %101010
 
 #import "picoreg.asm"
 #import "readline.asm"
@@ -127,12 +127,7 @@ startupScreen:
     jsr printLine
     rts
 
-.print "Clearscreen = " + toHexString(*)
-clearScreen:
-    lda #<pico_scr_0
-    sta AL
-    lda #>pico_scr_0
-    sta AH
+fill8192:
     ldx #32     // Clean 8192 bytes of VRAM = palette 0
 !:
     ldy #0
@@ -144,6 +139,30 @@ clearScreen:
     }
     dex
     bne !-
+    rts
+
+clearScreen:
+    lda #<pico_scr_0
+    sta AL
+    lda #>pico_scr_0
+    sta AH
+    jsr fill8192
+    lda #<pico_col_0
+    sta AL
+    lda #>pico_col_0
+    sta AH
+    jsr fill8192
+    lda #<pico_screen_select
+    sta AL
+    lda #>pico_screen_select
+    sta AH
+    stz D
+    lda #<pico_bitmap_start
+    sta AL
+    stz D
+    stz D
+    stz D
+    
     stz cursorX
     stz cursorY
     lda #<pico_scroll_y
@@ -270,7 +289,7 @@ setupPorts:
     rts
 
 message:
-    .text "JOFMODORE/JOFDOS 1.0"
+    .text "Welcome to JOFMODORE/JOFDOS 1.0"
 .label messageLength = *-message
     .byte 0
 
@@ -356,8 +375,6 @@ cursorBlink:
 readBuffer:
     .fill 64,0
 readBufferSize:
-    .byte 0
-textColor:
     .byte 0
 scrollOffset:
     .byte 0

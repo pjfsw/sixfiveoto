@@ -19,7 +19,6 @@
 * = LOAD_TARGET
 .pseudopc LOAD_TARGET {
 load_image:
-    sei
     jsr copy_bitmap
     jsr copy_sprite
     jsr copy_regs

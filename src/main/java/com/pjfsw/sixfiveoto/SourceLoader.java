@@ -27,6 +27,7 @@ public class SourceLoader {
         if (result == 0) {
             return source.replace(".asm", ".prg");
         }
+        System.err.printf("Result code when launching assembler: %d%n", result);
         return null;
     }
 

@@ -355,6 +355,7 @@ public class SixFiveOTo {
 
 
     public static void main(String[] args) {
+        System.out.println("[SixFiveOTo starting]");
         if (args.length != 1) {
             System.out.println("You must provide a properties file on command line!");
             System.exit(1);

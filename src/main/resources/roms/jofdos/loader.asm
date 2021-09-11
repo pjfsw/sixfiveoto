@@ -68,8 +68,6 @@ load:
     sta loadTarget+1
 !:
     lda loadTarget
-    clc
-    adc #1
     sta stringTarget
     lda loadTarget+1
     sta stringTarget+1
@@ -91,13 +89,18 @@ load:
     jsr printLine
     rts
 !:
-    lda #>LOAD_TARGET
-    sta loadTarget+1
-    lda #2
+    ldy #12
+    lda (loadTarget),y
     sta loadSource
-    stz loadSource+1
-    lda #124
+    iny
+    lda (loadTarget),y
+    sta loadSource+1
+    iny
+    lda (loadTarget),y
     sta loadCount
+    iny
+    lda (loadTarget),y
+    sta loadTarget+1
     jsr load_data
     rts
 

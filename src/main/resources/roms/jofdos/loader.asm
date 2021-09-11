@@ -5,8 +5,6 @@
 .const LOAD_PTR_ZP = $f0
 .const MOSI = 64;
 
-.segment DosCode
-
 spi_read_byte:
     ldy #1              // +2
     ldx #$7F            // +2
@@ -32,6 +30,76 @@ spi_write_byte:
     }                   // Min: 27*8+4=172 cycles  Max: 31*8+4=196 cycles
     rts
 
+compareString:
+    tax
+!nextChar:
+    cpx #0
+    beq !endOfSource+
+    lda (stringTarget)
+    cmp (stringSource)
+    bne !mismatch+
+    inc stringTarget
+    bne !+
+    inc stringTarget+1
+!:
+    inc stringSource
+    bne !+
+    inc stringSource+1
+!:
+    dex
+    jmp !nextChar-
+
+!endOfSource:
+    clc
+    lda (stringTarget)
+    bne !+
+    sec
+!:
+    rts
+!mismatch:
+    clc
+    rts
+
+load:
+    jsr load_dir
+    lda #<LOAD_TARGET
+    sta loadTarget
+    lda #>LOAD_TARGET
+    sta loadTarget+1
+!:
+    lda loadTarget
+    clc
+    adc #1
+    sta stringTarget
+    lda loadTarget+1
+    sta stringTarget+1
+    lda #<argument1
+    sta stringSource
+    lda #>argument1
+    sta stringSource+1
+    lda argumentLength
+    jsr compareString
+    bcs !+
+    lda loadTarget
+    clc
+    adc #$10
+    sta loadTarget
+    bne !-
+    ldx #<notFoundMessage
+    ldy #>notFoundMessage
+    lda #notFoundLength
+    jsr printLine
+    rts
+!:
+    lda #>LOAD_TARGET
+    sta loadTarget+1
+    lda #2
+    sta loadSource
+    stz loadSource+1
+    lda #124
+    sta loadCount
+    jsr load_data
+    rts
 
 load_data:
     stz loadTarget      // Clear lowbyte, we only load to even pages
@@ -64,12 +132,6 @@ load_data:
 
     rts
 
-.segment Zeropage
-.zp {
-loadSource:
-    .word 0
-loadTarget:
-    .word 0
-loadCount:
-    .byte 0
-}
+notFoundMessage:
+    .text "Not found!"
+.label notFoundLength = *-notFoundMessage

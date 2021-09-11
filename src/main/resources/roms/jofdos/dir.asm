@@ -1,9 +1,7 @@
 #importonce
 
 #import "loadtarget.asm"
-#import "../ui/print.asm"
-
-.segment DosCode
+#import "print.asm"
 
 load_dir:
     stz loadSource

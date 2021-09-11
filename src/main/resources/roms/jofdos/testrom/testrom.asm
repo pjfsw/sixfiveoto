@@ -1,8 +1,8 @@
 .cpu _65c02
 .encoding "ascii"
 
-#import "../picoreg.asm"
-#import "../loadtarget.asm"
+#import "../ui/picoreg.asm"
+#import "../filesystem/loadtarget.asm"
 
 .var jifTemplate = "Id=0,Width=1,Height=2,PaletteSize=4,Data=5"
 .var bmp_jif = LoadBinary("sixteencolors.jif", jifTemplate)
@@ -18,22 +18,22 @@
 
 /*
   Filesystem v0.1
-  2 bytes diskoffset in 256 byte sectors
-  14 byte filename
-  Filename starts with 0 => no more files
+  2 bytes diskoffset in pages (256-bytes)
+  1 byte target load page
+  1 byte number of pages to load
+  12 byte filename, zero terminated
+  Diskoffset = 0 = unused
 
-  A program starts with the following header
-  1 byte header "X"  for executable, will autostart after load
-  1 byte number of 256-bytes to load
-  1 byte target page in memory HEADER INCLUDE, autostart occurs at load address + 3
+  A regular file has no header. An executable file two bytes "EX" then a two byte jump address
 */
 * = $0000
-.byte 1
+.word 1
+.byte >LOAD_TARGET
+.byte 120
 .text "ImageTest"
-.align 16
-.byte 0,0
+.fill $100-*,0
 
-* = $0200
+* = $0100
 .pseudopc LOAD_TARGET {
 .byte $58  // "X"
 .byte >(image_test_length)

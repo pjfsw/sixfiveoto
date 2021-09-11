@@ -1,5 +1,11 @@
 #importonce
+
 #import "keyboard.asm"
+#import "picoreg.asm"
+
+.const MAX_LINE_LENGTH = 47
+
+.segment DosCode
 
 readline:
     jsr clearBuffer

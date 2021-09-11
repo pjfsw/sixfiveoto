@@ -2,6 +2,10 @@
 
 #import "picoreg.asm"
 
+.const SCROLL_LIMIT=36
+
+.segment DosCode
+
 updateScrollOffset:
     lda cursorY
     sec
@@ -36,23 +40,6 @@ printChar:
     pla
     sta D
     inc cursorX
-    rts
-
-printByte:
-    tay
-    lsr
-    lsr
-    lsr
-    lsr
-    and #15
-    tax
-    lda digit,x
-    jsr printChar
-    tya
-    and #15
-    tax
-    lda digit,x
-    jsr printChar
     rts
 
 print:
@@ -123,3 +110,4 @@ yToColorLo:
     .fill 64,<($1000+(i<<6))
 yToColorHi:
     .fill 64,>($1000+(i<<6))
+

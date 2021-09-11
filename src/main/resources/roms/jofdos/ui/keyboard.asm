@@ -13,6 +13,8 @@
 .const KEYBOARD_SELECT = $FE
 .const NO_SELECT = $FF
 
+.segment DosCode
+
 readSpiByte:
     ldy #1              // +2
     ldx #$7F            // +2

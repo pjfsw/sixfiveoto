@@ -1,5 +1,13 @@
 #importonce
 
+.segment DosCode
+
+argToHex:
+    lda argumentLength
+    ldx #<argument1
+    ldy #>argument1
+    jmp readHexString
+
 // A Number of chars
 // X Lo byte of string
 // Y Hi byte of string
@@ -82,3 +90,12 @@ digit:
     .text "0123456789abcdef"
 upperCaseDigit:
     .text "0123456789ABCDEF"
+
+.segment DosVars
+
+currentByte:
+    .byte 0
+currentNibble:
+    .byte 0
+tmpNumber:
+    .word 0

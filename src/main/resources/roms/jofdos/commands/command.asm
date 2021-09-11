@@ -1,5 +1,10 @@
 #importonce
 
+#import "calladdress.asm"
+#import "peekpoke.asm"
+
+.segment DosCode
+
 parseCommand:
     ldx #0
 !nextChar:
@@ -200,3 +205,17 @@ cmdLoad:
 cmdDir:
     .text "ls"
     .byte 0
+
+.segment DosVars
+
+commandCount:
+    .byte 0
+argument1:
+    .fill MAX_LINE_LENGTH,0
+argument2:
+    .fill MAX_LINE_LENGTH,0
+argumentLength:
+    .byte 0,0
+argumentCount:
+    .byte 0
+

@@ -101,8 +101,13 @@ load:
     iny
     lda (loadTarget),y
     sta loadTarget+1
+    pha
     jsr load_data
-    rts
+    pla
+    sta loadTarget+1
+    stz loadTarget
+    jmp (loadTarget)
+//    rts
 
 load_data:
     stz loadTarget      // Clear lowbyte, we only load to even pages

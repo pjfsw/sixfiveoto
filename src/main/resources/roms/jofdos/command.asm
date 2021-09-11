@@ -169,9 +169,9 @@ commandPtrHi:
     .byte >cmdClear, >cmdSys, >cmdPeek,  >cmdPage, >cmdPoke, >cmdLoad, >cmdDir, 0
 .print "Jump table = " + toHexString(*)
 commandJmpLo:
-    .byte <clearScreen, <callAddress, <peekByte, <peekPage, <pokeByte, <load, <dir,  0
+    .byte <clear, <callAddress, <peekByte, <peekPage, <pokeByte, <load, <dir,  0
 commandJmpHi:
-    .byte >clearScreen, >callAddress,  >peekByte, >peekPage, >pokeByte, >load, >dir, 0
+    .byte >clear, >callAddress,  >peekByte, >peekPage, >pokeByte, >load, >dir, 0
 arguments:
     .byte 0,1,1,1,2,1,0,0
 

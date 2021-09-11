@@ -39,11 +39,14 @@
 .pseudopc LOAD_TARGET {
 image_test_start:
 load_image:
+    jsr clearScreen
     jsr copy_bitmap
     jsr copy_sprite
     jsr copy_regs
     rts
 
+clear_screen:
+    rts
 copy_bitmap:
     copy_image_data(pixels, BITMAP_POINTER, bmp_width, bmp_height, (200-bmp_width)/2)
     rts
@@ -121,6 +124,8 @@ padding:
         bne !-
     }
     rts
+
+#import "../utility/clearscreen.asm"
 
 sprite:
     .print "Sprite width * height = " + spr_width + " * " + spr_height

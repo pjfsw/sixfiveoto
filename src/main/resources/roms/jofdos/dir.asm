@@ -17,22 +17,29 @@ load_dir:
 dir:
     jsr load_dir
 
-    lda #<(LOAD_TARGET+1)
+    lda #LOAD_TARGET
     sta loadSource
     lda #>LOAD_TARGET
     sta loadSource+1
 !:
     {
         lda (loadSource)
-        bne !+
-        rts
+        beq !+
+        ldx loadSource
+        ldy loadSource+1
+        lda #12
+        jsr print
+
+        ldy #14
+        lda (loadSource),y
+        jsr printByte
+        lda #'0'
+        jsr printChar
+        lda #'0'
+        jsr printChar
+        jsr linefeed
     !:
     }
-    ldx loadSource
-    ldy loadSource+1
-    lda #14
-    jsr printLine
-
     clc
     lda loadSource
     adc #$10

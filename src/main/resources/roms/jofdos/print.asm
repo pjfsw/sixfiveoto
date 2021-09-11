@@ -59,7 +59,12 @@ print:
     stx ioAddress
     sty ioAddress+1
     sta ioCount
+    pha
     jsr setPosition
+    pla
+    clc
+    adc cursorX
+    sta cursorX
     ldy #0
 !:
     cpy ioCount

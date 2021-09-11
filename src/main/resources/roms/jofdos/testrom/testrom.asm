@@ -18,27 +18,25 @@
 
 /*
   Filesystem v0.1
-  2 bytes diskoffset in 256 byte sectors
-  14 byte filename
-  Filename starts with 0 => no more files
 
-  A program starts with the following header
-  1 byte header "X"  for executable, will autostart after load
-  1 byte number of 256-bytes to load
-  1 byte target page in memory HEADER INCLUDE, autostart occurs at load address + 3
+  Works with even pages (256 bytes)
+
+  Page 0 is directory
+
+  12 byte file name
+  2 byte storage location in number of pages
+  1 byte size in pages
+  1 byte page load address
 */
 * = $0000
-.byte 1
 .text "ImageTest"
-.align 16
-.byte 0,0
+.fill 12-*,0
+.word 1
+.byte >image_test_length
+.byte 5
 
-* = $0200
+* = $0100
 .pseudopc LOAD_TARGET {
-.byte $58  // "X"
-.byte >(image_test_length)
-.byte >LOAD_TARGET
-
 image_test_start:
 load_image:
     jsr copy_bitmap

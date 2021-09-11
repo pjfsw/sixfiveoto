@@ -331,9 +331,6 @@ public class SixFiveOTo {
                         }
                     }
                     break;
-                case KeyEvent.VK_ESCAPE:
-                    stop();
-                    break;
                 default:
                     Switch aSwitch = buttons.get(event.getKeyCode());
                     if (aSwitch != null) {

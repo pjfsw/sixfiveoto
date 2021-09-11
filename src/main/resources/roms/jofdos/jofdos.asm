@@ -36,7 +36,7 @@
 start:
     jsr setupPorts
     jsr copyIrq
-
+    cli
     jsr startupScreen
 
     stz cursorX
@@ -60,10 +60,11 @@ copyIrq: // IRQ vector is hardwired to point at RAM address so we need to copy o
     inx
     cpx #irqLength
     bcc !-
-    cli
     rts
 
 startupScreen:
+    stz cursorX
+    stz cursorY
     lda #<pico_screen_pal
     sta AL
     lda #>pico_screen_pal
@@ -82,6 +83,17 @@ startupScreen:
     stz D
 
     jsr clearScreen
+
+    // Restore font pointers, sprites and bitmaps
+    lda #<pico_sprite_x
+    sta AL
+    lda #>pico_sprite_x
+    sta AH
+    ldx #$c0 // Repeat 192 times
+!:
+    stz D
+    dex
+    bne !-
 
     jsr setPosition
     ldx #<message
@@ -270,7 +282,9 @@ bmpSinTable:
 }
 
 irqSource:
-.pseudopc IRQ {
+    jmp irq
+.label irqLength = *-irqSource
+
 irq:
     stx irqX
     sty irqY
@@ -284,8 +298,6 @@ irq:
     ldy irqY
     lda irqA
     rti
-}
-.label irqLength = *-irqSource
 
 * = $FFFA "Vectors"
     .word 0

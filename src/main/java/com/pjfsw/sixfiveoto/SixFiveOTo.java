@@ -12,12 +12,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import com.pjfsw.sixfiveoto.addressables.Clockable;
+import com.pjfsw.sixfiveoto.addressables.Drawable;
 import com.pjfsw.sixfiveoto.addressables.Interrupt;
 import com.pjfsw.sixfiveoto.addressables.Resettable;
 import com.pjfsw.sixfiveoto.addressables.Screen;
@@ -42,12 +44,11 @@ public class SixFiveOTo {
     private final ScheduledExecutorService executorService;
     private int frameCycleCount;
 
-    //private final int clockSpeedHz = 2_560_000;
     private final int clockSpeedHz;
 
-    private final int screenRefreshRate = 60;
-    private final int refreshMultiplier = 10;
-    private final int refreshRate = refreshMultiplier * screenRefreshRate;
+    private static final int SCREEN_REFRESH_RATE = 60;
+    private static final int REFRESH_MULTIPLIER = 10;
+    private static final int REFRESH_RATE = REFRESH_MULTIPLIER * SCREEN_REFRESH_RATE;
     private final List<Resettable> resettables = new ArrayList<>();
     private final List<Clockable> clockables = new ArrayList<>();
     private final List<Interrupt> interrupts = new ArrayList<>();
@@ -104,19 +105,30 @@ public class SixFiveOTo {
             }
         }
 
-        screen = new Screen(cpuStatistics, scaling);
+        int screenWidth = collectedParts.values().stream()
+            .map(Part::getDrawable)
+            .filter(Objects::nonNull)
+            .map(Drawable::getWidth)
+            .reduce(Integer::max)
+            .orElseThrow();
 
+        int screenHeight = collectedParts.values().stream()
+            .map(Part::getDrawable)
+            .filter(Objects::nonNull)
+            .map(Drawable::getHeight)
+            .reduce(Integer::sum)
+            .orElseThrow();
+
+        screen = new Screen(cpuStatistics, scaling, screenWidth + debugger.getWidth(), screenHeight);
+
+        int y = 0;
         // Add  the reset normally
         for (Entry<String, Part> entry : collectedParts.entrySet()) {
             String name = entry.getKey();
             Part part = entry.getValue();
             if (part.getDrawable() != null) {
-                int x = Integer.parseInt(properties.getProperty(name + ".x", "0"));
-                int y = Integer.parseInt(properties.getProperty(name + ".y", "0"));
-                if (y < 0) {
-                    y = screen.getScreenHeight() - Math.abs(y);
-                }
-                screen.addDrawable(new Point(x,y), part.getDrawable());
+                screen.addDrawable(new Point(0,y), part.getDrawable());
+                y+=part.getDrawable().getHeight() + 2;
             }
             if (part.getResettable() != null) {
                 resettables.add(part.getResettable());
@@ -144,7 +156,7 @@ public class SixFiveOTo {
             }
         }
 
-        screen.addDrawable(new Point((Screen.W - Gameduino.W)/2, Gameduino.H+1), debugger);
+        screen.addDrawable(new Point(screenWidth, 0), debugger);
         // Map keys
     }
 
@@ -186,7 +198,7 @@ public class SixFiveOTo {
     }
     private void updateFrameCycleCount(int cycles) {
         frameCycleCount += cycles;
-        int cyclesPerFrame = clockSpeedHz / screenRefreshRate;
+        int cyclesPerFrame = clockSpeedHz / SCREEN_REFRESH_RATE;
         if (frameCycleCount >= cyclesPerFrame) {
             frameCycleCount -= cyclesPerFrame;
         }
@@ -237,11 +249,11 @@ public class SixFiveOTo {
         cycleCount = 0;
         totalCycles = 0;
         nanos = System.nanoTime();
-        int refreshPeriod = 1000000 / refreshRate;
-        int cyclesPerPeriod = clockSpeedHz/refreshRate;
+        int refreshPeriod = 1000000 / REFRESH_RATE;
+        int cyclesPerPeriod = clockSpeedHz/ REFRESH_RATE;
         runner = executorService.scheduleAtFixedRate(() -> {
             runCount++;
-            if (runCount % refreshRate == 0) {
+            if (runCount % REFRESH_RATE == 0) {
                 double micros = (System.nanoTime() - nanos)/1000.0;
                 cpuStatistics.setSpeed((double)totalCycles/micros);
                 nanos = System.nanoTime();

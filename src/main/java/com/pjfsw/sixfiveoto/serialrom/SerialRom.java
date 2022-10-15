@@ -13,7 +13,8 @@ import com.pjfsw.sixfiveoto.spi.Spi;
 public class SerialRom implements Clockable, Drawable {
     private static final int SCALE = 800;
     public static final int W = SCALE + 2;
-    public static final int H = 12;
+    private static final int BAR_HEIGHT = 12;
+    private static final int HEIGHT = BAR_HEIGHT + 12;
     private static final Color UNUSED_IDLE = new Color(0x550000);
     private static final Color USED_IDLE = new Color(0x004400);
     private static final Color UNUSED_ACTIVE = new Color(0xBB0000);
@@ -109,27 +110,41 @@ public class SerialRom implements Clockable, Drawable {
     public void draw(final Graphics graphics) {
         Graphics2D g2 = (Graphics2D)graphics;
 
+//        g2.setColor(Color.GREEN);
+//        g2.drawRect(0,0, W, HEIGHT);
         g2.setFont(new Font("Courier", Font.PLAIN, 12));
+        int h = g2.getFontMetrics().getHeight();
+        int base = 1 + g2.getFontMetrics().getAscent();
         boolean active = (System.currentTimeMillis() - lastActive) < 250;
         if (active) {
             g2.setColor(Color.WHITE);
-            g2.drawString(String.format("Serial ROM: %05X", address),2,0);
+            g2.drawString(String.format("Serial ROM: %05X", address),2, base);
         } else {
             g2.setColor(Color.DARK_GRAY);
-            g2.drawString("Serial ROM",2,0);
+            g2.drawString("Serial ROM",2, base);
         }
 
         //boolean active=true;
 
         g2.setColor(active ? UNUSED_ACTIVE : UNUSED_IDLE);
-        g2.fillRect(2,1, SCALE, H-2);
+        g2.fillRect(2,h, SCALE, BAR_HEIGHT -2);
         g2.setColor(active ? USED_ACTIVE : USED_IDLE);
-        g2.fillRect(2,1, usedSize * SCALE / CAPACITY, H-2);
+        g2.fillRect(2,h, usedSize * SCALE / CAPACITY, BAR_HEIGHT -2);
         if (active) {
             g2.setColor(Color.WHITE);
             int addressOffset = address * SCALE / CAPACITY;
-            g2.drawRect(addressOffset ,0, 2, H);
+            g2.drawRect(addressOffset ,h, 2, BAR_HEIGHT);
         }
 
+    }
+
+    @Override
+    public int getHeight() {
+        return HEIGHT;
+    }
+
+    @Override
+    public int getWidth() {
+        return W;
     }
 }

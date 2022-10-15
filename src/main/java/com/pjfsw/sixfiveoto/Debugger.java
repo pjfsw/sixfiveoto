@@ -18,11 +18,12 @@ public class Debugger implements Drawable {
     private static final int ROWSIZE = 16;
     private static final int ROWS_OFFSET = 2 * ROWSIZE;
     private static final int ROWS = 4;
+    private static final int WIDTH = 320;
+    private static final int HEIGHT = ROWS_OFFSET + ( 2 + ROWS) * ROWSIZE;
     private final Registers registers;
     private final Map<Integer, String> symbols;
     private final Font font;
     private boolean enabled;
-    private int pc;
     private String registerValues = "";
     private final AtomicReference<List<Row>> instructions = new AtomicReference<>(emptyList());
 
@@ -47,37 +48,44 @@ public class Debugger implements Drawable {
 
     @Override
     public void draw(final Graphics graphics) {
-        Graphics2D g2 = (Graphics2D)graphics;
-
-        if (enabled) {
-            g2.setFont(font);
-            g2.setColor(Color.WHITE);
-
-            int i = 0;
-            for (Row row : this.instructions.get()) {
-                String instr = String.format("%s %s",
-                    row.instruction,
-                    symbols.containsKey(row.address)?
-                        "; " + symbols.get(row.address) : "");
-
-
-                g2.drawString(String.format("$%04X", row.address),0,ROWS_OFFSET+i);
-                g2.drawString(instr, 96, ROWS_OFFSET + i);
-                i+=ROWSIZE;
-                g2.setColor(Color.GRAY);
-            }
-            g2.setColor(Color.LIGHT_GRAY);
-            g2.drawString(registerValues, 0,108);
+        if (!enabled) {
+            return;
         }
+
+        Graphics2D g2 = (Graphics2D)graphics;
+        g2.setColor(Color.DARK_GRAY);
+        g2.drawRect(0,0, WIDTH, HEIGHT);
+        g2.setFont(font);
+        int base = g2.getFontMetrics().getAscent();
+        g2.setColor(Color.WHITE);
+
+        int i = 0;
+        for (Row row : this.instructions.get()) {
+            String instr = String.format("%s %s",
+                row.instruction,
+                symbols.containsKey(row.address)?
+                    "; " + symbols.get(row.address) : "");
+
+
+            g2.drawString(String.format("$%04X", row.address),0,base + ROWS_OFFSET+i);
+            g2.drawString(instr, 96, base + ROWS_OFFSET + i);
+            i+=ROWSIZE;
+            g2.setColor(Color.GRAY);
+        }
+        g2.setColor(Color.LIGHT_GRAY);
+        g2.drawString(registerValues, 0,base + 108);
     }
 
-    private static class Row {
-        private final int address;
-        private final String instruction;
+    @Override
+    public int getHeight() {
+        return HEIGHT;
+    }
 
-        public Row(int address, String instruction) {
-            this.address = address;
-            this.instruction = instruction;
-        }
+    @Override
+    public int getWidth() {
+        return WIDTH;
+    }
+
+    private record Row(int address, String instruction) {
     }
 }

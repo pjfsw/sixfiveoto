@@ -258,6 +258,16 @@ public class PicoGfx implements Drawable, Clockable, Resettable, Poker, Interrup
     }
 
     @Override
+    public int getHeight() {
+        return VISIBLE_HEIGHT * 2;
+    }
+
+    @Override
+    public int getWidth() {
+        return VISIBLE_WIDTH * 2;
+    }
+
+    @Override
     public void reset(boolean hardReset) {
         if (hardReset) {
             init();

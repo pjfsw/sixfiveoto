@@ -29,7 +29,6 @@ public class Lcd implements Resettable, Clockable, Drawable, Connectable {
     private final Pin e2 = Pin.input();
     private final Pin[] data = new Pin[8];
     private final Pin rw = Pin.input();
-    private final int clockSpeed;
 
     private static final Pattern DATA_RE = Pattern.compile("d([0-7])");
     private final int rows;
@@ -42,7 +41,6 @@ public class Lcd implements Resettable, Clockable, Drawable, Connectable {
     private static final int[] rowOffsets = {0, 0x40, 0x14, 0x54};
 
     public Lcd(int clockSpeed, int cols, int rows) {
-        this.clockSpeed = clockSpeed;
         this.cols = cols;
         this.rows = rows;
         for (int i = 0; i < 8; i++) {
@@ -149,5 +147,14 @@ public class Lcd implements Resettable, Clockable, Drawable, Connectable {
         }
     }
 
+    @Override
+    public int getHeight() {
+        return DISPLAY_OFFSET + rows * CHARACTER_Y_SPACING + DISPLAY_PADDING * 2;
+    }
+
+    @Override
+    public int getWidth() {
+        return DISPLAY_OFFSET + DISPLAY_PADDING*2+cols*CHARACTER_X_SPACING;
+    }
 
 }

@@ -4,6 +4,7 @@ import java.awt.*;
 import java.awt.image.BufferStrategy;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import javax.swing.JFrame;
 import javax.swing.WindowConstants;
@@ -12,22 +13,23 @@ import com.pjfsw.sixfiveoto.CpuStatistics;
 
 public class Screen {
     private static final int WAIT_PERIOD = 1_000 / 60;
-    public static final int W = 800;
-    public static final int H = 744;
-    //private final PixelFrame pixelComponent;
     private final JFrame frame;
     private final CpuStatistics cpuStatistics;
     private final Font font;
     private final int leftOffset;
     private final int topOffset;
     private final float scaling;
+    private final int screenHeight;
+    private final int screenWidth;
     private volatile boolean running = true;
     private int fps = 0;
     private final List<PositionedDrawable> drawables = new ArrayList<>();
 
-    public Screen(CpuStatistics cpuStatistics, float scaling) {
-        this.cpuStatistics = cpuStatistics;
+    public Screen(CpuStatistics cpuStatistics, float scaling, int screenWidth, int screenHeight) {
+        this.cpuStatistics = Objects.requireNonNull(cpuStatistics);
         this.scaling = scaling;
+        this.screenHeight = screenHeight;
+        this.screenWidth = screenWidth;
 
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
         GraphicsDevice[] gs = ge.getScreenDevices();
@@ -36,7 +38,7 @@ public class Screen {
 
         frame = new JFrame("A Fine Emulator of 65C02", gc);
 
-        frame.setPreferredSize(new Dimension(W ,H));
+        frame.setPreferredSize(new Dimension((int)(scaling*screenWidth), (int)(scaling*screenHeight)));
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.pack();
         frame.setVisible(true);
@@ -46,8 +48,8 @@ public class Screen {
         int bottomOffset = insets.bottom;
         int rightOffset = insets.right;
         frame.setPreferredSize(new Dimension(
-            (int)(scaling*W)+leftOffset + rightOffset,
-            (int)(scaling*H)+topOffset + bottomOffset)
+            (int)(scaling*screenWidth) + leftOffset + rightOffset,
+            (int)(scaling*screenHeight) + topOffset + bottomOffset)
         );
         frame.pack();
         frame.setLocationRelativeTo(null);
@@ -55,10 +57,6 @@ public class Screen {
         frame.createBufferStrategy(2);
         frame.setAlwaysOnTop(true);
         frame.setAlwaysOnTop(false);
-    }
-
-    public int getScreenHeight() {
-        return H - frame.getInsets().bottom - frame.getInsets().top;
     }
 
     public void addDrawable(Point position, Drawable drawable) {
@@ -93,14 +91,14 @@ public class Screen {
             Graphics graphics = strategy.getDrawGraphics();
             Graphics2D g2 = (Graphics2D)graphics;
             g2.setColor(Color.BLACK);
-            g2.translate(leftOffset, topOffset);
+            g2.fillRect(0,0, screenWidth*2, screenHeight*2);
+            g2.translate(leftOffset, topOffset * 2);
             g2.scale(scaling, scaling);
-            g2.fillRect(0,0,W,H);
             draw(g2);
             graphics.dispose();
             frames++;
             strategy.show();
-            long wait = WAIT_PERIOD - (int)(System.currentTimeMillis() - lastTime);
+            long wait = WAIT_PERIOD - (System.currentTimeMillis() - lastTime);
             if (wait > 0) {
                 waitMs(wait);
             }
@@ -118,16 +116,20 @@ public class Screen {
         }
         Color normalColor = Color.GRAY;
         Color angryColor = Color.RED;
-        graphics.setFont(font);
-        graphics.setColor(normalColor);
-        graphics.drawString(String.format("CPU: %.2f MHz", cpuStatistics.getSpeed()), 2, 610);
+        Graphics g = graphics.create();
+        g.setFont(font);
+        int base = graphics.getFontMetrics().getAscent();
+        int statusPos = base + (int)(screenHeight * scaling);
+        int x = 800;
+        g.setColor(normalColor);
+        g.drawString(String.format("CPU: %.2f MHz", cpuStatistics.getSpeed()), x + 2, statusPos);
         long irqUsage = cpuStatistics.irqUsage();
-        if (irqUsage > 95) {
-            graphics.setColor(angryColor);
+        if (irqUsage > 0) {
+            g.setColor(angryColor);
         }
-        graphics.drawString(String.format("IRQ: %d%%", irqUsage), 140, 610);
-        graphics.setColor(normalColor);
-        graphics.drawString(String.format("FPS: %d", fps), 220 ,610);
+        g.drawString(String.format("IRQ: %d%%", irqUsage), x + 140, statusPos);
+        g.setColor(normalColor);
+        g.drawString(String.format("FPS: %d", fps), x + 220, statusPos);
     }
 
     private static class PositionedDrawable {

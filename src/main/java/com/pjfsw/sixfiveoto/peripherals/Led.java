@@ -39,4 +39,14 @@ public class Led implements Consumer<Boolean>, Drawable {
         g2.setColor(Color.WHITE);
         g2.fillOval(SIZE/4,SIZE/4,SIZE/4, SIZE/4);
     }
+
+    @Override
+    public int getHeight() {
+        return SIZE;
+    }
+
+    @Override
+    public int getWidth() {
+        return SIZE;
+    }
 }

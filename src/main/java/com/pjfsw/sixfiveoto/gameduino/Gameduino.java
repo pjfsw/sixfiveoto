@@ -28,7 +28,7 @@ public class Gameduino implements Drawable, Clockable, Resettable {
     private static final int CANVAS_W = 800;
     private static final int CANVAS_H = 600;
     public static final int W = 802;
-    public static final int H = 608;
+    public static final int H = 620;
 
     private static final int[] spriteXTransforms = new int[] {
         2,-2,
@@ -338,6 +338,16 @@ public class Gameduino implements Drawable, Clockable, Resettable {
             transform.scale(spriteXTransforms[rotationBits],spriteYTransforms[rotationBits]);
             g2.drawImage(spriteImages[i], transform, null);
         }
+    }
+
+    @Override
+    public int getHeight() {
+        return H;
+    }
+
+    @Override
+    public int getWidth() {
+        return W;
     }
 
 }

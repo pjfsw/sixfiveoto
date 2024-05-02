@@ -1,4 +1,4 @@
-<filetype binary="false" description="6502 Assembly" name="6502">
+<filetype binary="false" default_extension="asm" description="6502 Assembly" name="6502">
   <highlighting>
     <options>
       <option name="LINE_COMMENT" value="//" />
@@ -13,7 +13,7 @@
     <keywords keywords="adc;and;asl;bcc;bcs;beq;bit;bmi;bne;bpl;bra;brk;bvc;clc;cld;cli;clv;cmp;cpx;cpy;dec;dex;dey;eor;inc;inx;iny;jmp;jsr;lda;ldx;ldy;lsr;nop;ora;pha;phx;phy;pla;plp;plx;ply;rol;ror;rti;rts;sbc;sec;sed;sei;sta;stx;sty;stz;tax;tay;trb;tsb;tsx;txa;txs;txy;tya;tyx" ignore_case="true" />
     <keywords2 />
     <keywords3 keywords="#import;#importonce" />
-    <keywords4 keywords=".align;.byte;.const;.cpu;.encoding;.eval;.fill;.fillword;.for;.function;.if;.label;.macro;.print;.pseudopc;.return;.text;.var;.word;.zp" />
+    <keywords4 keywords=".align;.byte;.const;.cpu;.encoding;.eval;.fill;.fillword;.for;.function;.if;.label;.macro;.print;.pseudopc;.return;.segment;.segmentdef;.text;.var;.word;.zp" />
   </highlighting>
   <extensionMap>
     <mapping ext="asm" />
